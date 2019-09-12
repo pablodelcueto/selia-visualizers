@@ -164,3 +164,7 @@ renderToolbar() {
   );
 }
 ```
+
+## Example
+
+To see a functioning example see [image visualizer](https://github.com/mbsantiago/selia-image-visualizer).
