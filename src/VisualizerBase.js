@@ -41,14 +41,17 @@ class VisualizerBase {
 
   canvasToPoint(p) {
     // abstract method
+    return p;
   }
 
   pointToCanvas(p) {
     // abstract method
+    return p;
   }
 
   validatePoints(p){
     // abstract method
+    return p;
   }
 
   emitUpdateEvent() {
