@@ -47,7 +47,6 @@ This repository is structured as follows
     │
     └───src
     │   │   index.js
-    │   │   VisualizerBase.js
     │   │
     │   └─── visualizer
     │       │   index.js
@@ -65,13 +64,13 @@ within the files directory (`public/files/`) to serve as a test file for the vis
 
 ### Starting development
 
-The visualizer should be a single class that inherits from the class `VisualizerBase` contained in the file `src/VisualizerBase.js`
+The visualizer should be a single class that inherits from the class `VisualizerBase` contained in the package `@selia/visualizer`
 and exported as default by the file `src/visualizer/index.js`.
 
 Hence any `src/visualizer/index.js` file should have this structure:
 
 ```javascript
-import VisualizerBase from '../VisualizerBase';
+import VisualizerBase from '@selia/visualizer';
 
 class MyVisualizer extends VisualizerBase {
   // Custom code
@@ -80,6 +79,8 @@ class MyVisualizer extends VisualizerBase {
 
 export default MyVisualizer
 ```
+
+To consult the code for the base class check out its [repository](https://github.com/mbsantiago/selia-visualizer-base).
 
 ### Visualizer basics
 
