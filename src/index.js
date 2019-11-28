@@ -22,5 +22,6 @@ import(/* webpackIgnore: true */'/visualizer.js').then(module => {
 
   ReactDOM.render(
     visualizer.renderToolbar(),
-    document.getElementById('toolbar'));
+    document.getElementById('toolbar'),
+    () => visualizer.adjustSize());
 });
