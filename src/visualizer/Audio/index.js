@@ -8,8 +8,7 @@ class FileLoader { //Para ir cargando poquito a poco.
         this.oldProgress = [];
         this.newChunk = [];
         this.indiceDeCarga = 0;
-        this.indiceFinal = Math.floor(file.byteLength/1200000);;
-
+        this.indiceFinal = Math.floor(file.byteLength/1200000);
     }
 
     keepTrackOfProgress() { //Usefull to check newChunks of Data loaded. 
@@ -37,33 +36,7 @@ class audioWork {
         this.startDrawing = false;
     };
     
-    //Para ir cargando pedazos pequeños e ir dibujando sus resultados.
-    loadSmoothlyWhileDrawing(file,loader,fftDataProcessor){
-        this.resultLength = this.file.length/ this.noIntersectionSize; //No se usa ahorita, pero si 
-        // en loadColors para no tratar de dibujar mas de lo que tamaño del archivo permite.
-        let newChunk = file.slice(loader.indiceDeCarga*1200000,(loader.indiceDeCarga+1)*1200000);
-        this.FFTData(false, newChunk);
-        fftDataProcessor(); // funcion para dibujar la cual solamente se activa cuando cambió newPictureSetup
-
-        if (!(loader.indiceDeCarga===loader.indiceFinal)){
-            if (loader.indiceDeCarga===0){
-                var startTime = Date.now(); 
-            }
-            loader.indiceDeCarga++;
-            // this.loadSmoothlyWhileDrawing(reader,loader,fftDataProcessor);
-            setTimeout(()=>this.loadSmoothlyWhileDrawing(file,loader,fftDataProcessor),500);
-            console.log('indice numero', loader.indiceDeCarga);
-        }
-
-        else{ 
-            var endTime = Date.now();
-            console.log('Cuentas terminadas en', (endTime-loader.startTime)/1000, 'segundos');
-            return
-        }
-
-    }
-
-    FFTData(preloaded, fileArray){
+    FFTData(preloaded, fileArray){ //FFT computations with tensorflow
         let tensorBuffer = tf.tensor1d(new Float32Array(fileArray)); //Tensor con la informacion del archivo
         let frames = tf.signal.frame(tensorBuffer, this.windowSize, this.noIntersectionSize);
         let windowed_frames = this.windowType.mul(frames);
@@ -77,10 +50,35 @@ class audioWork {
         else {
             this.completeResultArray = this.completeResultArray.concat(tensordb.array());
         }
+    }    
+
+    //Para ir cargando pedazos pequeños e ir dibujando sus resultados.
+    loadSmoothlyWhileDrawing(file,loader,fftDataProcessor){
+        this.resultLength = this.file.length/ this.noIntersectionSize; //No se usa ahorita, pero si 
+        // en loadColors para no tratar de dibujar mas de lo que tamaño del archivo permite.
+        let newChunk = file.slice(loader.indiceDeCarga*1200000,(loader.indiceDeCarga+1)*1200000);
+        this.FFTData(false, newChunk);
+
+        if (!(loader.indiceDeCarga===loader.indiceFinal)){
+            if (loader.indiceDeCarga===0){
+                var startTime = Date.now(); 
+            }
+            loader.indiceDeCarga++;
+            // this.loadSmoothlyWhileDrawing(reader,loader,fftDataProcessor);
+            setTimeout(()=>this.loadSmoothlyWhileDrawing(file,loader,fftDataProcessor),500);
+        }
+
+        else{ 
+            fftDataProcessor(this.completeResultArray); // funcion para dibujar la cual solamente se activa cuando cambió newPictureSetup
+            var endTime = Date.now();
+            console.log('Cuentas terminadas en', (endTime-loader.startTime)/1000, 'segundos');
+        }
+
     }
+                                                                                    
+    
 
       loadFile(fftDataProcessor){ // fftDataProcessor is the function used with loaded file
-        
         let reader = new FileReader();
         fetch('http://localhost:3000/download')
             .then((result) => { return result.arrayBuffer()})
@@ -90,14 +88,14 @@ class audioWork {
                                     this.resultLength = this.file.length / this.noIntersectionSize; //No se usa ahorita, pero si 
                                     // en loadColors para no tratar de dibujar mas de lo que tamaño del archivo permite.
                                     let fileLoader = new FileLoader(this.file);
+
                                     this.loadSmoothlyWhileDrawing(this.file,fileLoader,fftDataProcessor);
                                     // console.log(Int16bitArray);
-                                })
-                             
+                                })    
     return this.completeResultArray;
     }
 
-    resetSetup(){
+    resetAudioLoadSetup(){
         this.windowSize = newPictureSetup.windowSize;
         this.windowType = tf.hannWindow(this.windowSize);
         this.windowIntersectionPercentage = newPictureSetup.intercectionPercentage;   

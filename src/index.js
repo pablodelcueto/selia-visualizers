@@ -23,5 +23,8 @@ import(/* webpackIgnore: true */'/visualizer.js').then(module => {
   ReactDOM.render(
     visualizer.renderToolbar(),
     document.getElementById('toolbar'),
-    () => visualizer.adjustSize());
+    () => {
+      visualizer.adjustSize();
+      visualizer.draw();
+    });
 });

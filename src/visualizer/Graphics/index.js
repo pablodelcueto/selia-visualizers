@@ -28,16 +28,25 @@ export function canvasSetup(id) {
             shaders = new modelShader(gl);
             gl.useProgram(shaders.program);
             gl.viewport(0,0,gl.canvas.width,gl.canvas.height);
+
+            return gl;
         }
 
-export function renderSetup(points,colors,indices){
+export function renderSetup(setup,points, colors, indices){
+    gl.uniformMatrix3fv(shaders.matrixUniform, false, setup.transformationMatrix);
+    gl.uniform1f(shaders.brightnessUniform, setup.brightness);
     gl.useProgram(shaders.program);
     // let positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shaders.positionBuffer);
-    gl.vertexAttribPointer(shaders.positionAttribute, 2, gl.FLOAT, false, 0,0) // TENSOR TRIAL
+    gl.vertexAttribPointer(shaders.positionAttribute, 2, gl.FLOAT, false, 0,0) 
     gl.enableVertexAttribArray(shaders.positionAttribute);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER,null);
+
+    // gl.vertexAttribPointer(shaders.colorAttribute, 1, gl.FLOAT, false, 0,0);
+    // gl.enableVertexAttribArray(shaders.colorAttribute);
+    // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+
 
     gl.bindBuffer(gl.ARRAY_BUFFER, shaders.colorBuffer);
     gl.vertexAttribPointer(shaders.colorAttribute, 1, gl.FLOAT, false, 0,0);
@@ -51,15 +60,25 @@ export function renderSetup(points,colors,indices){
 
 }
 
-export function columnsAdaption(file,numberOfColumnsInCanvas){ 
-           return Math.min(file.length,numberOfColumnsInCanvas); // 600 es las columans que tendrá el canvas
-       } 
+// BORRAME PORFAVOR
+var INDICES_CHACALOSO_BORRAME_YA = null;
 
-export function renderSketch(points,colors,indices) { //Primero debe cargarse información
-    renderSetup(points,colors,indices);
-    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0); //Por cada punto en points son 2 triangulos
-gl.finish();         
+export function renderSketch(setup,points,colors, indices) { //Primero debe cargarse información
+    renderSetup(setup,points,colors, indices);
+
+    // A MI TAMBIEN
+    INDICES_CHACALOSO_BORRAME_YA = indices.length;
+
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0); //Por cada punto en points son 2 triangulos    
 }
+
+export function newRenderization(setup){
+    gl.uniformMatrix3fv(shaders.matrixUniform, false, setup.transformationMatrix);
+    gl.uniform1f(shaders.brightnessUniform, setup.brightness);
+    // CUIDADO CON LOS INDICES CHACALOSOS
+    gl.drawElements(gl.TRIANGLES, INDICES_CHACALOSO_BORRAME_YA, gl.UNSIGNED_INT, 0);
+}
+
 
 //---------------------------------------------------------------------------------
 

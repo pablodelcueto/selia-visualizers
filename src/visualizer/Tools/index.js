@@ -7,7 +7,6 @@ export default class Toolbox extends React.Component{
     constructor(props){
         super(props)
         this.state={
-            zoomSwitch:"on",
             windowSize:512,
         }
     }
@@ -32,9 +31,8 @@ export default class Toolbox extends React.Component{
 
                                           className="custom-control-input" 
                                           id="customSwitch1"
-                                          unchecked
                                           onChange = {() => this.props.switchButton()}  />
-                  <label className="custom-control-label" for="customSwitch1">Zoom Tool</label>
+                  <label className="custom-control-label" htmlFor="customSwitch1">Zoom Tool</label>
                 </div>
 
                 <button style = {buttonstyle}
@@ -47,8 +45,11 @@ export default class Toolbox extends React.Component{
                     onClick={()=>this.props.increaseBrightness()} >
                     {"Brightness: +"}
                 </button>
-                <button style={buttonstyle} onClick={()=>this.props.moveLeft()} >{"Move Left"}</button>
                 <button style={buttonstyle} onClick={()=>this.props.moveRight()} > {"Move Rigth"}</button>
+                <button style={buttonstyle} onClick={()=>this.props.moveLeft()} >{"Move Left"}</button>
+                <button style={buttonstyle} onClick={()=>this.props.zoomIn()} >{"Zoom In"}</button>
+                <button style={buttonstyle} onClick={()=>this.props.zoomOut()} >{"Zoom Out"}</button>
+
 
                 <select style = {buttonstyle} onChange={this.handleWindowTypeChange} > 
                     <optgroup label = "Window Type">

@@ -54,7 +54,8 @@ export default class modelShader {
         //     }
         // }
 
-
+        this.matrixUniform = this.gl.getUniformLocation(this.program, Locations.MATRIX);
+        this.brightnessUniform = this.gl.getUniformLocation(this.program, Locations.BRIGHTNESS);
         this.positionAttribute=this.gl.getAttribLocation(this.program, Locations.POSITION);
         // this.texcoordAttribute = GLC.getAttribLocation(program, 'a_texcoord') // Variables de los shaders a donde los datos 
         this.colorAttribute=this.gl.getAttribLocation(this.program, Locations.COLOR);
