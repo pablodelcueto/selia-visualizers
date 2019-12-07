@@ -1,5 +1,5 @@
 import React from 'react';
-import VisualizerBase from '../VisualizerBase';
+import VisualizerBase from '@selia/visualizer';
 
 // import {AudioObj} from './Audio';
 import {canvasSetup} from './Graphics';
