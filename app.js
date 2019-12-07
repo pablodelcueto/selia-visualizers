@@ -6,7 +6,7 @@ const app = express()
 app.use(cors());
 const port = 3000
 
-app.get('/download/', function (req, res) {
+app.get('/', function (req, res) {
   var files = fs.readdirSync(path.join(__dirname, 'public', 'files'));
   res.sendFile(path.join(__dirname, 'public', 'files', files[0]));
 })
