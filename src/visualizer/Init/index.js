@@ -6,7 +6,7 @@ import {renderSketch, newRenderization,columnsAdaption} from '../Graphics';
 //------------------------------------------------------------------
 var colors=[];
 var points = [];
-var indices = []; 
+var indices = [];
 var initialTimeLength = 2800;
 var initialFrequenciesLength = 256;
 export var newPictureSetup = {
@@ -22,9 +22,9 @@ export var newPictureSetup = {
                     // zoomY:.5,
                 };
 
-// 
+//
 
-function loadCompleteVertexBuffer(setup,fileFFTArray, drawingMethod) {
+function loadCompleteVertexBuffer(setup, fileFFTArray) {
     for (var i=0; i<setup.resultLength; i++){
         for (var j=0; j< setup.numberOfFrequencies;j++){
             points.push(...[i,j]);
@@ -32,7 +32,7 @@ function loadCompleteVertexBuffer(setup,fileFFTArray, drawingMethod) {
             if (i < setup.resultLength -1 && j < setup.numberOfFrequencies-1){
                 indices.push(...[i*(setup.numberOfFrequencies)+j,
                                  (i+1)*(setup.numberOfFrequencies)+(j+1),
-                                (i+1)*(setup.numberOfFrequencies)+j, 
+                                (i+1)*(setup.numberOfFrequencies)+j,
 
                                  i*(setup.numberOfFrequencies)+j,
                                  i*(setup.numberOfFrequencies)+(j+1),
@@ -40,20 +40,22 @@ function loadCompleteVertexBuffer(setup,fileFFTArray, drawingMethod) {
             }
         }
     }
-    drawingMethod(setup, points,colors,indices);
-    return 
+    return [points, colors, indices];
 }
 
-export function loadFFTArray(setup){
+export function loadFFTArray(info, setup){
     Audio.resetAudioLoadSetup();
-    Audio.loadFile((array)=>drawCompleteFile(array,setup));
+    Audio.loadFile2(info)
+      .then(({result, loader}) => {
+        Audio.loadSmoothlyWhileDrawing(result, loader, (array) => drawCompleteFile(array,setup))
+      })
     }
 
 export function drawCompleteFile(file,setup){
-    loadCompleteVertexBuffer(setup, file,()=>renderSketch(setup,points,colors,indices));
+    let [points, colors, indices] = loadCompleteVertexBuffer(setup, file);
+    renderSketch(setup, points, colors,indices);
 }
 
 export function changesApplication(setup){
     newRenderization(setup);
 }
-

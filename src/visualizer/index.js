@@ -5,6 +5,7 @@ import VisualizerBase from '@selia/visualizer';
 import {canvasSetup} from './Graphics';
 import {loadFFTArray, changesApplication, newPictureSetup, drawCompleteFile} from './Init';
 import Tools from './Tools';
+import AudioFile from './Audio/audioFile';
 
 class Visualizer extends VisualizerBase {
     // name = "Spectrum visualizer";
@@ -13,20 +14,22 @@ class Visualizer extends VisualizerBase {
     // configuration_schema = "longer story";
 
 
-    init(){
-        this.config=newPictureSetup;
-        this.gl = canvasSetup('visualizerCanvas');
-        this.initialMousePosition = null;
+    init() {
+      this.config=newPictureSetup;
+      this.gl = canvasSetup('visualizerCanvas');
+      this.initialMousePosition = null;
 
-        this.last = null;
-        this.dragStart = null;
-        this.dragged = false;
-        
-        this.zoomSwitchPosition = "off";
-        this.transformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1,1);
-        this.viewportMatrix = this.svg.createSVGMatrix().translate(-1,-1)
-                                                        .scaleNonUniform(2/newPictureSetup.resultLength,
-                                                                         2/newPictureSetup.numberOfFrequencies);
+      this.last = null;
+      this.dragStart = null;
+      this.dragged = false;
+
+      this.zoomSwitchPosition = "off";
+      this.transformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1,1);
+      this.viewportMatrix = this.svg.createSVGMatrix()
+        .translate(-1,-1)
+        .scaleNonUniform(
+          2/newPictureSetup.resultLength,
+          2/newPictureSetup.numberOfFrequencies);
     }
 
     resetViewport() {
@@ -34,7 +37,7 @@ class Visualizer extends VisualizerBase {
     }
 
     getConfig(){
-        //Debe hacer una lectura del estado del toolbox 
+        //Debe hacer una lectura del estado del toolbox
     }
 
     adjustSize() {
@@ -47,7 +50,7 @@ class Visualizer extends VisualizerBase {
 
     draw() {
         // this.config.transformationMatrix = this.setTransform(this.transformationMatrix);
-        loadFFTArray(this.config);
+        loadFFTArray(this.itemInfo, this.config);
     }
 
     redraw () {
@@ -87,14 +90,14 @@ class Visualizer extends VisualizerBase {
         this.redraw();
     }
 
-    translation(p) { // el punto p deba manejar coordenadas de archivo no de canvas 
+    translation(p) { // el punto p deba manejar coordenadas de archivo no de canvas
         let matrix = this.transformationMatrix.translate(p.x,p.y);
         (matrix.e > 0) ? matrix.e = 0 : matrix.e ;
-        (matrix.e<this.config.columnsInCanvas-matrix.a*this.config.resultLength) ? 
+        (matrix.e<this.config.columnsInCanvas-matrix.a*this.config.resultLength) ?
                         matrix.e = this.transformationMatrix.e : matrix.e ;
 
         (matrix.f > 0) ? matrix.f = 0 : matrix.f ;
-        (matrix.f<this.config.linesInCanvas-matrix.d*this.config.numberOfFrequencies) ? 
+        (matrix.f<this.config.linesInCanvas-matrix.d*this.config.numberOfFrequencies) ?
                         matrix.f = this.transformationMatrix.f : matrix.f ;
 
         this.transformationMatrix = matrix;
@@ -102,11 +105,11 @@ class Visualizer extends VisualizerBase {
         this.redraw()
     }
 
-    setConfig(){   
+    setConfig(){
     }
 
     getEvents() {
-        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);    
+        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
         this.ratonPulsado = this.ratonPulsado.bind(this);
         this.ratonMovido = this.ratonMovido.bind(this);
         this.ratonSoltado = this.ratonSoltado.bind(this);
@@ -115,7 +118,7 @@ class Visualizer extends VisualizerBase {
         return {"mousedown": this.ratonPulsado,
                 "mousemove": this.ratonMovido,
                 "mouseup": this.ratonSoltado,
-                // "mouseMoviendo": this.onMouseMove, 
+                // "mouseMoviendo": this.onMouseMove,
                 // "mousewheel": this.mouseScroll
             };
     }
@@ -123,21 +126,21 @@ class Visualizer extends VisualizerBase {
     zoomActivator(){
         switch (this.zoomSwitchPosition){
             case "on":
-                this.zoomSwitchPosition = "off"; 
+                this.zoomSwitchPosition = "off";
                 break
             case "off":
                 this.zoomSwitchPosition = "on";
                 break
-        }    
-    } 
+        }
+    }
 
     // zoomByScrolling(factor, fixedPoint){
     //     let newTotalLength =Math.min(this.config.resultLength-2, this.config.canvasColumns*factor);
     //     let newLeftColumn =Math.min(this.config.resultLength-newTotalLength,
     //                                 fixedPoint.x*(1-factor)+this.config.initialColumn
     //                                 );
-    //     // let newRightColumn = fixedPoint.x*(1-factor) + this.config.canvasColumns; 
-    //     this.setConfig({initialColumn:Math.round(newLeftColumn), 
+    //     // let newRightColumn = fixedPoint.x*(1-factor) + this.config.canvasColumns;
+    //     this.setConfig({initialColumn:Math.round(newLeftColumn),
     //                     canvasColumns: Math.round(newTotalLength)},false, true);
     // }
 
@@ -145,7 +148,7 @@ class Visualizer extends VisualizerBase {
         this.config.brightness += addition;
         this.redraw();
     }
-   
+
 
     canvasToPoint(p){
         var pt = this.createPoint(p.x,p.y)
@@ -156,7 +159,7 @@ class Visualizer extends VisualizerBase {
         var pt = this.createPoint(p.x,p.y);
         return pt.matrixTransform(this.viewportMatrix.multiply(this.transformationMatrix));
     }
-   
+
     validatePoints(p){
         // abstract method
     }
@@ -185,9 +188,9 @@ class Visualizer extends VisualizerBase {
 
     getMouseEventPosition(event) { //Posicion relativa al viewPort (rango de -1 a 1 en ambas direcciones)
         let x = event.offsetX || (event.pageX - this.canvas.offsetLeft);
-        let y = event.offsetY || (event.pageY - this.canvas.offsetTop);        
+        let y = event.offsetY || (event.pageY - this.canvas.offsetTop);
         x = 2*x/this.canvas.width-1;
-        y = -2*y/this.canvas.height+1; 
+        y = -2*y/this.canvas.height+1;
         let point = this.createPoint(x,y);
         return point;
     }
@@ -195,14 +198,14 @@ class Visualizer extends VisualizerBase {
     // moveWithMouse(event){
     //     var actualPoint = this.getMouseEventPosition(event);
     //     var xActual = actualPoint.x;
-    //     var yActual = actualPoint.y; 
+    //     var yActual = actualPoint.y;
     //     let xInic = this.initialMousePosition.x;
     //     let yInic = this.initialMousePosition.y;
-          
-    //     let xInc = xActual-xInic; 
+
+    //     let xInc = xActual-xInic;
     //     let yInc = yActual-yInic;
     //     this.translation(this.createPoint(-xInc,yInc));
-    //     this.initialMousePosition = actualPoint;   
+    //     this.initialMousePosition = actualPoint;
     // }
 
     ratonPulsado(event){ //Obtiene la posicion inicial para los siguientes eventos.
@@ -226,11 +229,11 @@ class Visualizer extends VisualizerBase {
         }
     }
 
-   
 
 
 
-  
+
+
 
     ratonMovido(event) {
         console.log(this.dragged);
@@ -240,24 +243,24 @@ class Visualizer extends VisualizerBase {
                 this.onMouseMoveWithoutZoom(event);
             }
             else{}//las instrucciones para cuando esta en modo zoom, no debe ir nada.
-        }    
-        else{}//No hará nada si no se ha clickeado el mouse     
+        }
+        else{}//No hará nada si no se ha clickeado el mouse
     }
 
-            
-    ratonSoltado(event) {    
+
+    ratonSoltado(event) {
         if (this.dragged===true){
             this.dragged=false;
 
-            if (this.zoomSwitchPosition==="on"){ 
+            if (this.zoomSwitchPosition==="on"){
                 let secondZoomPoint = this.getMouseEventPosition(event);
                 console.log(this.initialMousePosition, secondZoomPoint);
                 //Las instrucciones por si está en zoom mode.
                 this.moveForZoom(this.initialMousePosition,secondZoomPoint);
-                        
+
             }
             else{
-                //Aquí no debe ir nada. 
+                //Aquí no debe ir nada.
             }
         }
         else{
@@ -274,7 +277,7 @@ class Visualizer extends VisualizerBase {
     //     // console.log('la direccion de scroll es negativa', dir<0);
     //         let factor = (dir > 0) ? 55/57 : 57/55;
     //         console.log('factor', factor);
-    //         if (factor<0 && 
+    //         if (factor<0 &&
     //             (this.canvas.initialColumn==0 ||
     //              this.config.resultLength - this.config.initialTime> this.config.canvasColumns)){
 
@@ -284,6 +287,6 @@ class Visualizer extends VisualizerBase {
     //         }
     //     }
     // }
-} 
+}
 
 export default Visualizer;
