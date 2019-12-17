@@ -45,10 +45,10 @@ export default class Toolbox extends React.Component{
                     onClick={()=>this.props.increaseBrightness()} >
                     {"Brightness: +"}
                 </button>
-                <button style={buttonstyle} onClick={()=>this.props.moveRight()} > {"Move Rigth"}</button>
+                {/*<button style={buttonstyle} onClick={()=>this.props.moveRight()} > {"Move Rigth"}</button>
                 <button style={buttonstyle} onClick={()=>this.props.moveLeft()} >{"Move Left"}</button>
                 <button style={buttonstyle} onClick={()=>this.props.zoomIn()} >{"Zoom In"}</button>
-                <button style={buttonstyle} onClick={()=>this.props.zoomOut()} >{"Zoom Out"}</button>
+                <button style={buttonstyle} onClick={()=>this.props.zoomOut()} >{"Zoom Out"}</button>*/}
 
 
                 <select style = {buttonstyle} onChange={this.handleWindowTypeChange} > 
@@ -58,10 +58,12 @@ export default class Toolbox extends React.Component{
                     </optgroup>
                 </select>  
 
-                <select style = {buttonstyle} onChange={this.handleWindowSizeChange} > 
+                <select style = {buttonstyle} onChange={(e)=>this.props.windowSize(parseInt(e.target.value))} > 
                     <optgroup label = "Window Size">
+                    <option value="256" >256</option>
                     <option value="512" >512</option>
                     <option value="1024">1024</option>
+                    <option value="2048">2048</option>
                     </optgroup>
                 </select> 
 
