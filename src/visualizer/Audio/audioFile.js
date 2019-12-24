@@ -2,7 +2,7 @@ import headerReader from './headerReader';
 
 
 const MAX_FILE_SIZE = 10000000;
-const MINIMUM_DATA_SIZE = 10240;
+const MINIMUM_DATA_SIZE = 10240*30;
 
 
 export default class AudioFile {
@@ -18,6 +18,7 @@ export default class AudioFile {
   }
 
   startLoading() {
+
     fetch(this.url)
       .then((response) => {
         var stream = response.body.getReader();

@@ -25,11 +25,12 @@ class FileLoader { //Para ir cargando poquito a poco.
 
 }
 
-class audioWork {
+class DFThandler {
     constructor(){
         this.file = null;
         this.preload = false;
-        this.completeResultArray = []; //Result after aplying FFT
+        this.loadedResultArray;
+        this.sketchingResultArray = []; //Result after aplying FFT
         this.resultLength = 0;
         this.windowSize = null;
         this.windowType = tf.hannWindow(this.windowSize);
@@ -39,6 +40,7 @@ class audioWork {
     };
 
     FFTData(preloaded, fileArray){ //FFT computations with tensorflow
+        console.log('windowType', this.windowType); 
         let tensorBuffer = tf.tensor1d(new Float32Array(fileArray)); //Tensor con la informacion del archivo
         let frames = tf.signal.frame(tensorBuffer, this.windowSize, this.noIntersectionSize);
         let windowed_frames = this.windowType.mul(frames);
@@ -46,11 +48,11 @@ class audioWork {
         let tensordb = tf.square(tf.log(tensorBufferSplitting));
 
         if (!preloaded){
-            this.completeResultArray = this.completeResultArray.concat(tensordb.arraySync());
+            this.sketchingResultArray = this.sketchingResultArray.concat(tensordb.arraySync());
         }
 
         else {
-            this.completeResultArray = this.completeResultArray.concat(tensordb.array());
+            this.sketchingResultArray = this.sketchingResultArray.concat(tensordb.array());
         }
     }
 
@@ -60,6 +62,7 @@ class audioWork {
         // en loadColors para no tratar de dibujar mas de lo que tamaño del archivo permite.
         let newChunk = file.slice(loader.indiceDeCarga*1200000,(loader.indiceDeCarga+1)*1200000);
         this.FFTData(false, newChunk);
+        // this.FFTData(false,file);
 
         if (!(loader.indiceDeCarga===loader.indiceFinal)){
             if (loader.indiceDeCarga===0){
@@ -70,8 +73,8 @@ class audioWork {
             setTimeout(()=>this.loadSmoothlyWhileDrawing(file,loader,fftDataProcessor),500);
         }
 
-        else{
-            fftDataProcessor(this.completeResultArray); // funcion para dibujar la cual solamente se activa cuando cambió newPictureSetup
+        else{console.log('this.sketchingArray', this.sketchingResultArray);
+            fftDataProcessor(this.sketchingResultArray); // funcion para dibujar la cual solamente se activa cuando cambió newPictureSetup
             var endTime = Date.now();
             console.log('Cuentas terminadas en', (endTime-loader.startTime)/1000, 'segundos');
         }
@@ -95,10 +98,10 @@ class audioWork {
                 // this.loadSmoothlyWhileDrawing(Int16bitArray, fileLoader, fftDataProcessor);
                 // // console.log(Int16bitArray);
             })
-    return this.completeResultArray;
+    return this.sketchingResultArray;
     }
 
-    resetAudioLoadSetup(){
+    modifyAudioLoadSetup(){
         this.windowSize = newPictureSetup.windowSize;
         this.windowType = tf.hannWindow(this.windowSize);
         this.windowIntersectionPercentage = newPictureSetup.intercectionPercentage;
@@ -111,21 +114,20 @@ class audioWork {
         let audioFile = new AudioFile(info);
 
         let checkIfReady = () => {
-          if (audioFile.isReady()) {
-            let result = audioFile.read().data;
-            let loader = new FileLoader(result);
-            console.log(audioFile.loadingProgress);
-            resolve({result: result, loader: loader});
+          if (audioFile.isReady()) { // check if data obtained is bigger than MINIMUN_DATA_SIZE
+            this.loadedResultArray = audioFile.read().data;
+            let loader = new FileLoader(this.loadedResultArray);
+            resolve({result: this.loadedResultArray, loader: loader});
           } else {
             setTimeout(checkIfReady, 1)
           }
         }
 
-        setTimeout(checkIfReady, 1);
+        setTimeout(checkIfReady, 1); //We wait until mediaInfo is ready
       })
     }
 }
 
 
-const audiowork = new audioWork();
+const audiowork = new DFThandler();
 export default audiowork;
