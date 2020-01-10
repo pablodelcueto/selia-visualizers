@@ -1,9 +1,10 @@
 const STFT_BUFFER_MAX_SIZE = 10000000; //Tamaño máximo del buffer para los valores del STFT
 const COLUMNS_PER_STFT_CALCULATION = 10; // Número de columnas a calcular en cada computo del STFT.
-
+const REQUEST_DELAY = 1;
 
 class STFTHandler {
   constructor(audioHandler, config) {
+    this.audioHandler = audioHandler;
     // audioHandler es una instancia de la clase Audio y se encarga de cargar el archivo
     // de audio. Para acceder a sus datos hay que usar el método audioHandler.read.
     // Para saber si está listo basta llamar audioHandler.isReady
@@ -31,6 +32,11 @@ class STFTHandler {
     // También, al iniciar, el STFTHandler debería de esperar a que audioHandler esté listo y una vez
     // que esto ocurra empezar a pedir información del audioHandler, procesar está
     // información (STFT) y guardarla en su buffer.
+    //--------------------------------------------
+    this.waitForAudioHandler()
+      .then(()=>this.)
+
+    //--------------------------------------------
   }
 
   getConfig() {
@@ -69,6 +75,15 @@ class STFTHandler {
   waitForAudioHandler() {
     // Este método debe de regresar una promesa que se resuelve cuando el audioHandler
     // está listo para la lectura.
+    return new Promise ((resolve,reject)=>{
+      let checkIfReady(){
+        if (this.audioHandler.isReady()){
+          resolve();
+        }
+        else {checkIfReady()}
+      }
+      checkIfReady();
+    })
   }
 
   fillBuffer() {
@@ -89,6 +104,15 @@ class STFTHandler {
   getAudioData({startIndex=null, startTime=null, durationColumns=COLUMNS_PER_STFT_CALCULATION} = {}) {
     // Este método pide información a el audioHandler.
     // Debe de regresar una promesa que se resuelve en la información WAV solicitada.
+    let checkArray(array){
+      return ((array.end-array.start)>this.config.hop*durationColumns+this.config.windowSize)
+    }
+    let array = this.audioHandler.read({startIndex=startIndex,startTime=startTime, durationIndex = durationColumns})
+    return new Promise ((resolve,reject)=>{
+      if (checkArry(array)){
+        // resolve(array.)
+      }
+    })
   }
 
   setSTFTtoBuffer(startColumn, STFTarray) {
