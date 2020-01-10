@@ -65,6 +65,10 @@ export default class AudioFile {
     return this.bufferIndexToWavIndex(this.lastIndex);
   }
 
+  canRead(index) {
+    return index < this.getLastWavIndex();
+  }
+
   read({startIndex=0, startTime=null, endIndex=-1, endTime=null, durationIndex=null, durationTime=null, channel=0} = {}) {
     let lastIndex = this.getLastWavIndex();
 
