@@ -13,6 +13,7 @@ export default class AudioFile {
     this.loadingProgress = 0;
     this.rawDataArray = new Uint8Array(MAX_FILE_SIZE);
     this.mediaInfo;
+    this.done = False;
 
     this.startLoading();
   }
@@ -23,6 +24,10 @@ export default class AudioFile {
         var stream = response.body.getReader();
         this.readStream(stream);
     })
+  }
+
+  isDone() {
+    return this.done;
   }
 
   readHeader() {
@@ -50,14 +55,18 @@ export default class AudioFile {
     return indexNoChannel / this.mediaInfo.sampleRate;
   }
 
-  getLastIndex() {
+  bufferIndexToWavIndex(index) {
     return Math.floor(
-      8 * (this.lastIndex - this.mediaInfo.dataStart) /
-      (this.mediaInfo.channels * this.mediaInfo.sampleSize))
+      8 * (index - this.mediaInfo.dataStart) /
+      (this.mediaInfo.sampleSize * this.mediaInfo.channels));
+  }
+
+  getLastWavIndex() {
+    return this.bufferIndexToWavIndex(this.lastIndex);
   }
 
   read({startIndex=0, startTime=null, endIndex=-1, endTime=null, durationIndex=null, durationTime=null, channel=0} = {}) {
-    let lastIndex = this.getLastIndex();
+    let lastIndex = this.getLastWavIndex();
 
     if (startTime !== null) {
       startIndex = this.getIndex(startTime);
@@ -120,11 +129,7 @@ export default class AudioFile {
 
   isReady() {
     if (!(this.mediaInfo)) return false;
-
-    let currentDataSize = (
-      (this.lastIndex - this.mediaInfo.dataStart) /
-      (this.mediaInfo.sampleSize / 8))
-    return currentDataSize > MINIMUM_DATA_SIZE * this.mediaInfo.channels;
+    return this.getLastWavIndex() > MINIMUM_DATA_SIZE;
   }
 
   async readStream(stream) {
@@ -132,6 +137,7 @@ export default class AudioFile {
       let {done, value} = await stream.read();
 
       if (done) {
+        this.done = True;
         break;
       }
 
