@@ -38,8 +38,8 @@ export function renderSetup(setup,points, colors, indices){
     gl.useProgram(shaders.program);
     // let positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shaders.positionBuffer);
-    gl.vertexAttribPointer(shaders.positionAttribute, 2, gl.FLOAT, false, 0,0) 
     gl.enableVertexAttribArray(shaders.positionAttribute);
+    gl.vertexAttribPointer(shaders.positionAttribute, 2, gl.FLOAT, false, 0,0) 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(points), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER,null);
 
@@ -49,13 +49,13 @@ export function renderSetup(setup,points, colors, indices){
 
 
     gl.bindBuffer(gl.ARRAY_BUFFER, shaders.colorBuffer);
-    gl.vertexAttribPointer(shaders.colorAttribute, 1, gl.FLOAT, false, 0,0);
     gl.enableVertexAttribArray(shaders.colorAttribute);
+    gl.vertexAttribPointer(shaders.colorAttribute, 1, gl.FLOAT, false, 0,0);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
             
-    gl.enableVertexAttribArray(shaders.indexBuffer);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shaders.indexBuffer);
+    gl.enableVertexAttribArray(shaders.indexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 
 }

@@ -1,8 +1,8 @@
 import headerReader from './headerReader';
 
 
-const MAX_FILE_SIZE = 10000000;
-const MINIMUM_DATA_SIZE = 10240;
+const MAX_FILE_SIZE = 50000000; // 50 MB
+const MINIMUM_DATA_SIZE = 10240; //10.24 KB
 
 
 export default class AudioFile {
@@ -50,8 +50,14 @@ export default class AudioFile {
     return indexNoChannel / this.mediaInfo.sampleRate;
   }
 
+  getLastIndex() {
+    return Math.floor(
+      8 * (this.lastIndex - this.mediaInfo.dataStart) /
+      (this.mediaInfo.channels * this.mediaInfo.sampleSize))
+  }
+
   read({startIndex=0, startTime=null, endIndex=-1, endTime=null, durationIndex=null, durationTime=null, channel=0} = {}) {
-    let lastIndex = Math.floor((this.lastIndex - this.mediaInfo.dataStart) / this.mediaInfo.channels);
+    let lastIndex = this.getLastIndex();
 
     if (startTime !== null) {
       startIndex = this.getIndex(startTime);

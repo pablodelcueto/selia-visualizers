@@ -107,6 +107,7 @@ class audioWork {
     }
 
     loadFile2(info) {
+      console.log('backend', tf.getBackend());
       return new Promise((resolve, reject) => {
         let audioFile = new AudioFile(info);
 

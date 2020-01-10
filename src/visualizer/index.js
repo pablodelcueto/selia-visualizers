@@ -5,7 +5,7 @@ import VisualizerBase from '@selia/visualizer';
 import {canvasSetup} from './Graphics';
 import {loadFFTArray, changesApplication, newPictureSetup, drawCompleteFile} from './Init';
 import Tools from './Tools';
-import AudioFile from './Audio/audioFile';
+
 
 class Visualizer extends VisualizerBase {
     // name = "Spectrum visualizer";
