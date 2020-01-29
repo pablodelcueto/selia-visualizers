@@ -1,0 +1,14 @@
+import {VERTEX_LOADING_SHADER, FRAGMENT_LOADING_SHADER, 
+        VERTEX_SHADER, FRAGMENT_SHADER} from './loadingShaders'
+
+const PROGRAM_1 = 'Loading Program';
+const PROGRAM_2 = 'Using Textures';
+
+const PROGRAMS = {
+    [PROGRAM_1]: [VERTEX_LOADING_SHADER, FRAGMENT_LOADING_SHADER],
+    [PROGRAM_2]: [VERTEX_SHADER, FRAGMENT_SHADER],
+}
+
+export {
+    PROGRAMS, PROGRAM_1, PROGRAM_2,    
+};

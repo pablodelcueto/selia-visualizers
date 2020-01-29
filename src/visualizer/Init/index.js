@@ -1,6 +1,8 @@
 import React from 'react'
 import Audio from '../Audio';
 import {renderSketch, newRenderization,columnsAdaption} from '../Graphics';
+import AudioFile from '../Audio/audioFile';
+import STFTHandler from '../STFTHandler/STFTHandler';
 
 let pointsBuffer = new Float32Array(10000000);
 let MAX_LENGHT = 500000;
@@ -12,6 +14,14 @@ var points = [];
 var indices = [];
 var initialTimeLength = 2800;
 var initialFrequenciesLength = 256;
+var config = {
+      STFT: { 
+        window_size: 1024,
+        hop_length: 256,
+        window_function: 'hann',
+      },
+      startWAVindex: 0,   
+    }
 export var newPictureSetup = {
                     resultLength : 2500,
                     numberOfFrequencies : 256,
@@ -58,30 +68,38 @@ function loadCompleteVertexBuffer(setup, fileFFTArray){
 export function loadFFTArray(info,setup){
     var sketchingArray = [];
     let audioFile = new AudioFile(info);
-    let dftRetriever = new DFThandler(audioFile, setup);
-    dftRetriever.waitForMediaInfo()
-    .then(()=>{
-            // loadBufferWithDFTdata(sketchingArray, 0);
-            // drawLoadedBuffer(setup, sketchingArray);
-        // console.log('Media info', audioFile.mediaInfo, audioFile.isReady(), audioFile.lastIndex)
-        for (var i=0;i<10;i++){
-                let j = i;
-                dftRetriever.loadRawData(j,j+1) //rango en segundos
-                    .then((loadedFile)=> {
-                                        return dftRetriever.DFTcomputeArray(loadedFile)
-                                        }) 
-                    .then((arrayResult) => {
-                                        sketchingArray = sketchingArray.concat(arrayResult);
-                                        drawLoadedBuffer(setup,sketchingArray);
-                                        })
-                    .catch((err)=> console.error(err));
-        }
-    // Audio.modifyAudioLoadSetup();
-    // Audio.loadFile2(info)
-    //     .then(({result,loader}) => {
-    //         Audio.loadSmoothlyWhileDrawing(result, loader, array => drawCompleteFile(setup,array))
-    //     })
-    })
+    let STFTRetriever = new STFTHandler(audioFile, config);
+    setTimeout(
+        ()=>{
+            console.log('primera lectura', STFTRetriever.read({startColumn:0}));
+            STFTRetriever.shiftSTFTBuffer(1);
+            setTimeout(()=>console.log('shifted', STFTRetriever.STFTBuffer.slice(0,2)),4000)
+        },
+        3000);
+        
+    // dftRetriever.waitForMediaInfo()
+    // .then(()=>{
+    //         // loadBufferWithDFTdata(sketchingArray, 0);
+    //         // drawLoadedBuffer(setup, sketchingArray);
+    //     // console.log('Media info', audioFile.mediaInfo, audioFile.isReady(), audioFile.lastIndex)
+    //     for (var i=0;i<10;i++){
+    //             let j = i;
+    //             dftRetriever.loadRawData(j,j+1) //rango en segundos
+    //                 .then((loadedFile)=> {
+    //                                     return dftRetriever.DFTcomputeArray(loadedFile)
+    //                                     }) 
+    //                 .then((arrayResult) => {
+    //                                     sketchingArray = sketchingArray.concat(arrayResult);
+    //                                     drawLoadedBuffer(setup,sketchingArray);
+    //                                     })
+    //                 .catch((err)=> console.error(err));
+    //     }
+    // // Audio.modifyAudioLoadSetup();
+    // // Audio.loadFile2(info)
+    // //     .then(({result,loader}) => {
+    // //         Audio.loadSmoothlyWhileDrawing(result, loader, array => drawCompleteFile(setup,array))
+    // //     })
+    // })
 }
 
 export function drawLoadedBuffer(setup, arrayFile){

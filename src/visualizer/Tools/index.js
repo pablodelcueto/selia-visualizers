@@ -45,11 +45,6 @@ export default class Toolbox extends React.Component{
                     onClick={()=>this.props.increaseBrightness()} >
                     {"Brightness: +"}
                 </button>
-                <button style={buttonstyle} onClick={()=>this.props.moveRight()} > {"Move Rigth"}</button>
-                <button style={buttonstyle} onClick={()=>this.props.moveLeft()} >{"Move Left"}</button>
-                <button style={buttonstyle} onClick={()=>this.props.zoomIn()} >{"Zoom In"}</button>
-                <button style={buttonstyle} onClick={()=>this.props.zoomOut()} >{"Zoom Out"}</button>
-
 
                 <select style = {buttonstyle} onChange={this.handleWindowTypeChange} > 
                     <optgroup label = "Window Type">

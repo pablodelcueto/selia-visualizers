@@ -13,7 +13,7 @@ export default class AudioFile {
     this.loadingProgress = 0;
     this.rawDataArray = new Uint8Array(MAX_FILE_SIZE);
     this.mediaInfo;
-    this.done = False;
+    this.done = false;
 
     this.startLoading();
   }
@@ -67,6 +67,10 @@ export default class AudioFile {
 
   canRead(index) {
     return index < this.getLastWavIndex();
+  }
+
+  isIndexInFile(index){
+    return index<this.mediaInfo.totalSize;
   }
 
   read({startIndex=0, startTime=null, endIndex=-1, endTime=null, durationIndex=null, durationTime=null, channel=0} = {}) {
@@ -141,7 +145,7 @@ export default class AudioFile {
       let {done, value} = await stream.read();
 
       if (done) {
-        this.done = True;
+        this.done = true;
         break;
       }
 
