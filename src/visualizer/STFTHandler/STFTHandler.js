@@ -1,7 +1,7 @@
   import * as tf from '@tensorflow/tfjs';
 
-const STFT_BUFFER_MAX_SIZE = 202400*5 //Tamaño máximo del buffer para los valores del STFT 
-const COLUMNS_PER_STFT_COMPUTATION =500; // Número de columnas a calcular en cada computo del STFT.
+const STFT_BUFFER_MAX_SIZE = 1024*25000 //Tamaño máximo del buffer para los valores del STFT 
+const COLUMNS_PER_STFT_COMPUTATION = 20; // Número de columnas a calcular en cada computo del STFT.
 const CHECK_HEADER_DELAY = 1;
 const CHECK_READIBILITY_DELAY = 1;
 const INIT_CONFIG = {
@@ -11,6 +11,7 @@ const INIT_CONFIG = {
         window_function: 'hann',
       },
       startWAVindex: 256*0,   
+      startGlobalColumn: 0,
     }
 
 
@@ -27,13 +28,13 @@ class STFTHandler {
   init(){
     this.bufferColumnHeight = this.config.STFT.window_size/2+1;
     this.bufferColumns = Math.floor(STFT_BUFFER_MAX_SIZE / this.bufferColumnHeight); 
-    this.initialGlobalColumnInBuffer = this.bufferColumnToGlobalColumn(0);
+    this.initialGlobalColumn = this.bufferColumnToGlobalColumn(0);
     this.finalGlobalColumnInBuffer = this.bufferColumnToGlobalColumn(this.bufferColumns);
     this.tensorBuffer = tf.tensor1d(new Float32Array((COLUMNS_PER_STFT_COMPUTATION-1)*this.config.STFT.window_size));
-    this.STFTBuffer = new Float32Array(this.bufferColumns*this.bufferColumnHeight);
+    this.STFTBuffer = new Float32Array(this.bufferColumns*this.bufferColumnHeight).fill(1);
     this.waitForAudioHandler()
       .then(()=>{ 
-        this.fillBuffer(0,this.config.startWAVindex);
+        this.fillBuffer(0,this.config.startGlobalColumn);
       })
   }
 
@@ -139,12 +140,12 @@ class STFTHandler {
     }
 
 
-    let start_Column = Math.max(0, startColumn);
-    let end_Column = Math.min(this.lastComputedBufferColumn, endColumn);
+    let start_Column = Math.floor(Math.max(0, startColumn));
+    let end_Column = Math.floor(Math.max(Math.min(this.lastComputedBufferColumn, endColumn),start_Column));
 
-    let array = this.STFTBuffer.slice(this.columnToSTFTBufferIndex(start_Column), this.columnToSTFTBufferIndex(end_Column));
+    let array = this.STFTBuffer.slice(this.bufferColumnToBufferIndex(start_Column), this.bufferColumnToBufferIndex(end_Column));
     if(this.shouldShift(startColumn,endColumn)){
-      this.shiftSTFTBuffer(startColumn) //Cambiar al WAVindex
+      this.shiftSTFTBuffer(startColumn) 
     }
 
     return {
@@ -158,44 +159,42 @@ class STFTHandler {
   
   WAVindexToGlobalColumn(index){ //computes the first complete column in which index is used for STFT.
     let intersectionSize = this.config.STFT.window_size-this.config.STFT.hop_length;
-    return max(0,Math.floor((index-intersectionSize)/this.config.STFT.hop_length)); 
+    return Math.max(0,Math.floor((index-intersectionSize)/this.config.STFT.hop_length)); 
   }
 
   globalColumnToWAVindex(column){ //the base index on the column
     return column*this.config.STFT.hop_length;
   }
 
-  WAVindexToBufferColumn(index){ //first column wich used the index in computations
-    let column = WAVindexToGlobalColumn(index)-this.WAVindexToGlobalColumn(this.config.startWAVindex);
+  WAVindexToBufferColumn(index){ //first buffer column wich used the index for it's computations
+    let column = WAVindexToGlobalColumn(index)-this.config.startGlobalColumn;
     return column;
   }
 
-  bufferColumnToWAVindex(column){ //depends on the startWAVIndex. 
-    //Gives the index where the column begins.
-    //this.config.startWAVindex should be a multiple of this.config.hop_length.
-    return this.config.startWAVindex + (column*this.config.STFT.hop_length)
+  bufferColumnToWAVindex(column){ 
+    return (column+this.config.startGlobalColumn)*this.config.STFT.hop_length
   }
 
   bufferColumnToGlobalColumn(column){
     let wavIndex = this.bufferColumnToWAVindex(column);
-    return this.initialGlobalColumnInBuffer + column
+    // return this.initialGlobalColumn + column
     return this.WAVindexToGlobalColumn(wavIndex);
   }
 
   isGlobalColumnInBuffer(column){     
-    if (this.initialGlobalColumnInBuffer<column && column< this.finalGlobalColumnInBuffer){
+    if (this.initialGlobalColumn<column && column< this.finalGlobalColumnInBuffer){
       return true;
     }
     else {return false}
   }
 
-  columnToSTFTBufferIndex(column){
+  bufferColumnToBufferIndex(column){ // returns the index where column begins inside buffer
     return column*this.bufferColumnHeight;
   }
 
   globalColumnToBufferColumn(column){
     if (this.isGlobalColumnInBuffer(column)){
-      return column - this.initialGlobalColumnInBuffer
+      return column - this.initialGlobalColumn
     }
     else {
       return null;
@@ -220,7 +219,7 @@ class STFTHandler {
       console.log('subArrayReused', subArrayReused);
       this.setSTFTtoBuffer(0,subArrayReused);
       this.lastComputedBufferColumn = this.lastComputedBufferColumn-newInitialColumnInBufferColumn;
-      this.initialGlobalColumnInBuffer = newInitialColumn;
+      this.initialGlobalColumn = newInitialColumn;
       this.finalGlobalColumnInBuffer = newFinalColumn;
       this.fillBuffer(this.lastComputedBufferColumn+1, this.bufferColumnToWAVindex(this.lastComputedBufferColumn+1))
       // console.log('STFTBuffer', this.STFTBuffer);
@@ -245,7 +244,7 @@ class STFTHandler {
     // el buffer.
     var posibleNewLastColumn = this.lastComputedBufferColumn + COLUMNS_PER_STFT_COMPUTATION;
     var posibleNewLastWAVindex = this.bufferColumnToWAVindex(posibleNewLastColumn+1)-1 ; 
-    if ( posibleNewLastColumn > this.bufferColumns){
+    if (posibleNewLastColumn > this.bufferColumns){
       return true //Se cumple cuando se acaba el espacio del buffer
     }
     else if(!this.audioHandler.isIndexInFile(posibleNewLastWAVindex)) {
@@ -256,34 +255,35 @@ class STFTHandler {
 
   resetBuffer() {
     // Este metodo borra todo el buffer y reinicia el cálculo del STFT con las nuevas configuraciones.
-    this.SFTF = new Float32Array(this.bufferColumns*this.bufferColumnHeight);
-    let initialWAVindex = this.config.STFT.startWAVindex;
-    this.fillBuffer(0,initialWAVindex);
+    this.fillBuffer(0,this.config.initialGlobalColumn);
   }
 
-  fillBuffer(initialBufferColumn, initialWAVindex) {
+  fillBuffer(initialBufferColumn, initialGlobalColumn) {
     // Este método debe de comenzar el proceso de llenado del buffer con información del
     // STFT.
-    this.fillByChunks(initialBufferColumn, initialWAVindex) // start when the lastComputedBufferColumn = 0;
+    this.fillByChunks(initialBufferColumn, initialGlobalColumn) // start when the lastComputedBufferColumn = 0;
   }
 
-  fillByChunks(initialBufferColumn,initialWAVindex){ 
+  fillByChunks(initialBufferColumn,initialGlobalColumn){ 
   // It sets the data that should belong in the next COLUMNS_PER_STFT_COMPUTATION's columns after initialColumn 
     if (this.checkSpace(initialBufferColumn)){
-      this.getAudioData({startWAVIndex : initialWAVindex})
+      this.getAudioData({startWAVIndex : this.globalColumnToWAVindex(initialGlobalColumn)})
         .then((arrayResult) => {
           return this.computeSTFT(arrayResult);      
         })
         .then((STFTresult)  =>this.setSTFTtoBuffer(initialBufferColumn, STFTresult)) 
         .then(()            => {
+            this.lastComputedBufferColumn=this.lastComputedBufferColumn+ COLUMNS_PER_STFT_COMPUTATION; 
             initialBufferColumn = initialBufferColumn + COLUMNS_PER_STFT_COMPUTATION; 
-            initialWAVindex = this.bufferColumnToWAVindex(initialBufferColumn);
-            this.lastComputedBufferColumn=initialBufferColumn-1;
-            this.fillByChunks(initialBufferColumn, initialWAVindex); 
+            initialGlobalColumn = initialGlobalColumn + COLUMNS_PER_STFT_COMPUTATION;  
+            // initialWAVindex = this.bufferColumnToWAVindex(initialBufferColumn);
+            this.fillByChunks(initialBufferColumn, initialGlobalColumn); 
                 
         })
     }
-    else{} //Que hacer en caso de no caber mas calculos en STFTBuffer
+    else{
+    //Que hacer en caso de no caber mas calculos en STFTBuffer  
+    } 
   }
 
   getAudioData({startWAVIndex=null, startTime=null, durationColumns=COLUMNS_PER_STFT_COMPUTATION} = {}) {
@@ -322,14 +322,14 @@ class STFTHandler {
     return this.tensordb.data();
   }
 
-  checkSpace(column){
-    return (COLUMNS_PER_STFT_COMPUTATION + column < this.bufferColumns)
+  checkSpace(initialColumn){ //Checks for a new block of columns beginning at initialColumn
+    return (COLUMNS_PER_STFT_COMPUTATION + initialColumn < this.bufferColumns)
   } 
 
   setSTFTtoBuffer(startColumn, STFTarray) {
     // Este método inserta los valores resultantes del STFT en el STFTBuffer en el lugar
     // indicado.
-    var bufferIndex = this.columnToSTFTBufferIndex(startColumn);
+    var bufferIndex = this.bufferColumnToBufferIndex(startColumn);
     this.STFTBuffer.set(STFTarray, bufferIndex);
   } 
 

@@ -1,7 +1,7 @@
 import headerReader from './headerReader';
 
 
-const MAX_FILE_SIZE = 50000000; // 50 MB
+const MAX_FILE_SIZE = 60000000; // 50 MB
 const MINIMUM_DATA_SIZE = 10240; //10.24 KB
 
 

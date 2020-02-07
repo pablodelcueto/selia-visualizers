@@ -33,8 +33,16 @@ class Visualizer extends VisualizerBase {
         this.dragged = false;
         
         this.zoomSwitchPosition = "off";
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix();
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix().translate(1, 0).scaleNonUniform(0.2, 1);
         this.arrayTransformationMatrix = null;
+
+        setTimeout(() => this.startDrawing(), 5);
+    }
+
+    startDrawing() {
+        this.draw();
+
+        setTimeout(() => this.startDrawing(), 100);
     }
 
     resetViewport() {
@@ -90,12 +98,6 @@ class Visualizer extends VisualizerBase {
         return matrixArray;
     }
 
-    setViewportMatrix(){
-        return this.svg.createSVGMatrix()
-                   .translate(-1,-1)
-                   .scaleNonUniform(2/newPictureSetup.columnsInCanvas,2/newPictureSetup.linesInCanvas);
-    }
-
     zoomActivator(){
         switch (this.zoomSwitchPosition){
             case "on":
@@ -110,12 +112,7 @@ class Visualizer extends VisualizerBase {
 
 // ---------------------------------------------------------------------
 
-    draw() {
-        // this.resultLength = newPictureSetup.resultLength;
-        // loadFFTArray(this.itemInfo, this.config);
-    }
-
-    redraw () { //data Loaded from file with loadFile2 could be reused.
+    draw() { //data Loaded from file with loadFile2 could be reused.
         this.arrayTransformationMatrix=this.SVGmatrixToArray(this.SVGtransformationMatrix);
         this.artist.draw(this.arrayTransformationMatrix);
     }
@@ -145,17 +142,18 @@ class Visualizer extends VisualizerBase {
 
 //--------------------------------------------------------Movements
     scale(x, y) {
+        console.log('scaling');
         let matrix = this.SVGtransformationMatrix.scaleNonUniform(x, y);
             (matrix.a<1) ? matrix.a = 1 : matrix.a ; 
             (matrix.d<1) ? matrix.d = 1 : matrix.d ; 
 
         this.SVGtransformationMatrix = matrix;
-        this.redraw();
+        this.draw();
     }
 
     translation(p) { // el punto p deba manejar coordenadas de archivo no de canvas 
                      // p.x marca la traslacion temporal y p.y la frecuencial.
-        let matrix = this.SVGtransformationMatrix.translate(p.x,p.y);
+        let matrix = this.SVGtransformationMatrix.translate(p.x,0);
         if (matrix.f<this.config.linesInCanvas-matrix.d*this.config.numberOfFrequencies){
             matrix = this.SVGtransformationMatrix.translate(p.x,0);
         }
@@ -166,7 +164,7 @@ class Visualizer extends VisualizerBase {
         // (matrix.e<this.config.columnsInCanvas-matrix.a*this.config.resultLength) ? 
         //                 matrix.e = this.SVGtransformationMatrix.e : matrix.e ;
         this.SVGtransformationMatrix = matrix;
-        this.redraw();
+        this.draw();
     }
 
 
@@ -185,17 +183,21 @@ class Visualizer extends VisualizerBase {
     }
 
     zoomOnPoint(factor, fixedPoint){
-        let fixedPoint2 = this.canvasToPoint(fixedPoint);
-        let matrix = this.SVGtransformationMatrix.translate(fixedPoint2.x,fixedPoint2.y);
+        console.log('scaling with factor', factor);
+        let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x,fixedPoint.y);
         matrix = matrix.scaleNonUniform(factor, 1);
-        matrix = matrix.translate(-fixedPoint2.x, -fixedPoint2.y)
-        this.SVGtransformationMatrix = matrix;
-        this.redraw();
+        matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y)
+        console.log('scaling on matrix', matrix);
+        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/5)
+         || (factor >1 && this.SVGtransformationMatrix.a < 5)){
+            this.SVGtransformationMatrix = matrix;           
+            this.draw();
+        }
     }
 
     changeBright(addition){
         this.config.brightness += addition;
-        this.redraw();
+        this.draw();
     }
    
 
@@ -224,13 +226,11 @@ class Visualizer extends VisualizerBase {
         x = 2*x/this.canvas.width-1;
         y = -2*y/this.canvas.height+1; 
         let point = this.createPoint(x,y);
-        console.log(point)
         return point;
     }
 
     mouseDown(event){ //Obtiene la posicion inicial para los siguientes eventos.
         this.last = this.getMouseEventPosition(event);
-        console.log(this.canvasToPoint(this.last));
         this.dragStart = this.canvasToPoint(this.last);
         this.dragged = true;
     }
@@ -243,7 +243,7 @@ class Visualizer extends VisualizerBase {
                 pt.x -= this.dragStart.x;
                 pt.y -= this.dragStart.y;
                 this.translation(pt);
-                this.redraw();
+                this.draw();
                 this.dragStart = this.canvasToPoint(this.last);
             }
         }
@@ -272,11 +272,12 @@ class Visualizer extends VisualizerBase {
 
     mouseScroll(event){
         let mousePosition = this.getMouseEventPosition(event);
+        let fixedPoint = this.canvasToPoint(mousePosition)
         let factor = null;
         let dir = event.deltaY; 
         if (!dir == 0){
             (dir <0 ) ? factor = 1.1 : factor = .9;
-            this.zoomOnPoint(factor, mousePosition);
+            this.zoomOnPoint(factor, fixedPoint);
         }
     }
 
@@ -289,7 +290,7 @@ class Visualizer extends VisualizerBase {
         this.config.numberOfFrequencies = this.config.numberOfFrequencies*(1/factor);
         this.config.resultLength = this.config.resultLength*factor;
         this.config.windowSize=size;
-        this.redraw();
+        this.draw();
     }
 } 
 

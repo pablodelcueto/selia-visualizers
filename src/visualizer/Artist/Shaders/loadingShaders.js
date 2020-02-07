@@ -27,10 +27,10 @@
 
   // Color map variables
   float column = 0.240;
-  float max_lim = 0.999;
-  float min_lim = 0.005  ;
-  float epsilon = 40.5;
-  float max_value = 50000.0;
+  float max_lim = 1.0;
+  float min_lim = 0.0;
+  float epsilon = 4.0;
+  float max_value = 100000000.0;
 
   void main() {
      float min_log = log(epsilon);
@@ -39,7 +39,7 @@
 
      vec4 spec_value = texture2D(u_texture, v_texcoord);
      float log_spec_value = (log(spec_value.r + epsilon) - min_log) / log_range;
-     float color_value = (min(max(log_spec_value, min_lim), max_lim) - min_lim) / (max_lim - min_lim);
+     float color_value = 1.0 - (min(max(log_spec_value, min_lim), max_lim) - min_lim) / (max_lim - min_lim);
      // float color_value = (min(max(spec_value.r, min_lim), max_lim) - min_lim) / (max_lim - min_lim);
 
      vec2 color_coords = vec2(color_value, column);

@@ -1,10 +1,12 @@
 import {PROGRAMS, PROGRAM_1, PROGRAM_2} from './Shaders/sourcesDictionary';
+import {RANGE_AMPLITUDE} from './artist';
 
 
 export default class webGLChalan{
     constructor(){
     this.canvas = document.getElementById('visualizerCanvas');
     this.gl = this.canvas.getContext('webgl');
+    this.gl.viewport(0,0,this.gl.canvas.width, this.gl.canvas.height);
     this.program = this.gl.createProgram();
     this.dimensions = {width:null, height: null}
     this.init();    
@@ -35,13 +37,6 @@ export default class webGLChalan{
       gl.linkProgram(this.program);
       gl.useProgram(this.program)
       this.setLocations();
-    }
-
-    loadColorMapImage(){
-       this.colorImage.src = './colormaps.bmp';
-       this.colorImage.onload = () =>{
-         return
-       }  
     }
 
     shadersInit(gl, programType){
@@ -89,44 +84,20 @@ export default class webGLChalan{
     }
 
 //------------------------------------------------------------------------   
-    loadingSketch(){ //all blue
-      this.shadersInit(this.gl,'Loading Program');
-      this.gl.linkProgram(this.program);
-      this.setLocations();
-      let gl = this.gl;
-      gl.useProgram(this.program);
-
-      var positionBuffer = gl.createBuffer();
-      var positions = new Float32Array([
-                      -1,-1,
-                       1,1,
-                       1,-1,
-                      -1,1,
-                      -1,1,
-                       1,-1,
-                      ]);
-
-      gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-      gl.enableVertexAttribArray(positionLocation);
-      gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-      gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-      this.draw(gl);
-    }
 
     setTextures(array){ //Using Santigo script of textures
       let gl = this.gl;
       // // Clear the canvas
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+      // gl.clearColor(0, 0, 0, 0);
+      // gl.clear(gl.COLOR_BUFFER_BIT);
 
       // this.shadersInit(gl,'Using Textures');
       // gl.linkProgram(this.program);
       // gl.useProgram(this.program)
       // this.setLocations();
       
-      let transformationMatrix = new Float32Array([1,0,0,0,1,0,-.7,0,1]);
-      gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
-      this.setupPositionBuffer();
+
+      // this.setupPositionBuffer();
       this.setupTextureCoordinatesBuffer();
       this.setupTextures(array);
 
@@ -153,18 +124,20 @@ export default class webGLChalan{
       gl.vertexAttribPointer(this.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
     }
 
-    setupPositionBuffer() {
+    setupPositionBuffer(initX) {
+      let l = RANGE_AMPLITUDE;
+      console.log('cambindo posiciones')
       let gl = this.gl;
 
       var positionBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       var positions = new Float32Array([
-        -1, -1,
-        1, -1,
-        -1, 1,
-        1, 1,
-        1, -1,
-        -1, 1,
+        -l+initX, -1,
+         l+initX, -1,
+        -l+initX, 1,
+         l+initX, 1,
+         l+initX, -1,
+        -l+initX, 1,
       ]);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(this.positionLocation);
@@ -186,7 +159,7 @@ export default class webGLChalan{
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
     // gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -250,6 +223,11 @@ export default class webGLChalan{
     setTimeout(()=>gl.drawArrays(gl.TRIANGLES, 0, 6),0);
 
   }
+
+  resetTexture(){
+    let gl = this.gl;
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  } 
 
   createRandomArray(n) {
     let array = new Float32Array(n);
