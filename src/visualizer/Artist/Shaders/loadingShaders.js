@@ -26,7 +26,7 @@
   uniform sampler2D u_color;
 
   // Color map variables
-  float column = 0.240;
+  float column = 0.12;
   float max_lim = 1.0;
   float min_lim = 0.0;
   float epsilon = 4.0;

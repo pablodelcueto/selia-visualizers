@@ -1,4 +1,4 @@
-  import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs';
 
 const STFT_BUFFER_MAX_SIZE = 1024*25000 //Tamaño máximo del buffer para los valores del STFT 
 const COLUMNS_PER_STFT_COMPUTATION = 20; // Número de columnas a calcular en cada computo del STFT.
@@ -199,6 +199,10 @@ class STFTHandler {
     else {
       return null;
     }
+  }
+
+  columnsPerSecond(){
+    return this.audioHandler.mediaInfo.sampleRate/this.config.STFT.hop_length
   }
 
   shouldShift(startColumn,endColumn){

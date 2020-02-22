@@ -1,3 +1,6 @@
+import {RANGE_AMPLITUDE} from './Artist/artist' 
+// const RANGE_AMPLITUDE = 10;
+
 import React from 'react';
 import VisualizerBase from '../VisualizerBase';
 import Artist from './Artist/artist'
@@ -33,20 +36,26 @@ class Visualizer extends VisualizerBase {
         this.dragged = false;
         
         this.zoomSwitchPosition = "off";
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix().translate(1, 0).scaleNonUniform(0.2, 1);
-        this.arrayTransformationMatrix = null;
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix();
+        // this.SVGtransformationMatrix = this.svg.createSVGMatrix().translate(-1,0);
+        // this.glMatrix = this.SVGtransformationMatrix.translate(1,0); // must use RANGE_AMPLITUDE in the general case.
+        // this.base = document.getElementById("barraBase");
 
-        setTimeout(() => this.startDrawing(), 5);
+        setTimeout(() => this.startDrawing(), 500);
+    }
+
+    adjustSize(){
+        VisualizerBase.prototype.adjustSize.call(this);
+
+        if ('artist' in this){
+            this.artist.adjustSizes();
+        }
     }
 
     startDrawing() {
         this.draw();
 
-        setTimeout(() => this.startDrawing(), 100);
-    }
-
-    resetViewport() {
-        this.gl.viewport(0,0, this.canvas.width, this.canvas.height);
+        setTimeout(() => this.startDrawing(), 200);
     }
 
     setConfig(){   
@@ -76,18 +85,9 @@ class Visualizer extends VisualizerBase {
                                    decreaseBrightness = {() => this.changeBright(5)}
                                    windowSize = {(size) => this.windowSizeModification(size)} />
     }
- 
-    adjustSize() {
-        VisualizerBase.prototype.adjustSize.call(this);
 
-        if ('gl' in this) {
-            this.resetViewport();
-        }
-    }
 
     SVGmatrixToArray(matrix){
-        // let matrix = this.SVGtransformationMatrix.multiply(this.viewportMatrix);
-        // let matrix = this.viewportMatrix.multiply(this.SVGtransformationMatrix)
         let a= matrix.a;
         let b= matrix.b;
         let c= matrix.c;
@@ -109,12 +109,24 @@ class Visualizer extends VisualizerBase {
         }    
     } 
 
-
 // ---------------------------------------------------------------------
 
     draw() { //data Loaded from file with loadFile2 could be reused.
-        this.arrayTransformationMatrix=this.SVGmatrixToArray(this.SVGtransformationMatrix);
-        this.artist.draw(this.arrayTransformationMatrix);
+        // this.glMatrix = this.SVGtransformationMatrix.translate(-1,0); // must use RANGE_AMPLITUDE in the general case.
+        this.glMatrix = this.SVGtransformationMatrix.translate(0,0);
+        let presicion = this.computeTimePresicion(this.SVGtransformationMatrix.a); // Depends on time coordinate expantion.
+        // let initialPixelWithLine = this.pointToCanvas(this.createPoint(-1,0))
+        let initialCanvasPoint = this.canvasToPoint(this.createPoint(-1,0)); //QUEDO
+        this.artist.initialCanvasTime = this.pointToTime(initialCanvasPoint);
+
+        let initialCanvasTime = parseFloat(this.artist.initialCanvasTime.toFixed(presicion))
+        
+        // console.log('initialTime', initialCanvasTime);
+        let glArray = this.SVGmatrixToArray(this.glMatrix);
+        this.artist.draw(initialCanvasTime, glArray);
+        this.glMatrix[6] = glArray[6] // this is in case the artist makes a shift and adaps transformationMatrix
+
+        this.SVGtransformationMatrix = this.glMatrix;        
     }
 
     
@@ -126,7 +138,7 @@ class Visualizer extends VisualizerBase {
         return center;
     }
 
-    canvasToPoint(p){
+    canvasToPoint(p){ //takes into acount how the canvas has been moved by the transformation.
         var pt = this.createPoint(p.x,p.y)
         return pt.matrixTransform(this.SVGtransformationMatrix.inverse());
     }
@@ -136,40 +148,37 @@ class Visualizer extends VisualizerBase {
         return pt.matrixTransform(this.SVGtransformationMatrix);
     }
    
-    validatePoints(p){
+    pointToTime(point){
+        let tiempo = (point.x)/(RANGE_AMPLITUDE)*this.artist.GLbuffer.secondsInBuffer; //+1 porque init comienza en -1 por el viewport
+        return tiempo
+    }
+
+
+    validatePoints(p){ 
         // abstract method
     }
 
 //--------------------------------------------------------Movements
+    computeTimePresicion(){
+        return 6;
+    }
+
     scale(x, y) {
-        console.log('scaling');
         let matrix = this.SVGtransformationMatrix.scaleNonUniform(x, y);
             (matrix.a<1) ? matrix.a = 1 : matrix.a ; 
             (matrix.d<1) ? matrix.d = 1 : matrix.d ; 
 
         this.SVGtransformationMatrix = matrix;
-        this.draw();
+        this.draw(null);
     }
 
     translation(p) { // el punto p deba manejar coordenadas de archivo no de canvas 
                      // p.x marca la traslacion temporal y p.y la frecuencial.
         let matrix = this.SVGtransformationMatrix.translate(p.x,0);
-        if (matrix.f<this.config.linesInCanvas-matrix.d*this.config.numberOfFrequencies){
-            matrix = this.SVGtransformationMatrix.translate(p.x,0);
-        }
-        // matrix.e = Math.min(0, matrix.e);
         matrix.f = Math.min(0, matrix.f);
-        (matrix.f<this.config.linesInCanvas-matrix.d*this.config.numberOfFrequencies) ? 
-                        matrix.f = this.SVGtransformationMatrix.f : matrix.f ;
-        // (matrix.e<this.config.columnsInCanvas-matrix.a*this.config.resultLength) ? 
-        //                 matrix.e = this.SVGtransformationMatrix.e : matrix.e ;
         this.SVGtransformationMatrix = matrix;
         this.draw();
-    }
-
-
-
-    
+    }   
 
     
 
@@ -183,15 +192,15 @@ class Visualizer extends VisualizerBase {
     }
 
     zoomOnPoint(factor, fixedPoint){
-        console.log('scaling with factor', factor);
+        console.log('fixed point', fixedPoint);
         let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x,fixedPoint.y);
+        console.log('zoom matrix', matrix)
         matrix = matrix.scaleNonUniform(factor, 1);
         matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y)
-        console.log('scaling on matrix', matrix);
-        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/5)
-         || (factor >1 && this.SVGtransformationMatrix.a < 5)){
+        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/4)
+         || (factor >1 && this.SVGtransformationMatrix.a < 4)){
             this.SVGtransformationMatrix = matrix;           
-            this.draw();
+            this.draw();            
         }
     }
 
@@ -218,20 +227,24 @@ class Visualizer extends VisualizerBase {
     }
 
 //------------------------------------------------------Events 
-
+    
 
     getMouseEventPosition(event) { //Posicion relativa al viewPort (rango de -1 a 1 en ambas direcciones)
         let x = event.offsetX || (event.pageX - this.canvas.offsetLeft);
         let y = event.offsetY || (event.pageY - this.canvas.offsetTop);        
-        x = 2*x/this.canvas.width-1;
-        y = -2*y/this.canvas.height+1; 
+        x = 2*x/this.canvas.width-1; 
+        y = -2*y/this.canvas.height+1;
         let point = this.createPoint(x,y);
         return point;
     }
 
     mouseDown(event){ //Obtiene la posicion inicial para los siguientes eventos.
         this.last = this.getMouseEventPosition(event);
+        console.log('canvas point', this.last)
         this.dragStart = this.canvasToPoint(this.last);
+        console.log('column range point', this.dragStart);
+        let tiempo = this.pointToTime(this.dragStart);
+        console.log('tiemp', tiempo);
         this.dragged = true;
     }
 
@@ -272,7 +285,9 @@ class Visualizer extends VisualizerBase {
 
     mouseScroll(event){
         let mousePosition = this.getMouseEventPosition(event);
+
         let fixedPoint = this.canvasToPoint(mousePosition)
+        console.log('fixedPoint', fixedPoint)
         let factor = null;
         let dir = event.deltaY; 
         if (!dir == 0){

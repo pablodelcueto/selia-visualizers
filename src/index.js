@@ -24,6 +24,6 @@ import(/* webpackIgnore: true */'/visualizer.js').then(module => {
     visualizer.renderToolbar(),
     document.getElementById('toolbar'),
     () => {
-      // visualizer.draw();
+      visualizer.adjustSize();
     });
 });
