@@ -5,6 +5,8 @@ import {RANGE_AMPLITUDE} from './artist';
 export default class webGLChalan{
     constructor(){
     this.canvas = document.getElementById('visualizerCanvas');
+
+
     this.gl = this.canvas.getContext('webgl');
     this.gl.viewport(0,0,this.gl.canvas.width, this.gl.canvas.height);
     this.program = this.gl.createProgram();
@@ -12,8 +14,9 @@ export default class webGLChalan{
     this.init();    
     }
 
-
-
+    adjustSize() {
+      this.gl.viewport(0,0,this.gl.canvas.width, this.gl.canvas.height);
+    }
 
     init(){
       this.colorImage = new Image(100,100)
@@ -126,18 +129,24 @@ export default class webGLChalan{
 
     setupPositionBuffer(initX) {
       let l = RANGE_AMPLITUDE;
-      console.log('cambindo posiciones')
       let gl = this.gl;
 
       var positionBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
       var positions = new Float32Array([
-        -l+initX, -1,
-         l+initX, -1,
-        -l+initX, 1,
-         l+initX, 1,
-         l+initX, -1,
-        -l+initX, 1,
+        initX, -1,
+        l+initX, -1,
+        initX, 1,
+        l+initX, 1,
+        l+initX, -1,
+        initX, 1,
+
+        // -l+initX, -1,
+        //  l+initX, -1,
+        // -l+initX, 1,
+        //  l+initX, 1,
+        //  l+initX, -1,
+        // -l+initX, 1,
       ]);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(this.positionLocation);

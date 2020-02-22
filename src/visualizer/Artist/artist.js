@@ -1,9 +1,10 @@
 import webGLchalan from './webGL.js';
+import axisDrawer from './axis.js';
 
-const COLUMNS_PER_STFT_COMPUTATION = 10;
-const BUFFER_LENGTH_IN_COLUMNS = 10000;
+const COLUMNS_PER_STFT_COMPUTATION = 50;
 const CHECK_BUFFER_DELAY = 1;
-const RANGE_AMPLITUDE = 10;
+const BUFFER_LENGTH_IN_COLUMNS = 10000;
+const RANGE_AMPLITUDE = BUFFER_LENGTH_IN_COLUMNS / 1000;   // We want it to be even.
 const INIT_CONFIG = {
     colorMap : 'blueGum',
     amplitudScale : 'logaritmo',
@@ -15,6 +16,8 @@ const INIT_CONFIG = {
 export default class Artist{
     constructor(stftHandler){
         this.stftHandler = stftHandler;
+        this.initialCanvasTime = 0;
+        
     //las conf de dibujo:
     // colorMap, escalade aplitud(normal, cuadrada, log), escala de frecuencia(lineal  o log)
     // limitescolorMap (el filtrado)
@@ -27,16 +30,22 @@ export default class Artist{
             filledColumns: 0, // goes from 0 to buffer length.
             initX : 0, // this is the point used to translate the positionBuffer each time new bufferload is required.
             };
-        this.dataArray = new Float32Array(BUFFER_LENGTH_IN_COLUMNS*this.stftHandler.bufferColumnHeight).fill(1);
-        this.chalan.colorImage.onload = () =>this.init();    
+        this.dataArray = new Float32Array(BUFFER_LENGTH_IN_COLUMNS*this.stftHandler.bufferColumnHeight).fill();
+        this.chalan.colorImage.onload = () =>{this.init()};    
     }
 
     init(){
         this.chalan.setupPositionBuffer(this.GLbuffer.initX)
         this.stftHandler.waitForAudioHandler()
             .then(()=>{
+                this.GLbuffer.secondsInBuffer = BUFFER_LENGTH_IN_COLUMNS/this.stftHandler.columnsPerSecond();
+                this.axisHandler = new axisDrawer(this.GLbuffer.secondsInBuffer);
                 this.setGLdimensions(BUFFER_LENGTH_IN_COLUMNS,this.stftHandler.bufferColumnHeight);
-                setTimeout(()=>this.draw(new Float32Array([1,0,0,0,1,0,0,0,1])),100)})
+            });
+    }
+
+    adjustSizes(){
+        this.chalan.adjustSize();
     }
 
     getConfig(){ 
@@ -44,7 +53,6 @@ export default class Artist{
     }
     
     setGLdimensions(width, height){
-        // this.chalan.dimensions.width = Math.min(width, this.stftHandler.lastComputedBufferColumn);
         this.chalan.dimensions.width = Math.min(width, BUFFER_LENGTH_IN_COLUMNS);
         this.chalan.dimensions.height = Math.min(height, this.stftHandler.bufferColumnHeight);
     }
@@ -58,43 +66,29 @@ export default class Artist{
         //Picks shader file depending on config.
     }
 
-    draw(matrixTransformation){
+    draw(initialTime, matrixTransformation){
         if(this.isShiftNeeded(matrixTransformation) || this.stillSpaceOnGLbuffer(this.GLbuffer)){
             this.realizeShift(matrixTransformation);
             let GLdata = this.getSTFTdata();
                 this.setDataToGLbuffer(GLdata)
                     .then(()=>{                        
-                        this.drawAxis(matrixTransformation);
+                        this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
                         this.drawSpectrogram(matrixTransformation);
                     })
                     .catch(()=>{
                         // console.log('There is no more info in stftBuffer, it must shift.');    
-                        // this.drawAxis(matrixTransformation);
-                        // this.drawSpectrogram(matrixTransformation);
+                        this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
+                        this.drawSpectrogram(matrixTransformation);
                     });
         }
         else{
-            this.drawAxis(matrixTransformation);
+            this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
             this.drawSpectrogram(matrixTransformation);
         }               
     }
 
-    secondDraw(matrixTransformation){
-        if(this.isShiftNeeded(matrixTransformation) || this.stillSpaceOnGLbuffer(this.GLbuffer)){
-            this.realizeShift(matrixTransformation);
-            let GLdata = this.getSTFTdata();
-                this.secondSetDataToGLbuffer(GLdata);                    
-                    this.drawAxis(matrixTransformation);
-                    this.drawSpectrogram(matrixTransformation);
-        }
-        else{
-            this.chalan.setTextures(this.dataArray);
-            this.drawAxis(matrixTransformation);
-            this.drawSpectrogram(matrixTransformation);
-        }
-    }
-
-    drawAxis(matrixTransformation){
+    drawAxis(initialTime, numberOfTicks, zoomFactor, translation){
+        this.axisHandler.adaptAxis(initialTime, numberOfTicks, zoomFactor, translation);
     }
 
     drawSpectrogram(matrixTransformation){ 
@@ -110,66 +104,80 @@ export default class Artist{
         return (buffer.filledColumns + (data.end-data.start) <= BUFFER_LENGTH_IN_COLUMNS)           
     }
 
-    isShiftNeeded(matrix){
+    isShiftNeeded(matrix){ //------------------------------------CAMBIAR
+        let r = RANGE_AMPLITUDE;
         let initX = this.GLbuffer.initX;
-        return (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] + matrix[6] <  1 
-            || matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[6] >  -1)         
+           return (matrix[0]*initX + 2*matrix[0] + matrix[6] >=   initX + r/2 + 1  
+            || matrix[0]*initX + r*matrix[0] - 2*matrix[0] + matrix[6] <=   initX + r/2 - 1 ) //shift to left || shift a la derecha
+
+        // return (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] + matrix[6] <  2 
+        //     || matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[6] >  -2)         
     }
 
 
-    realizeShift(matrix){
+    realizeShift(matrix){ //------------------------------------CAMBIAR
         let initX = this.GLbuffer.initX;
+        let r = RANGE_AMPLITUDE;
          if (this.isShiftNeeded(matrix)){
-            console.log('shifting matrix',matrix);
-            if (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] + matrix[6] <  1){
+            // console.log('shifting matrix',matrix);
+            // if (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] -matrix[0] + matrix[6] <  1){
+                if (matrix[0]*initX + r*matrix[0] - 2*matrix[0] + matrix[6] <= initX + r/2 -1 ){
                 this.shiftToRight(matrix);
             }
-            else if(matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[6] >  -1){
+            else if(matrix[0]*initX + 2*matrix[0] + matrix[6] >= initX + r/2 +1  && initX >0){
                 this.shiftToLeft(matrix);
-            }
-            console.log('initX', this.GLbuffer.initX)
+            }         
+            // else if(matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[0] + matrix[6] >  -1 && this.GLbuffer.initX>RANGE_AMPLITUDE){
+            //     this.shiftToLeft(matrix);
+            // }
+
             this.chalan.setupPositionBuffer(this.GLbuffer.initX);
             // this.chalan.setupTextureCoordinatesBuffer();
         }            
     }
 
-    shiftToRight(matrix){ //In case canvas is mpving to the right.
-        console.log('shifting rigth with matrix:', matrix);
+    shiftToRight(matrix){ //In case canvas is mpving to the right.  //------------------------------------CAMBIAR
+        // console.log('shifting rigth with matrix:', matrix);
         if (this.GLbuffer.initialGlobalColumn+BUFFER_LENGTH_IN_COLUMNS < this.stftHandler.lastComputedBufferColumn){
             this.resetDataArray();
-            console.log('doing shift');
-            this.readaptMatrix(matrix);
-            console.log('adapted matrix', matrix);
-            this.GLbuffer.initX = (1-matrix[6]-matrix[0])/matrix[0]; 
+            this.readaptMatrixToRigth(matrix);
+            this.GLbuffer.initX = this.GLbuffer.initX + RANGE_AMPLITUDE/2 - 1; 
             this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn + 
-                                        (RANGE_AMPLITUDE-1)*(BUFFER_LENGTH_IN_COLUMNS)/(RANGE_AMPLITUDE*2);                                       
+                                                (RANGE_AMPLITUDE-2)*BUFFER_LENGTH_IN_COLUMNS/RANGE_AMPLITUDE;
+            console.log('initX', this.GLbuffer.initX);
+            console.log('initial Global Column', this.GLbuffer.initialGlobalColumn);
         }
     }
 
-    shiftToLeft(matrix){
-        console.log('shifting left with matrix:', matrix);
+    shiftToLeft(matrix){   //------------------------------------CAMBIAR
         if (this.GLbuffer.initialGlobalColumn > 0){
             this.resetDataArray();
-            this.readaptMatrix(matrix);
-            this.GLbuffer.initX = (-1-matrix[6]+matrix[0])/matrix[0]; 
-            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn -
-                                    (RANGE_AMPLITUDE-1)*(BUFFER_LENGTH_IN_COLUMNS)/(RANGE_AMPLITUDE*2);
-        }    
+            // this.readaptMatrixToLeft(matrix);
+            let numberOfTextureFractions = 4 //entre  - RANGE_AMPLITUDE Y -1
+            this.GLbuffer.initX = this.GLbuffer.initX - RANGE_AMPLITUDE/2 -1;
+            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn - 
+                                                (RANGE_AMPLITUDE-2)*BUFFER_LENGTH_IN_COLUMNS/RANGE_AMPLITUDE;
+            console.log('initX', this.GLbuffer.initX);
+            console.log('initial Global Column', this.GLbuffer.initialGlobalColumn);
+            }    
         
     }
 
+    newinitialGlobalColumn(newInitX, matrix){
 
-    readaptMatrix(matrix){
+    }
+
+
+    readaptMatrixToRigth(matrix){  //------------------------------------CAMBIAR
         let initX = this.GLbuffer.initX;
-        if (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] + matrix[6] <  1){ // Se esta haciendo traslacion negativa
-            matrix[6] = 1 - matrix[0]*(initX+RANGE_AMPLITUDE);
-        }
+        matrix[6] = initX*(1-matrix[0]) + RANGE_AMPLITUDE*(1/2 - matrix[0]) + 2*matrix[0]-1;
+    }
 
-        else if(matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[6] > - 1){
-            matrix[6]= -1 + matrix[0]*(RANGE_AMPLITUDE-initX);
-        }
-        this.drawAxis(matrix);
-        this.drawSpectrogram(matrix);
+    readaptMatrixToLeft(matrix){
+        let initX = this.GLbuffer.initX;
+        matrix[6] = initX*(1-matrix[0]) + RANGE_AMPLITUDE/2 - 2*matrix[0] + 1;
+        // this.drawAxis(matrix);
+        // this.drawSpectrogram(matrix);
     }
 
     resetDataArray(){
@@ -194,7 +202,6 @@ export default class Artist{
     setDataToGLbuffer(data){ 
         return new Promise((resolve,reject)=>{
             if (this.spaceOnGLbufferForData(this.GLbuffer, data) && this.isDataNew(data)){     
-                console.log('data', data);
                 this.arraySet(data.data, this.GLbuffer.filledColumns); // Puede ir cambiando para no tener que repetir lecturas en STFT
                 this.GLbuffer.filledColumns = data.end - this.GLbuffer.initialGlobalColumn;
                 this.chalan.setTextures(this.dataArray);
