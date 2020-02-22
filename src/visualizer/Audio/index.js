@@ -4,6 +4,7 @@ import AudioFile from './audioFile';
 
 tf.backend('webGL');
 
+
 class FileLoader { //Para ir cargando poquito a poco.
     constructor(file) {
         this.startTime=Date.now();
