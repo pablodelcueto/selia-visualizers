@@ -1,4 +1,4 @@
-# Selia-visualizer: *Development kit for Selia visualizers*
+# Selia-Spectrogram-visualizer: 
 
 This repository contains the basic code needed to develop a new visualizer for [Selia/Irekua](https://github.com/CONABIO-audio/irekua).
 A visualizer is meant to be a tool to see and explore files of a certain type.
