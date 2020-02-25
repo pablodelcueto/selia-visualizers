@@ -1,345 +1,517 @@
 import * as tf from '@tensorflow/tfjs';
 
-const STFT_BUFFER_MAX_SIZE = 1024*25000 //Tamaño máximo del buffer para los valores del STFT 
-const COLUMNS_PER_STFT_COMPUTATION = 20; // Número de columnas a calcular en cada computo del STFT.
-const CHECK_HEADER_DELAY = 1;
-const CHECK_READIBILITY_DELAY = 1;
+// Tamaño máximo del buffer para los valores del STFT
+const STFT_BUFFER_MAX_SIZE = 1024 * 25000;
+
+// Número de columnas a calcular en cada computo del STFT.
+const COLUMNS_PER_STFT_COMPUTATION = 20;
+
+// Read audio component behaviour
+const CHECK_HEADER_DELAY = 5;
+const CHECK_READABILITY_DELAY = 5;
+const MAX_TRIES_AUDIO_READ = 10000;
+const MAX_TRIES_GET_AUDIO_DATA = 10000;
+
+const SHIFT_COLUMN_HOP = 200;
+const SHIFT_COLUMN_BUFFER = 100;
+
 const INIT_CONFIG = {
-      STFT: { 
+    stft: {
         window_size: 1024,
         hop_length: 256,
         window_function: 'hann',
-      },
-      startWAVindex: 256*0,   
-      startGlobalColumn: 0,
+    },
+    startTime: 0.0,
+};
+
+
+/**
+ * Get windowing function for the short time fourier transform.
+ * @param {string} windowFunction  Type of windowing function: hann, hamming or none
+ * @param {int}    size            Size of window.
+ */
+function getTensorWindowFunction(windowFunction, size) {
+    if (windowFunction === 'hann') {
+        return tf.signal.hannWindow(size);
     }
 
+    if (windowFunction === 'hamming') {
+        return tf.signal.hammingWindow(size);
+    }
+
+    // Otherwise we assume the window function is trivial
+    return tf.ones([size], 'float32');
+}
 
 
+/**
+ * Class that handles all the Short Time Fourier Transform (STFT) computations.
+ *
+ * The class accesses the wav data in an Audio object and sequentially computes the STFT in small
+ * batches. All the resulting computations are stored into a fixed sized buffer for memory control.
+ * The class makes the computed data available through the read method. This will return any
+ * requested data, if available, and advise otherwise. Since the buffer that stores computations
+ * might not be large enough to store the whole spectrogram, when the requested data falls outside
+ * the buffer window, the buffer will drop some data, shift, and start the computation of the
+ * demanded portions.
+ */
 class STFTHandler {
-  constructor(audioHandler) {
-    this.audioHandler = audioHandler;
-    this.lastComputedBufferColumn=-1;
-    this.config = INIT_CONFIG;
-    this.tensorWindowType = this.tensorWindowFunctionTypeMap(this.config.STFT.window_function);
-    this.init();
-  }  
+    /**
+     * Create a STFTHandler object.
+     * @constructor
+     * @param {AudioFile} audioHandler - The AudioFile object that stores the wav data.
+     * @param {Object} [configs] - Optional configuration values for the STFTHandler.
+     * @param {Object} [configs.stft] - Configuration values pertaining the STFT calculation.
+     * @param {number} [configs.stft.window_size] - The size of window for the fourier transform
+     * in the STFT calculation.
+     * @param {number} [configs.stft.hop_length] - The hop length between each window in the STFT
+     * calculation.
+     * @param {string} [configs.stft.hann] - The type of windowing function to use in the fourier
+     * transform. Options are: 'hann', 'hamming', 'linear'.
+     * @param {number} [configs.startTime] - Time from which to start the computation of the STFT.
+     */
+    constructor(audioHandler) {
+        this.audioHandler = audioHandler;
 
-  init(){
-    this.bufferColumnHeight = this.config.STFT.window_size/2+1;
-    this.bufferColumns = Math.floor(STFT_BUFFER_MAX_SIZE / this.bufferColumnHeight); 
-    this.initialGlobalColumn = this.bufferColumnToGlobalColumn(0);
-    this.finalGlobalColumnInBuffer = this.bufferColumnToGlobalColumn(this.bufferColumns);
-    this.tensorBuffer = tf.tensor1d(new Float32Array((COLUMNS_PER_STFT_COMPUTATION-1)*this.config.STFT.window_size));
-    this.STFTBuffer = new Float32Array(this.bufferColumns*this.bufferColumnHeight).fill(1);
-    this.waitForAudioHandler()
-      .then(()=>{ 
-        this.fillBuffer(0,this.config.startGlobalColumn);
-      })
-  }
+        // Copy base configuration
+        this.config = { ...INIT_CONFIG };
 
+        // Setup for stft calculations
+        this.setupSTFT();
 
-    // audioHandler es una instancia de la clase Audio y se encarga de cargar el archivo
-    // de audio. Para acceder a sus datos hay que usar el método audioHandler.read.
-    // Para saber si está listo basta llamar audioHandler.isReady
+        // Wait for Audio Handler to be ready and then start stft calculation and buffer filling.
+        this.waitForAudioHandler()
+            .then(() => {
+                // Setup starting time and indices references
+                this.startColumn = this.getStftColumnFromTime(this.config.startTime);
+                this.columnWidth = this.getStftColumnFromWavIndex(this.audioHandler.mediaInfo.size);
+                this.endColumn = Math.min(this.startColumn + this.bufferColumns, this.columnWidth);
 
-    // configs es un objecto que contiene las configuraciones de generación de espectrograma
-    // y de ubicación temporal (donde empezar a hacer el STFT).
-
-    // por ejemplo:
-    // config = {
-    //   STFT: { 
-    //     window_size: 1024,
-    //     hop_length: 256,
-    //     window_function: 'hann'
-    //   },
-    //   start: 0,   
-    // }
-    // Donde start:0 indica que el computo deberá de iniciar desde el índice 0 del arreglo
-    // WAV.
-
-    // Aquí también tiene que inicializarse el buffer donde se guardará toda la información
-    // del STFT.
-
-    // También, al iniciar, el STFTHandler debería de esperar a que audioHandler esté listo y una vez
-    // que esto ocurra empezar a pedir información del audioHandler, procesar está
-    // información (STFT) y guardarla en su buffer.
-    //--------------------------------------------
-    
-
-    //--------------------------------------------
-  
-
-  tensorWindowFunctionTypeMap(windowFunction){
-    if(windowFunction === 'hann'){
-      return tf.hannWindow(this.config.STFT.window_size);
+                // Start calculation
+                this.computed = {
+                    first: this.startColumn,
+                    last: this.startColumn,
+                };
+                this.startSTFTCalculation();
+            });
     }
-    else if(windowFunction === 'hamming'){
-      return tf.signal.hamming_window(this.config.STFT.window_size);
-    }
-    else if(windowFunction === 'linear'){
-      return tf.ones([this.config.STFT.window_size], 'float32');
-    }
-  }
 
-  waitForAudioHandler() {
-    // Este método debe de regresar una promesa que se resuelve cuando el audioHandler
-    // está listo para la lectura.
-    return new Promise ((resolve,reject)=>{
-      let checkIfHeader = () => {
-        if (this.audioHandler.isReady()){
-          resolve();
+    /** Sets up variables for stft calculation. */
+    setupSTFT() {
+        // Shape of final spectrogram
+        this.bufferColumnHeight = 1 + this.config.stft.window_size / 2;
+        this.bufferColumns = Math.floor(STFT_BUFFER_MAX_SIZE / this.bufferColumnHeight);
+
+        // Short Time Fourier Transform auxiliary variables
+        this.STFTWindowFunction = getTensorWindowFunction(
+            this.config.stft.window_function,
+            this.config.stft.window_size,
+        );
+
+        const bufferSize = (COLUMNS_PER_STFT_COMPUTATION - 1) * this.config.stft.window_size;
+        this.tensorBuffer = tf.tensor1d(new Float32Array(bufferSize));
+        this.STFTBuffer = new Float32Array(this.bufferColumns * this.bufferColumnHeight);
+    }
+
+    /**
+     * Returns a promise that resolves whenever the audio reader is ready for information
+     * to be read from it. This happens after the wav header is correctly parsed.
+     */
+    waitForAudioHandler() {
+        let tries = 0;
+
+        return new Promise((resolve, reject) => {
+            const checkIfReady = () => {
+                // Will reject the promise after many tries.
+                if (tries > MAX_TRIES_AUDIO_READ) {
+                    reject();
+                }
+
+                if (this.audioHandler.isReady()) {
+                    resolve();
+                } else {
+                    tries += 1;
+                    // Will wait for a set time and check again if audio reader is ready
+                    setTimeout(checkIfReady, CHECK_HEADER_DELAY);
+                }
+            };
+
+            checkIfReady();
+        });
+    }
+
+    /** Returns current configuration used by the stft handler. */
+    getConfig() {
+        return this.config;
+    }
+
+    /**
+     * Changes the configuration of the stft calculator and restarts the calculation
+     * @param {Object} config - The new configurations to be set.
+     * @param {Object} [config.stft] - Configurations pertaining the short time fourier transform
+     * @param {number} [config.stft.window_size] - The size of window to be used in stft (use powers
+     * of two.
+     * @param {number} [config.stft.hop_length] - The length of hop between every stft frame.
+     * @param {string} [config.stft.window_function] - The windowing function to use for the stft
+     * calculation.
+     * @param {number} [config.startTime] - The moment in time from which the stft calculator starts
+     * reading the wav data (seconds).
+     */
+    setConfig(config) {
+        // TODO
+        this.resetBuffer();
+    }
+
+    /**
+     * Returns data from the STFT buffer as requested by the user.
+     *
+     * It will not provide the requested data if it hasn't been calculated yet. This function will
+     * return all calculated data within the request and notify any shortcomings. This method is
+     * synchronic and does not contain heavy computations hence fast.
+     *
+     * @param {number} [startColumn] - Column at which to start reading the data from the STFT.
+     * @param {number} [startTime] - Time at which to start reading the data. This will translate
+     * into a stft column and data will be read from there.
+     * @param {number} [endColumn] - Last column to read from the buffer. If the calculated data is
+     * not sufficient will return up to the last computed column.
+     * @param {number} [endTime] - Time at which to stop reading the data. This will be translated
+     * into a stft column and then handled as endColumn.
+     * @param {number} [durationColumns] - Alternative method of specifying when to stop reading
+     * data. Will stop reading data until this many columns have been read. This translates into
+     * declaring endColum = startColumn + durationColumns.
+     * @param {number} [durationTime] - Similar to durationColumns. Will be translated into
+     * durationColumns.
+     */
+    read({
+        startColumn = 0,
+        startTime = null,
+        endColumn = -1,
+        endTime = null,
+        durationColumns = null,
+        durationTime = null,
+    } = {}) {
+        let startingColumn;
+        let endingColumn;
+        let columnDuration;
+
+        // If start time is provided get column from this
+        if (startTime != null) {
+            startingColumn = this.getStftColumnFromTime(startTime);
         }
-        else {setTimeout(checkIfHeader,CHECK_HEADER_DELAY)}
-      }
-      checkIfHeader();
-    })
-  }
 
-  getConfig() {
-    return this.config;
-    // Función que deberá de arrojar todas las configuraciones actuales (parámetros del
-    // STFT y ubicación temporal)
-  }
-
-  setConfig(newConfig) {
-    // Función que permite ajustar las configuraciones. Un cambio en las configuraciones
-    // implica borrar todo el buffer y recalcular el STFT (en caso de que sea un cambio a
-    // las configuraciones del STFT), o bien hacer un shift del buffer y calcular los
-    // pedazos restantes (en caso de que se haga un cambio de la ubicación temporal)
-    
-  }
-
-  read({startColumn=0, startTime=null, endColumn=-1, endTime=null, durationColumns=null, durationTime=null} = {}) {
-    // Esta función debe de regresar el fragmento del buffer de valores del STFT según
-    // fue pedido por el usuario.
-
-    // Este método debe de ser sincrónico!!!!
-
-    // En caso de no tener toda la información pedida, debe de regresar la información que
-    // si tiene, y especificar qué fragmento de la información se está regresando.
-    if(startTime!=null){
-      let startWAVindex = this.audioHandler.getIndex(startTime);
-      startColumn = this.WAVindexToGlobalColumn(startWAVindex); 
-    }
-
-    if(endColumn<0 || durationTime<0){
-      endColumn = this.lastComputedBufferColumn;
-    }
-
-    if(endTime != null){
-      endColumn = this.WAVindexToGlobalColumn(this.audioHandler.getIndex(endTime));
-    }
-
-    if(durationTime != null){
-      durationColumns = this.WAVindexToGlobalColumn(this.audioHandler.getIndex(durationTime));
-    }
-
-    if(durationColumns != null) {
-      endColumn = startColumn + durationColumns;
-    }
-
-
-    let start_Column = Math.floor(Math.max(0, startColumn));
-    let end_Column = Math.floor(Math.max(Math.min(this.lastComputedBufferColumn, endColumn),start_Column));
-
-    let array = this.STFTBuffer.slice(this.bufferColumnToBufferIndex(start_Column), this.bufferColumnToBufferIndex(end_Column));
-    if(this.shouldShift(startColumn,endColumn)){
-      this.shiftSTFTBuffer(startColumn) 
-    }
-
-    return {
-      start : start_Column,
-      end : end_Column,
-      data : array,
-      lastComputedBufferColumn : this.lastComputedBufferColumn,
-    }
-
-  }
-  
-  WAVindexToGlobalColumn(index){ //computes the first complete column in which index is used for STFT.
-    let intersectionSize = this.config.STFT.window_size-this.config.STFT.hop_length;
-    return Math.max(0,Math.floor((index-intersectionSize)/this.config.STFT.hop_length)); 
-  }
-
-  globalColumnToWAVindex(column){ //the base index on the column
-    return column*this.config.STFT.hop_length;
-  }
-
-  WAVindexToBufferColumn(index){ //first buffer column wich used the index for it's computations
-    let column = WAVindexToGlobalColumn(index)-this.config.startGlobalColumn;
-    return column;
-  }
-
-  bufferColumnToWAVindex(column){ 
-    return (column+this.config.startGlobalColumn)*this.config.STFT.hop_length
-  }
-
-  bufferColumnToGlobalColumn(column){
-    let wavIndex = this.bufferColumnToWAVindex(column);
-    // return this.initialGlobalColumn + column
-    return this.WAVindexToGlobalColumn(wavIndex);
-  }
-
-  isGlobalColumnInBuffer(column){     
-    if (this.initialGlobalColumn<column && column< this.finalGlobalColumnInBuffer){
-      return true;
-    }
-    else {return false}
-  }
-
-  bufferColumnToBufferIndex(column){ // returns the index where column begins inside buffer
-    return column*this.bufferColumnHeight;
-  }
-
-  globalColumnToBufferColumn(column){
-    if (this.isGlobalColumnInBuffer(column)){
-      return column - this.initialGlobalColumn
-    }
-    else {
-      return null;
-    }
-  }
-
-  columnsPerSecond(){
-    return this.audioHandler.mediaInfo.sampleRate/this.config.STFT.hop_length
-  }
-
-  shouldShift(startColumn,endColumn){
-    return false;
-  }
-  
-  shiftSTFTBuffer(newInitialColumn) { //Modificar a newStartColumn
-    // Este método debe de modificar el STFTBuffer para que empiece en la columna
-    // solicitada, salvando la mayor cantidad de información previamente calculada.
-    // Sincrónico.
-    let newFinalColumn = newInitialColumn + this.bufferColumns;
-    if (this.isGlobalColumnInBuffer(newInitialColumn) 
-      && newInitialColumn < this.bufferColumnToGlobalColumn(this.lastComputedBufferColumn) ){
-      console.log('is shifting');
-      let newInitialColumnInBufferColumn = this.globalColumnToBufferColumn(newInitialColumn);
-      let subArrayReused = this.read({startColumn:newInitialColumnInBufferColumn,
-                                      endColumn:this.lastComputedBufferColumn}).data;
-      console.log('subArrayReused', subArrayReused);
-      this.setSTFTtoBuffer(0,subArrayReused);
-      this.lastComputedBufferColumn = this.lastComputedBufferColumn-newInitialColumnInBufferColumn;
-      this.initialGlobalColumn = newInitialColumn;
-      this.finalGlobalColumnInBuffer = newFinalColumn;
-      this.fillBuffer(this.lastComputedBufferColumn+1, this.bufferColumnToWAVindex(this.lastComputedBufferColumn+1))
-      // console.log('STFTBuffer', this.STFTBuffer);
-    }
-
-    // else if(this.isGlobalColumnInBuffer(newFinalColumn)){
-    //   console.log('Sigue al else')
-    // }
-    
-    // else{ //Si se debe rellenar completamente el STFTBuffer
-    //   this.config.startWAVindex = newStartIndex;
-    //   this.resetBuffer();
-    // }
-    
-
-  }
-
-  isDone() {
-    // Este método debe de regresar 'true' si ha terminado de hacer los cálculos de STFT
-    // 'false' en el caso contrario.
-    // Esto ocurre hasta que se ha calculado el STFT de toda la grabación o ya se lleno
-    // el buffer.
-    var posibleNewLastColumn = this.lastComputedBufferColumn + COLUMNS_PER_STFT_COMPUTATION;
-    var posibleNewLastWAVindex = this.bufferColumnToWAVindex(posibleNewLastColumn+1)-1 ; 
-    if (posibleNewLastColumn > this.bufferColumns){
-      return true //Se cumple cuando se acaba el espacio del buffer
-    }
-    else if(!this.audioHandler.isIndexInFile(posibleNewLastWAVindex)) {
-      return true //Se cumple cuando se ya no puede seguir leyendo audio para posibleNewLastColumn
-    }
-    else{return false}
-  }
-
-  resetBuffer() {
-    // Este metodo borra todo el buffer y reinicia el cálculo del STFT con las nuevas configuraciones.
-    this.fillBuffer(0,this.config.initialGlobalColumn);
-  }
-
-  fillBuffer(initialBufferColumn, initialGlobalColumn) {
-    // Este método debe de comenzar el proceso de llenado del buffer con información del
-    // STFT.
-    this.fillByChunks(initialBufferColumn, initialGlobalColumn) // start when the lastComputedBufferColumn = 0;
-  }
-
-  fillByChunks(initialBufferColumn,initialGlobalColumn){ 
-  // It sets the data that should belong in the next COLUMNS_PER_STFT_COMPUTATION's columns after initialColumn 
-    if (this.checkSpace(initialBufferColumn)){
-      this.getAudioData({startWAVIndex : this.globalColumnToWAVindex(initialGlobalColumn)})
-        .then((arrayResult) => {
-          return this.computeSTFT(arrayResult);      
-        })
-        .then((STFTresult)  =>this.setSTFTtoBuffer(initialBufferColumn, STFTresult)) 
-        .then(()            => {
-            this.lastComputedBufferColumn=this.lastComputedBufferColumn+ COLUMNS_PER_STFT_COMPUTATION; 
-            initialBufferColumn = initialBufferColumn + COLUMNS_PER_STFT_COMPUTATION; 
-            initialGlobalColumn = initialGlobalColumn + COLUMNS_PER_STFT_COMPUTATION;  
-            // initialWAVindex = this.bufferColumnToWAVindex(initialBufferColumn);
-            this.fillByChunks(initialBufferColumn, initialGlobalColumn); 
-                
-        })
-    }
-    else{
-    //Que hacer en caso de no caber mas calculos en STFTBuffer  
-    } 
-  }
-
-  getAudioData({startWAVIndex=null, startTime=null, durationColumns=COLUMNS_PER_STFT_COMPUTATION} = {}) {
-    // Este método pide información a el audioHandler.
-    // Debe de regresar una promesa que se resuelve en la información WAV solicitada.
-    var lastWAVIndex = startWAVIndex+(durationColumns-1)*this.config.STFT.hop_length
-                  +this.config.STFT.window_size;
-
-    return new Promise ((resolve,reject)=>{
-      let checkIfReady = () => {
-        if (this.audioHandler.canRead(lastWAVIndex)){
-           let array = this.audioHandler.read({startIndex:startWAVIndex,endIndex : lastWAVIndex})
-           resolve(array)
+        if (startColumn != null) {
+            startingColumn = startColumn;
         }
-        else{setTimeout(checkIfReady, CHECK_READIBILITY_DELAY)}
-      }
-      checkIfReady();
-    })
-  }
- 
 
-  async computeSTFT(wavArray) {
-    // Este método debe de calcular el STFT para el fragmento de WAV utilzando las
-    // configuraciones del DFT actuales.
+        if (endColumn < 0 || durationTime < 0) {
+            endingColumn = this.computed.last;
+        }
 
-    // Este método debe de ser asincrónico.
+        if (endTime != null) {
+            endingColumn = this.getStftColumnFromTime(endTime);
+        }
 
-    // Empieza por esperar hasta que audioHandler tenga la información necesaria.
-    // Una vez que la obtenga se la pasa a tensorflow para hacer el cómputo de STFT.
-    this.tensorBuffer = tf.tensor1d(new Float32Array(wavArray.data));
-    this.frames = tf.signal.frame(this.tensorBuffer, this.config.STFT.window_size, this.config.STFT.hop_length);
-    this.windowed_frames = this.tensorWindowType.mul(this.frames);
-    this.tensordb = tf.abs(this.windowed_frames.rfft()).flatten();
-    // tf.print(this.frames);
-    // console.log('shape', this.tensordb.shape);
-    return this.tensordb.data();
-  }
+        if (durationColumns != null) {
+            columnDuration = durationColumns;
+        }
 
-  checkSpace(initialColumn){ //Checks for a new block of columns beginning at initialColumn
-    return (COLUMNS_PER_STFT_COMPUTATION + initialColumn < this.bufferColumns)
-  } 
+        if (durationTime != null) {
+            columnDuration = this.getStftColumnFromTime(durationTime);
+        }
 
-  setSTFTtoBuffer(startColumn, STFTarray) {
-    // Este método inserta los valores resultantes del STFT en el STFTBuffer en el lugar
-    // indicado.
-    var bufferIndex = this.bufferColumnToBufferIndex(startColumn);
-    this.STFTBuffer.set(STFTarray, bufferIndex);
-  } 
+        if (columnDuration != null) {
+            endingColumn = startingColumn + columnDuration;
+        }
 
+        if (this.shouldShift(startingColumn)) {
+            this.shiftSTFTBuffer(startingColumn);
+        }
 
+        // Check that requested columns do not fall outside the computed array
+        startingColumn = Math.max(this.computed.first, startingColumn);
+        endingColumn = Math.max(
+            Math.min(this.computed.last, endingColumn),
+            startingColumn,
+        );
 
-  
+        const array = this.STFTBuffer.slice(
+            this.getBufferIndexFromColumn(startingColumn),
+            this.getBufferIndexFromColumn(endingColumn),
+        );
+
+        return {
+            start: startingColumn,
+            end: endingColumn,
+            data: array,
+            computed: this.computed,
+        };
+    }
+
+    /**
+     * Get spectrogram column from time in seconds.
+     * @param {number} time - Time from start of recording in seconds.
+     */
+    getStftColumnFromTime(time) {
+        const wavIndex = this.audioHandler.getIndex(time);
+        return this.getStftColumnFromWavIndex(wavIndex);
+    }
+
+    /**
+     * Get time in seconds from spectrogram column.
+     * @param {number} column - Spectrogram column.
+     */
+    getTimeFromStftColumn(column) {
+        const wavIndex = column * this.config.stft.hop_length;
+        return this.audioHandler.getTime(wavIndex);
+    }
+
+    /**
+     * Get the wav array index that corresponds to the start of a spectrogram column.
+     * @param {number} column - Spectrogram column.
+     */
+    getWavIndexFromStftColumn(column) {
+        return column * this.config.stft.hop_length;
+    }
+
+    /**
+     * Get the spectrogram column that corresponds to a location in the Wav array.
+     * @param {number} index - Index of the wav array.
+     */
+    getStftColumnFromWavIndex(index) {
+        const intersectionSize = this.config.stft.window_size - this.config.stft.hop_length;
+        return Math.max(0, Math.floor((index - intersectionSize) / this.config.stft.hop_length));
+    }
+
+    /**
+     * Get the index in the STFT array where the information of a single spectrogram column is
+     * stored.
+     * @param {number} column - Spectrogram column.
+     */
+    getBufferIndexFromColumn(column) {
+        return (column - this.startColumn) * this.bufferColumnHeight;
+    }
+
+    columnsPerSecond() {
+        return this.audioHandler.mediaInfo.sampleRate / this.config.stft.hop_length;
+    }
+
+    /**
+     * Returns whether the buffer must shift in order to compute the required column
+     * @param {number} column - Desired column.
+     */
+    shouldShift(startColumn) {
+        const inferiorLimit = (this.startColumn) ? this.startColumn + SHIFT_COLUMN_BUFFER : 0;
+        const superiorLimit = this.startColumn + this.bufferColumns - SHIFT_COLUMN_BUFFER;
+        return (startColumn > superiorLimit) || (startColumn < inferiorLimit);
+    }
+
+    shiftSTFTBuffer(startColumn) {
+        // Calculate the column shift
+        const columnDiff = Math.abs(this.startColumn - startColumn + SHIFT_COLUMN_BUFFER);
+        const hops = Math.ceil(columnDiff / SHIFT_COLUMN_HOP);
+        const backwardsShift = (startColumn - SHIFT_COLUMN_BUFFER < this.startColumn);
+        let columnShift = backwardsShift ? -hops * SHIFT_COLUMN_HOP : hops * SHIFT_COLUMN_HOP;
+
+        // Constain to reasonable limits
+        const maxBackShift = -this.startColumn;
+        const maxForwardShift = Math.max(0, this.columnWidth - this.endColumn - this.bufferColumns);
+        columnShift = Math.min(Math.max(columnShift, maxBackShift), maxForwardShift);
+
+        let minIndex;
+        let maxIndex;
+        let offset;
+        if (backwardsShift) {
+            minIndex = 0;
+            maxIndex = Math.max(this.endColumn + columnShift, 0);
+            offset = -columnShift;
+        } else {
+            minIndex = columnShift;
+            maxIndex = this.endColumn;
+            offset = 0;
+        }
+
+        // Save any useful and previously calculated values
+        const savedValues = new Float32Array(this.STFTBuffer.slice(minIndex, maxIndex));
+        this.STFTBuffer.fill(0);
+        this.STFTBuffer.set(savedValues, offset);
+
+        // Shift start and end references
+        this.startColumn += columnShift;
+        this.endColumn += columnShift;
+
+        // Update constraints
+        this.startColumn = Math.max(this.startColumn, 0);
+        this.endColumn = Math.min(this.endColumn, this.columnWidth);
+        this.computed.first = Math.max(this.startColumn, this.computed.first);
+        this.computed.last = Math.min(this.endColumn, this.computed.last);
+
+        // Restart computation if had finished
+        if (this.done) {
+            this.startSTFTCalculation();
+        }
+    }
+
+    /** Returns if the STFT handler is no longer making calculations. */
+    isDone() {
+        return this.done;
+    }
+
+    /** Deletes all the contents of the STFT buffer and restarts calculations. */
+    resetBuffer() {
+        this.STFTBuffer.fill(0);
+        this.computed.first = this.startColumn;
+        this.computed.last = this.startColumn;
+        this.startSTFTCalculation();
+    }
+
+    /**
+     * Starts the calculation of the short time fourier transform using the current configurations.
+     */
+    startSTFTCalculation() {
+        this.done = false;
+        this.forwardFillByChunks();
+    }
+
+    /**
+     * Calculates a fixed number of stft frames and copies the result into the STFT buffer.
+     * At finish it will start the calculation on the next set of frames. If no space in the
+     * STFT buffer is left the process will stop.
+     */
+    forwardFillByChunks() {
+        // If enough columns were computed check if there is missing computation
+        // in the beggining of the buffer and compute backwards.
+        if (this.computed.last >= this.endColumn) {
+            this.backwardsFillByChunks();
+            return;
+        }
+
+        // If buffer is full check if there is missing computation in the beggining
+        // of the buffer and compute backwards.
+        if (!this.hasSpace()) {
+            this.backwardsFillByChunks();
+            return;
+        }
+
+        // If wav data is fully consumed check if there is missing computation
+        // in the beggining of the buffer and compute backwards.
+        if (this.readingIsDone(this.computed.last)) {
+            this.backwardsFillByChunks();
+            return;
+        }
+
+        this.getAudioData(this.computed.last)
+            .then((arrayResult) => this.computeSTFT(arrayResult))
+            .then((STFTresult) => {
+                this.setSTFTtoBuffer(this.computed.last, STFTresult);
+                this.computed.last += COLUMNS_PER_STFT_COMPUTATION;
+                this.forwardFillByChunks();
+            })
+            .catch((error) => {
+                // TODO: check if error comes from bad offset and ignore. Otherwise handle the error
+                // better.
+            });
+    }
+
+    /**
+     * Calculates a fixed number of stft frames and copies the result into the STFT buffer.
+     * Data will be consumed from the WAV array in a backwards fashion. When the calculation is
+     * complete, it well be repeated on the next set of frames. The process will
+     * stop when the first column is calculated.
+     */
+    backwardsFillByChunks() {
+        const startColumn = this.computed.first - COLUMNS_PER_STFT_COMPUTATION;
+
+        // End if start of buffer is reached
+        if (startColumn < this.startColumn) {
+            this.done = true;
+            return;
+        }
+
+        this.getAudioData(startColumn)
+            .then((arrayResult) => this.computeSTFT(arrayResult))
+            .then((STFTresult) => {
+                this.setSTFTtoBuffer(startColumn, STFTresult);
+                this.computed.first -= COLUMNS_PER_STFT_COMPUTATION;
+                this.backwardsFillByChunks();
+            });
+    }
+
+    /**
+     * Return a promise that resolves in the wav data required for a single stft calculation.
+     * @param {int} startColumn - The column at which to start of the required slice of wav data.
+     * @param {int} [durationColumns] - The number of columns of stft desired. This translates into
+     * a width of slice of wav data.
+     */
+    getAudioData(startColumn, columnDuration = COLUMNS_PER_STFT_COMPUTATION) {
+        const startIndex = this.getWavIndexFromStftColumn(startColumn);
+        const endIndex = startIndex
+            + (columnDuration - 1) * this.config.stft.hop_length
+            + this.config.stft.window_size;
+
+        let tries = 0;
+        return new Promise((resolve, reject) => {
+            const checkIfReady = () => {
+                if (tries > MAX_TRIES_GET_AUDIO_DATA) {
+                    reject();
+                }
+
+                if (this.audioHandler.canRead(startIndex)) {
+                    const array = this.audioHandler.read({
+                        startIndex,
+                        endIndex,
+                    });
+                    resolve(array);
+                } else {
+                    tries += 1;
+                    setTimeout(checkIfReady, CHECK_READABILITY_DELAY);
+                }
+            };
+
+            checkIfReady();
+        });
+    }
+
+    /**
+     * Computes the short time fourier transform of an array with the current configurations.
+     * Will return a promise that resolves into a buffer with the results of the computation.
+     * @async
+     * @param {array} wavArray - Array holding the signal data.
+     */
+    async computeSTFT(wavArray) {
+        // TODO: Set buffer data instead of creating a new one
+        this.tensorBuffer = tf.tensor1d(new Float32Array(wavArray.data));
+        this.frames = tf.signal.frame(
+            this.tensorBuffer,
+            this.config.stft.window_size,
+            this.config.stft.hop_length,
+        );
+
+        this.windowed_frames = this.STFTWindowFunction.mul(this.frames);
+        this.tensordb = tf.abs(this.windowed_frames.rfft()).flatten();
+
+        return this.tensordb.data();
+    }
+
+    /** Checks if the STFT buffer has enough space for a new stft calculation */
+    hasSpace() {
+        const computedColumns = this.computed.last - this.startColumn;
+        return (COLUMNS_PER_STFT_COMPUTATION + computedColumns < this.bufferColumns);
+    }
+
+    /** Checks if the requested column requires data outside the wav array. */
+    readingIsDone(column) {
+        const index = this.getWavIndexFromStftColumn(column);
+        return this.audioHandler.isDone() && (this.audioHandler.getLastWavIndex() <= index);
+    }
+
+    /** Copies data from stft calculation into the STFT buffer at the indicated column position.
+     * @param {int} column - The column position at which to insert the data.
+     * @param {array} stftData - The array holding the result of a single stft calculation.
+     */
+    setSTFTtoBuffer(column, stftData) {
+        const index = this.getBufferIndexFromColumn(column);
+        this.STFTBuffer.set(stftData, index);
+    }
 }
 
 export default STFTHandler;
