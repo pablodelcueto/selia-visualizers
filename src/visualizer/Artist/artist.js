@@ -3,8 +3,8 @@ import axisDrawer from './axis.js';
 
 const COLUMNS_PER_STFT_COMPUTATION = 50;
 const CHECK_BUFFER_DELAY = 1;
-const BUFFER_LENGTH_IN_COLUMNS = 10000;
-const RANGE_AMPLITUDE = BUFFER_LENGTH_IN_COLUMNS / 1000;   // We want it to be even.
+const BUFFER_LENGTH_IN_COLUMNS = 14000;
+const RANGE_AMPLITUDE = BUFFER_LENGTH_IN_COLUMNS / 700;   // We want it to be multiple of 4.
 const INIT_CONFIG = {
     colorMap : 'blueGum',
     amplitudScale : 'logaritmo',
@@ -14,9 +14,13 @@ const INIT_CONFIG = {
 };
 
 export default class Artist{
-    constructor(stftHandler){
+    constructor(visualizer, stftHandler){
         this.stftHandler = stftHandler;
-        this.initialCanvasTime = 0;
+        this.initialPosition = 0;
+        this.finalPosition = 0;
+        this.outsideCanvasLeftTime = 0;
+        this.outsideCanvasRigthTime = 0;
+        this.visualizer = visualizer;
         
     //las conf de dibujo:
     // colorMap, escalade aplitud(normal, cuadrada, log), escala de frecuencia(lineal  o log)
@@ -26,11 +30,12 @@ export default class Artist{
         this.chalan = new webGLchalan();
         this.gl = this.chalan.gl;
         this.GLbuffer = { 
-            initialGlobalColumn : 0, //first column in STFTbuffer used. 
+            initialGlobalColumn : 1709, //first column in STFTbuffer used. 
             filledColumns: 0, // goes from 0 to buffer length.
             initX : 0, // this is the point used to translate the positionBuffer each time new bufferload is required.
             };
-        this.dataArray = new Float32Array(BUFFER_LENGTH_IN_COLUMNS*this.stftHandler.bufferColumnHeight).fill();
+        // this.initialTime = this.visualizer.audioFile()
+        this.dataArray = new Float32Array(BUFFER_LENGTH_IN_COLUMNS*this.stftHandler.bufferColumnHeight).fill(1);
         this.chalan.colorImage.onload = () =>{this.init()};    
     }
 
@@ -39,7 +44,7 @@ export default class Artist{
         this.stftHandler.waitForAudioHandler()
             .then(()=>{
                 this.GLbuffer.secondsInBuffer = BUFFER_LENGTH_IN_COLUMNS/this.stftHandler.columnsPerSecond();
-                this.axisHandler = new axisDrawer(this.GLbuffer.secondsInBuffer);
+                this.axisHandler = new axisDrawer();
                 this.setGLdimensions(BUFFER_LENGTH_IN_COLUMNS,this.stftHandler.bufferColumnHeight);
             });
     }
@@ -66,29 +71,42 @@ export default class Artist{
         //Picks shader file depending on config.
     }
 
-    draw(initialTime, matrixTransformation){
+    draw(matrixTransformation){
         if(this.isShiftNeeded(matrixTransformation) || this.stillSpaceOnGLbuffer(this.GLbuffer)){
             this.realizeShift(matrixTransformation);
             let GLdata = this.getSTFTdata();
                 this.setDataToGLbuffer(GLdata)
                     .then(()=>{                        
-                        this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
+                        this.drawAxis(matrixTransformation[0]);
                         this.drawSpectrogram(matrixTransformation);
                     })
                     .catch(()=>{
-                        // console.log('There is no more info in stftBuffer, it must shift.');    
-                        this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
+                        // console.log('There is no more info in stftBuffer, it must shift STFTBuffer.');    
+                        this.drawAxis(matrixTransformation[0]);
                         this.drawSpectrogram(matrixTransformation);
                     });
         }
         else{
-            this.drawAxis(initialTime, 0, matrixTransformation[0], matrixTransformation[6]);
+            this.drawAxis(matrixTransformation[0]);
             this.drawSpectrogram(matrixTransformation);
         }               
     }
 
-    drawAxis(initialTime, numberOfTicks, zoomFactor, translation){
-        this.axisHandler.adaptAxis(initialTime, numberOfTicks, zoomFactor, translation);
+    drawAxis(zoomFactor){
+        let presicion = this.computeTimePresicion(zoomFactor); // Depends on time coordinate expantion. 
+      
+        let bordersTime = this.computeBordersTime();
+        let leftValues = this.outsideCanvasLeftTimeAndPosition(presicion, bordersTime.leftTime);
+        let rigthValues = this.outsideCanvasRigthTimeAndPosition(presicion, bordersTime.rigthTime);
+        
+        let initTime = leftValues.outsideLeftTime;
+        let finalTime = rigthValues.outsideRigthTime;
+        let initOutsidePosition = leftValues.outsideLeftPosition;
+        let finalOutsidePosition = rigthValues.outsideRigthPosition;
+        
+        let numberOfTicks = this.numberOfTicks(presicion, initTime, finalTime);
+        
+        this.axisHandler.adaptAxis(zoomFactor, initOutsidePosition, finalOutsidePosition, numberOfTicks, initTime, finalTime);
     }
 
     drawSpectrogram(matrixTransformation){ 
@@ -100,88 +118,58 @@ export default class Artist{
             return (buffer.filledColumns < BUFFER_LENGTH_IN_COLUMNS - COLUMNS_PER_STFT_COMPUTATION -10)
     }
 
+
+    gotRequestedStartColumn(newData){
+        return (this.GLbuffer.initialGlobalColumn + this.GLbuffer.filledColumns == newData.start)
+    }
+
+
     spaceOnGLbufferForData(buffer, data){
         return (buffer.filledColumns + (data.end-data.start) <= BUFFER_LENGTH_IN_COLUMNS)           
     }
 
-    isShiftNeeded(matrix){ //------------------------------------CAMBIAR
+    isShiftNeeded(matrix){ 
         let r = RANGE_AMPLITUDE;
         let initX = this.GLbuffer.initX;
-           return (matrix[0]*initX + 2*matrix[0] + matrix[6] >=   initX + r/2 + 1  
-            || matrix[0]*initX + r*matrix[0] - 2*matrix[0] + matrix[6] <=   initX + r/2 - 1 ) //shift to left || shift a la derecha
-
-        // return (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] + matrix[6] <  2 
-        //     || matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[6] >  -2)         
+           return (matrix[0]*initX + r/2*matrix[0] + matrix[6] >=  1  
+            || matrix[0]*initX + r*matrix[0] - r/2*matrix[0] + matrix[6] <=  - 1 ) //shift to left || shift a la derecha
     }
 
 
-    realizeShift(matrix){ //------------------------------------CAMBIAR
+    realizeShift(matrix){ 
         let initX = this.GLbuffer.initX;
         let r = RANGE_AMPLITUDE;
          if (this.isShiftNeeded(matrix)){
-            // console.log('shifting matrix',matrix);
-            // if (matrix[0]*initX + RANGE_AMPLITUDE*matrix[0] -matrix[0] + matrix[6] <  1){
-                if (matrix[0]*initX + r*matrix[0] - 2*matrix[0] + matrix[6] <= initX + r/2 -1 ){
+                if (matrix[0]*initX + r*matrix[0] - (r/2)*matrix[0] + matrix[6] <=  -1 ){
                 this.shiftToRight(matrix);
             }
-            else if(matrix[0]*initX + 2*matrix[0] + matrix[6] >= initX + r/2 +1  && initX >0){
+            else if(matrix[0]*initX + (r/2)*matrix[0] + matrix[6] >= 1  && initX >0){
                 this.shiftToLeft(matrix);
             }         
-            // else if(matrix[0]*initX - RANGE_AMPLITUDE*matrix[0] + matrix[0] + matrix[6] >  -1 && this.GLbuffer.initX>RANGE_AMPLITUDE){
-            //     this.shiftToLeft(matrix);
-            // }
 
             this.chalan.setupPositionBuffer(this.GLbuffer.initX);
-            // this.chalan.setupTextureCoordinatesBuffer();
         }            
     }
 
     shiftToRight(matrix){ //In case canvas is mpving to the right.  //------------------------------------CAMBIAR
-        // console.log('shifting rigth with matrix:', matrix);
         if (this.GLbuffer.initialGlobalColumn+BUFFER_LENGTH_IN_COLUMNS < this.stftHandler.lastComputedBufferColumn){
             this.resetDataArray();
-            this.readaptMatrixToRigth(matrix);
-            this.GLbuffer.initX = this.GLbuffer.initX + RANGE_AMPLITUDE/2 - 1; 
-            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn + 
-                                                (RANGE_AMPLITUDE-2)*BUFFER_LENGTH_IN_COLUMNS/RANGE_AMPLITUDE;
-            console.log('initX', this.GLbuffer.initX);
-            console.log('initial Global Column', this.GLbuffer.initialGlobalColumn);
+            this.GLbuffer.initX = this.GLbuffer.initX + 3/2*(RANGE_AMPLITUDE/4); 
+            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn + 3/2*BUFFER_LENGTH_IN_COLUMNS/4;
         }
     }
 
-    shiftToLeft(matrix){   //------------------------------------CAMBIAR
+    shiftToLeft(matrix){
         if (this.GLbuffer.initialGlobalColumn > 0){
             this.resetDataArray();
-            // this.readaptMatrixToLeft(matrix);
-            let numberOfTextureFractions = 4 //entre  - RANGE_AMPLITUDE Y -1
-            this.GLbuffer.initX = this.GLbuffer.initX - RANGE_AMPLITUDE/2 -1;
-            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn - 
-                                                (RANGE_AMPLITUDE-2)*BUFFER_LENGTH_IN_COLUMNS/RANGE_AMPLITUDE;
-            console.log('initX', this.GLbuffer.initX);
-            console.log('initial Global Column', this.GLbuffer.initialGlobalColumn);
-            }    
-        
+            this.GLbuffer.initX = this.GLbuffer.initX - 3/2*(RANGE_AMPLITUDE/4);
+            this.GLbuffer.initialGlobalColumn = this.GLbuffer.initialGlobalColumn - 3/2*BUFFER_LENGTH_IN_COLUMNS/4; 
+        }    
     }
 
-    newinitialGlobalColumn(newInitX, matrix){
-
-    }
-
-
-    readaptMatrixToRigth(matrix){  //------------------------------------CAMBIAR
-        let initX = this.GLbuffer.initX;
-        matrix[6] = initX*(1-matrix[0]) + RANGE_AMPLITUDE*(1/2 - matrix[0]) + 2*matrix[0]-1;
-    }
-
-    readaptMatrixToLeft(matrix){
-        let initX = this.GLbuffer.initX;
-        matrix[6] = initX*(1-matrix[0]) + RANGE_AMPLITUDE/2 - 2*matrix[0] + 1;
-        // this.drawAxis(matrix);
-        // this.drawSpectrogram(matrix);
-    }
 
     resetDataArray(){
-        this.dataArray.fill(1);
+        this.dataArray.fill();
         this.GLbuffer.filledColumns = 0; 
     }
 
@@ -190,7 +178,6 @@ export default class Artist{
     }
 
     getSTFTdata(){
-        this.isDrawing = false;
         let start_Column = this.GLbuffer.initialGlobalColumn + this.GLbuffer.filledColumns;  
         return this.stftHandler.read({
                             startColumn:start_Column,
@@ -198,15 +185,22 @@ export default class Artist{
               
     }
 
-   
+    //data tiene start, end and data
     setDataToGLbuffer(data){ 
         return new Promise((resolve,reject)=>{
-            if (this.spaceOnGLbufferForData(this.GLbuffer, data) && this.isDataNew(data)){     
+            if (this.gotRequestedStartColumn(data)){
+                this.arraySet(data.data, data.start-this.GLbuffer.initialGlobalColumn);
+                this.chalan.setTextures(this.dataArray);
+                resolve();
+            } 
+
+            else if (this.spaceOnGLbufferForData(this.GLbuffer, data) && this.isDataNew(data)){     
                 this.arraySet(data.data, this.GLbuffer.filledColumns); // Puede ir cambiando para no tener que repetir lecturas en STFT
                 this.GLbuffer.filledColumns = data.end - this.GLbuffer.initialGlobalColumn;
                 this.chalan.setTextures(this.dataArray);
                 resolve();
-            }   
+            }  
+
             else {
                 reject();
             }
@@ -218,24 +212,62 @@ export default class Artist{
     isDataNew(data){
         return (data.end-this.GLbuffer.initialGlobalColumn > this.GLbuffer.filledColumns)
     }
+
+
     arraySet(data, columnPosition){
         this.dataArray.set(data, columnPosition*this.stftHandler.bufferColumnHeight);
     }
 
-    checkIfGLbufferIsFull() {
-    // Este método debe de regresar una promesa que se resuelve cuando el stftbuffer
-    // esté lleno
-    return new Promise ((resolve,reject)=>{
-      let checkIfGLbufferIsFull = () => {
-        if (this.GLbuffer.filledColumns == BUFFER_LENGTH_IN_COLUMNS){
-          console.log('GLbuffer is ready')
-          resolve();
+
+
+    computeBordersTime(){
+        let initialCanvasPoint = this.visualizer.canvasToPoint(this.visualizer.createPoint(0,0)); 
+        let finalCanvasPoint = this.visualizer.canvasToPoint(this.visualizer.createPoint(1,0));
+        let leftBorderTime = this.visualizer.pointToTime(initialCanvasPoint);
+        let rigthBorderTime = this.visualizer.pointToTime(finalCanvasPoint);
+        return {leftTime:leftBorderTime, rigthTime: rigthBorderTime}
+    }
+
+
+    outsideCanvasLeftTimeAndPosition(precision, leftBorderTime){
+        let adaptedTimeToPresicion = Math.floor(leftBorderTime);
+        // let adaptedTimeToPresicion = Math.floor(leftBorderTime*(10**presicion))/(10**presicion);
+        // let adaptedTimeToPresicion = borderTime.toFixed(presicion);
+        let adaptedPoint = this.visualizer.timeToPoint(Number(adaptedTimeToPresicion));
+        let outPosition = this.visualizer.pointToCanvas(adaptedPoint);
+        let outTime = this.visualizer.pointToTime(adaptedPoint);
+        return {outsideLeftPosition: outPosition , outsideLeftTime: outTime}
+    }
+
+
+    outsideCanvasRigthTimeAndPosition(precision, rigthBorderTime){
+        let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime);
+        // let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime*(10**presicion))/(10**presicion);
+        // let adaptedRigthTimeToPresicion = rigthBorderTime.toFixed(presicion);
+        let adaptedRigthPoint = this.visualizer.timeToPoint(Number(adaptedRigthTimeToPresicion));
+        let outPosition = this.visualizer.pointToCanvas(adaptedRigthPoint);
+        let outTime = this.visualizer.pointToTime(adaptedRigthPoint);
+        return {outsideRigthPosition: outPosition , outsideRigthTime: outTime}
         }
-        else {setTimeout(checkIfGLbufferIsFull,CHECK_BUFFER_DELAY)}
-      }
-      checkIfGLbufferIsFull();
-    })
-  }
+    
+
+
+    computeTimePresicion(factor){
+         if (factor <= 2 ){
+            return 0    
+        }
+        else if ( factor <= 4){
+            console.log(factor);
+            return 1
+        }
+        else {
+            return 2
+        }
+    }
+
+    numberOfTicks(presicion,outsideLeftTime, outsideRigthTime){
+        return (outsideRigthTime-outsideLeftTime)*10**presicion;
+    }
 
 }
 

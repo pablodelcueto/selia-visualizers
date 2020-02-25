@@ -8,14 +8,15 @@ export default class webGLChalan{
 
 
     this.gl = this.canvas.getContext('webgl');
-    this.gl.viewport(0,0,this.gl.canvas.width, this.gl.canvas.height);
+    this.adjustSize();
+    
     this.program = this.gl.createProgram();
     this.dimensions = {width:null, height: null}
     this.init();    
     }
 
-    adjustSize() {
-      this.gl.viewport(0,0,this.gl.canvas.width, this.gl.canvas.height);
+    adjustSize() {    
+      this.gl.viewport(-this.canvas.width,-this.canvas.height, 2*this.gl.canvas.width, 2*this.gl.canvas.height);
     }
 
     init(){
@@ -89,16 +90,7 @@ export default class webGLChalan{
 //------------------------------------------------------------------------   
 
     setTextures(array){ //Using Santigo script of textures
-      let gl = this.gl;
-      // // Clear the canvas
-      // gl.clearColor(0, 0, 0, 0);
-      // gl.clear(gl.COLOR_BUFFER_BIT);
-
-      // this.shadersInit(gl,'Using Textures');
-      // gl.linkProgram(this.program);
-      // gl.useProgram(this.program)
-      // this.setLocations();
-      
+      let gl = this.gl;      
 
       // this.setupPositionBuffer();
       this.setupTextureCoordinatesBuffer();
@@ -127,19 +119,29 @@ export default class webGLChalan{
       gl.vertexAttribPointer(this.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
     }
 
-    setupPositionBuffer(initX) {
-      let l = RANGE_AMPLITUDE;
+    setupPositionBuffer(initTime, finalTime, initFrequency, finalFrequency) {
+      console.log('Times:', initTime, finalTime);
+      console.log('Frequencies:', initFrequency, finalFrequency);
+      // let l = RANGE_AMPLITUDE;
       let gl = this.gl;
 
       var positionBuffer = gl.createBuffer();
       gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+      const maxFreq = 1;
       var positions = new Float32Array([
-        initX, -1,
-        l+initX, -1,
-        initX, 1,
-        l+initX, 1,
-        l+initX, -1,
-        initX, 1,
+        initTime, 0,
+        finalTime, 0,
+        initTime, maxFreq,
+        finalTime, maxFreq,
+        finalTime, 0,
+        initTime, maxFreq,
+
+        // initX, -1,
+        // l+initX, -1,
+        // initX, 1,
+        // l+initX, 1,
+        // l+initX, -1,
+        // initX, 1,
 
         // -l+initX, -1,
         //  l+initX, -1,
@@ -153,15 +155,14 @@ export default class webGLChalan{
       gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
   }
 
-  setupTextures(textureArray){
-    this.setupArrayTexture(textureArray);
+  setupTextures(){
+    // this.setupArrayTexture(textureArray, width, height);
     this.setupColorTexture();
     this.bindTextures();
   }
-
   
 
-  setupArrayTexture(textureArray) {
+  setupArrayTexture(textureArray, width, height) {
     let gl = this.gl;
 
     this.texture = gl.createTexture();
@@ -174,13 +175,26 @@ export default class webGLChalan{
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-     gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    console.log({
+      dimensions: this.dimensions,
+      height,
+      width, 
+      textureArray,
+      size: height * width,
+      arraySize: textureArray.length,
+      heightType: typeof(height),
+      widthType: typeof(width)
+    });
+
+
+
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
       gl.LUMINANCE,
-      this.dimensions.height,
-      this.dimensions.width, 
+      height,
+      width, 
       0, 
       gl.LUMINANCE,
       gl.FLOAT,
