@@ -120,8 +120,8 @@ export default class webGLChalan{
     }
 
     setupPositionBuffer(initTime, finalTime, initFrequency, finalFrequency) {
-      console.log('Times:', initTime, finalTime);
-      console.log('Frequencies:', initFrequency, finalFrequency);
+      // console.log('Times:', initTime, finalTime);
+      // console.log('Frequencies:', initFrequency, finalFrequency);
       // let l = RANGE_AMPLITUDE;
       let gl = this.gl;
 
@@ -175,16 +175,16 @@ export default class webGLChalan{
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-    console.log({
-      dimensions: this.dimensions,
-      height,
-      width, 
-      textureArray,
-      size: height * width,
-      arraySize: textureArray.length,
-      heightType: typeof(height),
-      widthType: typeof(width)
-    });
+    // console.log({
+    //   dimensions: this.dimensions,
+    //   height,
+    //   width, 
+    //   textureArray,
+    //   size: height * width,
+    //   arraySize: textureArray.length,
+    //   heightType: typeof(height),
+    //   widthType: typeof(width)
+    // });
 
 
 

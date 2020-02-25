@@ -66,7 +66,7 @@ export default class Artist{
     }
 
     columnToWAV(column){
-        return this.stftHandler.globalColumnToWAVindex(column)
+        return this.stftHandler.getWavIndexFromStftColumn(column)
     }
 
     timeToWAV(time){
@@ -74,7 +74,7 @@ export default class Artist{
     }
 
     WAVtoColumn(index){
-        return this.stftHandler.WAVindexToGlobalColumn(index)
+        return this.stftHandler.getStftColumnFromWavIndex(index) 
     }
 
     WAVtoTime(index){

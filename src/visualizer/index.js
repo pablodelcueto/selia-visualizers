@@ -36,7 +36,7 @@ class Visualizer extends VisualizerBase {
         this.dragged = false;
         
         this.zoomSwitchPosition = "off";
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/2, 1);
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/5, 1);
         this.glMatrix = this.svg.createSVGMatrix().scaleNonUniform(2,1).translate(-1,0);
         // this.SVGtransformationMatrix = this.svg.createSVGMatrix().translate(-1,0);
         // this.glMatrix = this.SVGtransformationMatrix.translate(1,0); // must use RANGE_AMPLITUDE in the general case.

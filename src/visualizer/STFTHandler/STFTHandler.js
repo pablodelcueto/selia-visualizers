@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 // Tamaño máximo del buffer para los valores del STFT
-const STFT_BUFFER_MAX_SIZE = 1024 * 25000;
+const STFT_BUFFER_MAX_SIZE = 1024 * 5000;
 
 // Número de columnas a calcular en cada computo del STFT.
 const COLUMNS_PER_STFT_COMPUTATION = 20;
@@ -223,7 +223,8 @@ class STFTHandler {
             endingColumn = startingColumn + columnDuration;
         }
 
-        if (this.shouldShift(startingColumn)) {
+        if (this.shouldShift(startingColumn, endingColumn)) {
+            console.log('Is shifting');
             this.shiftSTFTBuffer(startingColumn);
         }
 
@@ -299,10 +300,10 @@ class STFTHandler {
      * Returns whether the buffer must shift in order to compute the required column
      * @param {number} column - Desired column.
      */
-    shouldShift(startColumn) {
+    shouldShift(startColumn, endColumn) {
         const inferiorLimit = (this.startColumn) ? this.startColumn + SHIFT_COLUMN_BUFFER : 0;
         const superiorLimit = this.startColumn + this.bufferColumns - SHIFT_COLUMN_BUFFER;
-        return (startColumn > superiorLimit) || (startColumn < inferiorLimit);
+        return (endColumn > superiorLimit) || (startColumn < inferiorLimit);
     }
 
     shiftSTFTBuffer(startColumn) {
