@@ -36,11 +36,7 @@ class Visualizer extends VisualizerBase {
         this.dragged = false;
         
         this.zoomSwitchPosition = "off";
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/5, 1);
-        this.glMatrix = this.svg.createSVGMatrix().scaleNonUniform(2,1).translate(-1,0);
-        // this.SVGtransformationMatrix = this.svg.createSVGMatrix().translate(-1,0);
-        // this.glMatrix = this.SVGtransformationMatrix.translate(1,0); // must use RANGE_AMPLITUDE in the general case.
-        // this.base = document.getElementById("barraBase");
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/4, 1);
 
         setTimeout(() => this.startDrawing(), 500);
     }
@@ -155,51 +151,6 @@ class Visualizer extends VisualizerBase {
         // abstract method
     }
 
-//--------------------------------------------------------Movements
-
-    // computeBordersTime(){
-    //     let this.artist.axisHandler.presicion = this.computeTimePresicion(this.SVGtransformationMatrix.a); // Depends on time coordinate expantion.
-
-    //     let initialCanvasPoint = this.canvasToPoint(this.createPoint(0,0)); 
-    //     let borderTime = this.pointToTime(initialCanvasPoint);
-    //     // let adaptedTimeToPresicion = Math.floor(borderTime);
-    //     let adaptedTimeToPresicion = Math.floor(borderTime*(10**presicion))/(10**presicion);
-    //     // let adaptedTimeToPresicion = borderTime.toFixed(presicion);
-    //     let adaptedPoint = this.timeToPoint(Number(adaptedTimeToPresicion));
-    //     this.artist.initPosition = this.pointToCanvas(adaptedPoint);
-    //     this.artist.outsideCanvasLeftTime = this.pointToTime(adaptedPoint);
-
-
-
-    //     let finalCanvasPoint = this.canvasToPoint(this.createPoint(1,0));
-    //     let rigthBorderTime = this.pointToTime(finalCanvasPoint);
-    //     // let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime);
-    //     let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime*(10**presicion))/(10**presicion);
-    //     // let adaptedRigthTimeToPresicion = rigthBorderTime.toFixed(presicion);
-    //     let adaptedRigthPoint = this.timeToPoint(Number(adaptedRigthTimeToPresicion));
-    //     this.artist.finalPosition = this.pointToCanvas(adaptedRigthPoint);
-    //     this.artist.outsideCanvasRigthTime = this.pointToTime(adaptedRigthPoint);
-    //     // console.log('time on final position', adaptedRigthTimeToPresicion)
-    // }
-
-    // computeNumberOfTicks(){
-    //     let presicion = this.computeTimePresicion(this.SVGtransformationMatrix.a);
-    //     console.log('presicion', presicion);
-    //     return (this.artist.outsideCanvasRigthTime-this.artist.outsideCanvasLeftTime)*10**presicion;
-    // }
-
-
-    // computeTimePresicion(factor){
-    //     if (factor <= 1 ){
-    //         return 0    
-    //     }
-    //     else if ( 1 <= factor < 2){
-    //         return 1
-    //     }
-    //     else if ( 2 <= factor <= 5){
-    //         return 2
-    //     }
-    // }
 
 
     translation(p) { // el punto p deba manejar coordenadas de archivo no de canvas 
@@ -222,13 +173,16 @@ class Visualizer extends VisualizerBase {
     }
 
     zoomOnPoint(factor, fixedPoint){
-        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/4)
-        || (factor >1 && this.SVGtransformationMatrix.a < 5)){
+        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/10)
+        || (factor >1 && this.SVGtransformationMatrix.a < 10)){
             let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x,fixedPoint.y);
             matrix = matrix.scaleNonUniform(factor, 1);
             matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
             this.SVGtransformationMatrix = matrix;           
             this.draw();            
+        }
+        else{
+            alert('No more zoom')
         }
     }
 
@@ -243,11 +197,8 @@ class Visualizer extends VisualizerBase {
     getMouseEventPosition(event) { //Posicion relativa al viewPort (rango de -1 a 1 en ambas direcciones)
         let x = event.offsetX || (event.pageX - this.canvas.offsetLeft);
         let y = event.offsetY || (event.pageY - this.canvas.offsetTop);        
-        x = x/this.canvas.width; 
+        x = x/this.canvas.width ; 
         y = -1*y/this.canvas.height+1;
-        
-        // x = 2*x/this.canvas.width-1; 
-        // y = -1*y/this.canvas.height+1;
         let point = this.createPoint(x,y);
         return point;
     }
@@ -255,6 +206,7 @@ class Visualizer extends VisualizerBase {
     mouseDown(event){ //Obtiene la posicion inicial para los siguientes eventos.
         this.last = this.getMouseEventPosition(event);
         this.dragStart = this.canvasToPoint(this.last);
+        console.log(this.dragStart);
         // let tiempo = this.pointToTime(this.dragStart);
         this.dragged = true;
     }
@@ -300,7 +252,7 @@ class Visualizer extends VisualizerBase {
         let factor = null;
         let dir = event.deltaY; 
         if (!dir == 0){
-            (dir <0 ) ? factor = 1.1 : factor = .9;
+            (dir <0 ) ? factor = 1.04 : factor = .96;
             this.zoomOnPoint(factor, fixedPoint);
         }
     }

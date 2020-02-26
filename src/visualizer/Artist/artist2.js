@@ -35,12 +35,13 @@ export default class Artist{
         this.glHandler.setupPositionBuffer(resultInitialTime, resultFinalTime, 0, this.stftHandler.bufferColumnHeight);
         this.glHandler.setupArrayTexture(
             data.data,
-            width,
+            width/2,
             height);
         return {resultInitialTime: initialTime, resultFinalTime: finalTime}
     } 
 
     draw(initialTime, finalTime, matrix){
+        this.drawAxis(initialTime, finalTime, matrix[0])
         if (this.requiredNewDataOnTexture(initialTime, finalTime)){
             if (this.matrix != matrix){
                 this.setTexture(initialTime, finalTime)
@@ -55,6 +56,22 @@ export default class Artist{
         }
         this.matrix = matrix;
     }
+
+    drawAxis(initialTime, finalTime, zoomFactor){
+        let presicion = this.computeTimePresicion(zoomFactor); // Depends on time coordinate expantion. 
+        // let bordersTime = this.computeBordersTime();
+        let leftValues = this.outsideCanvasLeftTimeAndPosition(presicion, initialTime);
+        let rigthValues = this.outsideCanvasRigthTimeAndPosition(presicion, finalTime);
+        let initOutsideTime = leftValues.outsideLeftTime;
+        let finalOutsideTime = rigthValues.outsideRigthTime;
+        let initOutsidePosition = leftValues.outsideLeftPosition;
+        let finalOutsidePosition = rigthValues.outsideRigthPosition;
+        
+        let numberOfTicks = this.numberOfTicks(presicion, initOutsideTime, finalOutsideTime);
+        
+        this.axisHandler.adaptAxis(zoomFactor, initOutsidePosition, finalOutsidePosition, numberOfTicks, initOutsideTime, finalOutsideTime);
+    }
+
 
     requiredNewDataOnTexture(initialTime, finalTime){
         return (initialTime != this.stftLoadedValues.initialTime || finalTime != this.stftLoadedValues.finalTime)
@@ -94,7 +111,53 @@ export default class Artist{
     setGLdimensions(width, height){
         this.glHandler.dimensions.width = width;
         this.glHandler.dimensions.height = height;
+    }  
+
+    computeBordersTime(){
+        let initialCanvasPoint = this.visualizer.canvasToPoint(this.visualizer.createPoint(0,0)); 
+        let finalCanvasPoint = this.visualizer.canvasToPoint(this.visualizer.createPoint(1,0));
+        let leftBorderTime = this.visualizer.pointToTime(initialCanvasPoint);
+        let rigthBorderTime = this.visualizer.pointToTime(finalCanvasPoint);
+        return {leftTime:leftBorderTime, rigthTime: rigthBorderTime}
     }
+
+
+    outsideCanvasLeftTimeAndPosition(presicion, leftBorderTime){
+        // let adaptedTimeToPresicion = Math.floor(leftBorderTime);
+        let adaptedTimeToPresicion = Math.floor(leftBorderTime*(10**presicion))/(10**presicion);
+        // let adaptedTimeToPresicion = borderTime.toFixed(presicion);
+        let positionOutsideCanvas = this.visualizer.pointToCanvas(this.visualizer.createPoint(adaptedTimeToPresicion,0));
+        return {outsideLeftPosition: positionOutsideCanvas , outsideLeftTime: adaptedTimeToPresicion}
+    }
+
+
+    outsideCanvasRigthTimeAndPosition(presicion, rigthBorderTime){
+        // let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime);
+        let adaptedRigthTimeToPresicion = Math.ceil(rigthBorderTime*(10**presicion))/(10**presicion);
+        // let adaptedRigthTimeToPresicion = rigthBorderTime.toFixed(presicion);
+        let positionOutsideCanvas = this.visualizer.pointToCanvas(this.visualizer.createPoint(adaptedRigthTimeToPresicion,0));
+        return {outsideRigthPosition: positionOutsideCanvas , outsideRigthTime: adaptedRigthTimeToPresicion}
+        }
+    
+
+
+    computeTimePresicion(factor){
+         if (factor <= 2 ){
+            return 0    
+        }
+        else if ( factor <= 5){
+            return 1
+        }
+        else {
+            return 2
+        }
+    }
+
+    numberOfTicks(presicion,outsideLeftTime, outsideRigthTime){
+        return (outsideRigthTime-outsideLeftTime)*10**presicion;
+    }
+
+
 
 
 

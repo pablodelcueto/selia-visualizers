@@ -12,6 +12,7 @@ export default class AxisConstructor {
         this.pixelsJumpForSecond = this.canvas.width*RANGE_AMPLITUDE/(2*this.secondsInBuffer);
         this.baseLineLength = this.canvas.width;;
         this.ctx = this.canvas.getContext('2d');
+        // this.drawBaseLine();
     }
 
     constructCanvas(){
