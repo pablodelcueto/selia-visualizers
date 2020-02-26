@@ -1,7 +1,13 @@
+/**
+* STFT Handler Module.
+*
+* @module STFTHandler
+* @see module:visualizer/STFTHandler/STFTHandler
+*/
 import * as tf from '@tensorflow/tfjs';
 
 // Tamaño máximo del buffer para los valores del STFT
-const STFT_BUFFER_MAX_SIZE = 1024 * 5000;
+const STFT_BUFFER_MAX_SIZE = 1024 * 2000;
 
 // Número de columnas a calcular en cada computo del STFT.
 const COLUMNS_PER_STFT_COMPUTATION = 20;
@@ -12,7 +18,8 @@ const CHECK_READABILITY_DELAY = 5;
 const MAX_TRIES_AUDIO_READ = 10000;
 const MAX_TRIES_GET_AUDIO_DATA = 10000;
 
-const SHIFT_COLUMN_HOP = 200;
+// STFT buffer shift behaviour
+const SHIFT_COLUMN_HOP = 400;
 const SHIFT_COLUMN_BUFFER = 100;
 
 const INIT_CONFIG = {
@@ -29,6 +36,7 @@ const INIT_CONFIG = {
  * Get windowing function for the short time fourier transform.
  * @param {string} windowFunction  Type of windowing function: hann, hamming or none
  * @param {int}    size            Size of window.
+ * @return {tf.Tensor} The window function as a tensorflow tensor.
  */
 function getTensorWindowFunction(windowFunction, size) {
     if (windowFunction === 'hann') {
@@ -46,6 +54,7 @@ function getTensorWindowFunction(windowFunction, size) {
 
 /**
  * Class that handles all the Short Time Fourier Transform (STFT) computations.
+ * @class
  *
  * The class accesses the wav data in an Audio object and sequentially computes the STFT in small
  * batches. All the resulting computations are stored into a fixed sized buffer for memory control.
@@ -92,6 +101,7 @@ class STFTHandler {
                     first: this.startColumn,
                     last: this.startColumn,
                 };
+
                 this.startSTFTCalculation();
             });
     }
@@ -116,6 +126,7 @@ class STFTHandler {
     /**
      * Returns a promise that resolves whenever the audio reader is ready for information
      * to be read from it. This happens after the wav header is correctly parsed.
+     * @async
      */
     waitForAudioHandler() {
         let tries = 0;
@@ -142,6 +153,7 @@ class STFTHandler {
 
     /** Returns current configuration used by the stft handler. */
     getConfig() {
+        // TODO
         return this.config;
     }
 
@@ -163,6 +175,20 @@ class STFTHandler {
     }
 
     /**
+    * A STFTData object stores the information returned by the STFTHandler when requested.
+    * @typedef module:STFTHandler.STFTData
+    * @type {Object}
+    * @property {boolean} start - The number of the first spectrogram column
+    * included in the returned data.
+    * @property {boolean} end - The number of the last spectrogram column included
+    * in the returned data.
+    * @property {boolean} data - An array holding the spectrogram data.
+    * @property {Object} computed - Information on the currently computed columns.
+    * @property {Object} computed.first - Lowest computed column number.
+    * @property {Object} computed.last - Highest computed column number.
+    */
+
+    /**
      * Returns data from the STFT buffer as requested by the user.
      *
      * It will not provide the requested data if it hasn't been calculated yet. This function will
@@ -181,9 +207,11 @@ class STFTHandler {
      * declaring endColum = startColumn + durationColumns.
      * @param {number} [durationTime] - Similar to durationColumns. Will be translated into
      * durationColumns.
+     * @return {module:STFTHandler.STFTData} An object that contains the requested data or portions of
+     * it, and information on the current state of the STFThandler.
      */
     read({
-        startColumn = 0,
+        startColumn = null,
         startTime = null,
         endColumn = -1,
         endTime = null,
@@ -223,9 +251,10 @@ class STFTHandler {
             endingColumn = startingColumn + columnDuration;
         }
 
-        if (this.shouldShift(startingColumn, endingColumn)) {
-            console.log('Is shifting');
-            this.shiftSTFTBuffer(startingColumn);
+        if (this.shouldShiftBackwards(startingColumn)) {
+          this.shiftSTFTBufferBackwards(startingColumn)
+        } else if (this.shouldShiftForwards(endingColumn)) {
+          this.shiftSTFTBufferForwards(endingColumn)
         }
 
         // Check that requested columns do not fall outside the computed array
@@ -251,6 +280,8 @@ class STFTHandler {
     /**
      * Get spectrogram column from time in seconds.
      * @param {number} time - Time from start of recording in seconds.
+     * @return {number} Column of the spectogram that corresponds to the desired time in
+     * seconds.
      */
     getStftColumnFromTime(time) {
         const wavIndex = this.audioHandler.getIndex(time);
@@ -260,6 +291,7 @@ class STFTHandler {
     /**
      * Get time in seconds from spectrogram column.
      * @param {number} column - Spectrogram column.
+     * @return {number} Time in seconds that corresponds to the column in the spectrogram.
      */
     getTimeFromStftColumn(column) {
         const wavIndex = column * this.config.stft.hop_length;
@@ -269,6 +301,8 @@ class STFTHandler {
     /**
      * Get the wav array index that corresponds to the start of a spectrogram column.
      * @param {number} column - Spectrogram column.
+     * @return {number} The index in the WAV array of the start of the
+     * STFT frame that corresponds the required spectrogram column.
      */
     getWavIndexFromStftColumn(column) {
         return column * this.config.stft.hop_length;
@@ -277,6 +311,8 @@ class STFTHandler {
     /**
      * Get the spectrogram column that corresponds to a location in the Wav array.
      * @param {number} index - Index of the wav array.
+     * @return {number} The spectrogram column that represents the audio contents in the
+     * WAV array around the requested index.
      */
     getStftColumnFromWavIndex(index) {
         const intersectionSize = this.config.stft.window_size - this.config.stft.hop_length;
@@ -287,6 +323,8 @@ class STFTHandler {
      * Get the index in the STFT array where the information of a single spectrogram column is
      * stored.
      * @param {number} column - Spectrogram column.
+     * @return {number} The index in the STFT Buffer corresponding to the start of the requested
+     * spectrogram column.
      */
     getBufferIndexFromColumn(column) {
         return (column - this.startColumn) * this.bufferColumnHeight;
@@ -297,44 +335,94 @@ class STFTHandler {
     }
 
     /**
-     * Returns whether the buffer must shift in order to compute the required column
-     * @param {number} column - Desired column.
+     * Returns whether the buffer must shift backwards in order to compute the required
+     * column.
+     * @param {number} startColumn - Desired starting column.
+     * @return {boolean} Whether the buffer should be shifted backwards
      */
-    shouldShift(startColumn, endColumn) {
-        const inferiorLimit = (this.startColumn) ? this.startColumn + SHIFT_COLUMN_BUFFER : 0;
+    shouldShiftBackwards(startColumn) {
+        const inferiorLimit = (this.startColumn > 0) ? this.startColumn + SHIFT_COLUMN_BUFFER : 0;
         const superiorLimit = this.startColumn + this.bufferColumns - SHIFT_COLUMN_BUFFER;
-        return (endColumn > superiorLimit) || (startColumn < inferiorLimit);
+        return startColumn < inferiorLimit;
     }
 
-    shiftSTFTBuffer(startColumn) {
-        // Calculate the column shift
-        const columnDiff = Math.abs(this.startColumn - startColumn + SHIFT_COLUMN_BUFFER);
-        const hops = Math.ceil(columnDiff / SHIFT_COLUMN_HOP);
-        const backwardsShift = (startColumn - SHIFT_COLUMN_BUFFER < this.startColumn);
-        let columnShift = backwardsShift ? -hops * SHIFT_COLUMN_HOP : hops * SHIFT_COLUMN_HOP;
+    /**
+     * Returns whether the buffer must shift forwards in order to compute the required
+     * column.
+     * @param {number} endColumn - Desired ending column.
+     * @return {boolean} Whether the buffer should be shifted forwards
+     */
+    shouldShiftForwards(endColumn) {
+        const superiorLimit = this.startColumn + this.bufferColumns - SHIFT_COLUMN_BUFFER;
+        return endColumn > superiorLimit;
+    }
+
+    /**
+    * Shift the STFT buffer backwards when an uncomputed column of the spectrogram is
+    * requested. The column should come before all computed columns. The shift will move the
+    * whole buffer some columns backwards, and will try to save as many computed values as
+    * possible.
+    * @param {number} startColumn - Column number being requested. Should be smaller than any
+    * computed column number. The buffer will shift to include such column and start the
+    * computation of any missing columns.
+    */
+    shiftSTFTBufferBackwards(startColumn) {
+        // Calculate number of columns to shift
+        const inferiorLimit = (this.startColumn > 0) ? this.startColumn + SHIFT_COLUMN_BUFFER : 0;
+        const columnDiff = inferiorLimit - startColumn;
+        let columnShift = - Math.ceil(columnDiff / SHIFT_COLUMN_HOP) * SHIFT_COLUMN_HOP;
 
         // Constain to reasonable limits
-        const maxBackShift = -this.startColumn;
-        const maxForwardShift = Math.max(0, this.columnWidth - this.endColumn - this.bufferColumns);
-        columnShift = Math.min(Math.max(columnShift, maxBackShift), maxForwardShift);
-
-        let minIndex;
-        let maxIndex;
-        let offset;
-        if (backwardsShift) {
-            minIndex = 0;
-            maxIndex = Math.max(this.endColumn + columnShift, 0);
-            offset = -columnShift;
-        } else {
-            minIndex = columnShift;
-            maxIndex = this.endColumn;
-            offset = 0;
-        }
+        columnShift = Math.max(columnShift, -this.startColumn)
 
         // Save any useful and previously calculated values
-        const savedValues = new Float32Array(this.STFTBuffer.slice(minIndex, maxIndex));
+        const maxIndex = this.getBufferIndexFromColumn(Math.max(this.endColumn + columnShift, 0));
+        const offset = -columnShift * this.bufferColumnHeight;
+        const savedValues = new Float32Array(this.STFTBuffer.slice(0, maxIndex));
         this.STFTBuffer.fill(0);
         this.STFTBuffer.set(savedValues, offset);
+
+        // Shift start and end references
+        this.startColumn += columnShift;
+        this.endColumn += columnShift;
+
+        // Update constraints
+        this.startColumn = Math.max(this.startColumn, 0);
+        this.endColumn = Math.min(this.endColumn, this.columnWidth);
+        this.computed.first = Math.max(this.startColumn, this.computed.first);
+        this.computed.last = Math.min(this.endColumn, this.computed.last);
+
+        // Restart computation if had finished
+        if (this.done) {
+            this.startSTFTCalculation();
+        }
+    }
+
+    /**
+    * Shift the STFT buffer forwards when an uncomputed column of the spectrogram is
+    * requested. The column should be after all computed columns. The shift will move the
+    * whole buffer some columns forwards, and will try to save as many computed values as
+    * possible.
+    * @param {number} endColumn - Column number being requested. Should be larger than any
+    * computed column number. The buffer will shift to include such column and start the
+    * computation of any missing columns.
+    */
+    shiftSTFTBufferForwards(endColumn) {
+        // Calculate the column shift
+        const superiorLimit = this.startColumn + this.bufferColumns - SHIFT_COLUMN_BUFFER;
+        const columnDiff = endColumn - superiorLimit;
+        let columnShift = Math.ceil(columnDiff / SHIFT_COLUMN_HOP) * SHIFT_COLUMN_HOP;
+
+        // Constain to reasonable limits
+        const maxForwardShift = Math.max(0, this.columnWidth - this.endColumn - this.bufferColumns);
+        columnShift = Math.min(columnShift, maxForwardShift);
+
+        // Save any useful and previously calculated values
+        const endIndex = this.getBufferIndexFromColumn(this.endColumn)
+        const startIndex = columnShift * this.bufferColumnHeight;
+        const savedValues = new Float32Array(this.STFTBuffer.slice(startIndex, endIndex));
+        this.STFTBuffer.fill(0);
+        this.STFTBuffer.set(savedValues, 0);
 
         // Shift start and end references
         this.startColumn += columnShift;
@@ -439,9 +527,12 @@ class STFTHandler {
 
     /**
      * Return a promise that resolves in the wav data required for a single stft calculation.
+     * @async
      * @param {int} startColumn - The column at which to start of the required slice of wav data.
      * @param {int} [durationColumns] - The number of columns of stft desired. This translates into
      * a width of slice of wav data.
+     * @returns {Promise} Promise that represents a chunk of WAV data as provided by the
+     * audio handler object.
      */
     getAudioData(startColumn, columnDuration = COLUMNS_PER_STFT_COMPUTATION) {
         const startIndex = this.getWavIndexFromStftColumn(startColumn);
@@ -477,6 +568,7 @@ class STFTHandler {
      * Will return a promise that resolves into a buffer with the results of the computation.
      * @async
      * @param {array} wavArray - Array holding the signal data.
+     * @returns {Promise} Promise that represents the STFT computation results.
      */
     async computeSTFT(wavArray) {
         // TODO: Set buffer data instead of creating a new one
@@ -499,7 +591,11 @@ class STFTHandler {
         return (COLUMNS_PER_STFT_COMPUTATION + computedColumns < this.bufferColumns);
     }
 
-    /** Checks if the requested column requires data outside the wav array. */
+    /** Checks if the requested column requires data outside the wav array.
+    * @param {number} column - Column in the spectrogram.
+    * @returns {boolean} Whether the computation of the requested column would
+    * having more that than stored in the WAV file.
+    */
     readingIsDone(column) {
         const index = this.getWavIndexFromStftColumn(column);
         return this.audioHandler.isDone() && (this.audioHandler.getLastWavIndex() <= index);
