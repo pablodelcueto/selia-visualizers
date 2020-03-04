@@ -23,6 +23,8 @@ export default class webGLChalan{
       this.colorImage = new Image(100,100)
       this.colorImage.src = './colormaps.bmp';
       this.color = 0.6;
+      this.minFilter = 0.0;
+      this.maxFilter = 1.0;
 
       var floatTextures = this.gl.getExtension('OES_texture_float');
       if (!this.gl) {
@@ -38,10 +40,12 @@ export default class webGLChalan{
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
 
-      this.shadersInit(gl,'Using Textures');
+      this.shadersInit(gl, 'Using Textures');
       gl.linkProgram(this.program);
       gl.useProgram(this.program)
       this.setLocations();
+      this.setColor(0.5);
+      this.setFilters(0.0, 1.0);
     }
 
     shadersInit(gl, programType){
@@ -88,8 +92,8 @@ export default class webGLChalan{
         this.matrixUniform = this.gl.getUniformLocation(this.program, 'u_matrix');
         
         this.columnUniform = this.gl.getUniformLocation(this.program, 'u_colorMap');
-        // this.colorLimFilters = this.gl.getUniformLocation(this.program, 'u_limites');
-        console.log('uniform location',  this.columnUniform);
+        this.limitsUniform = this.gl.getUniformLocation(this.program, 'u_limits');
+        console.log('uniform location',  this.limitsUniform);
     }
 
 //------------------------------------------------------------------------   
@@ -239,9 +243,21 @@ export default class webGLChalan{
   }
 
   setColor(newColumn){
-    // console.log('TYPE OF newColorValue', newColumn);
-    this.gl.uniform1f(this.columnUniform, false, this.color);
+
+    this.gl.uniform1f(this.columnUniform, newColumn);
     // this.gl.drawArrays(this.gl.TRIANGLES,0,6);
+  }
+
+  setFilters(minLim, maxLim){
+    this.gl.uniform2f(this.limitsUniform, this.minFilter, this.maxFilter);
+  }
+
+  setMinFilter(newValue){
+    this.minFilter = newValue;
+  }
+
+  setMaxFilter(newValue){
+    this.maxFilter = newValue;
   }
 
   resetTexture(){

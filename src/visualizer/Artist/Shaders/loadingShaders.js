@@ -10,18 +10,20 @@ const FRAGMENT_SHADER = `
   uniform sampler2D u_color;
 
   //Color setting.
-  // uniform float u_colorMap;
-  varying vec2 v_colorMap;
-
+  uniform float u_colorMap;
+  uniform vec2 u_limits;
   // Color map variables
-  float column = 0.45;
-  float max_lim = 1.0;
-  float min_lim = 0.0;
+  // float column = 0.45;
+  // float max_lim = 1.0;
+  // float min_lim = 0.0;
   float epsilon = 4.0;
   float max_value = 100000000.0;
 
   void main() {
-     // column = v_colorMap.x;
+
+     float column = u_colorMap;
+     float max_lim = u_limits.y;
+     float min_lim = u_limits.x;
      float min_log = log(epsilon);
      float max_log = log(max_value + epsilon);
      float log_range = max_log - min_log;
@@ -46,18 +48,12 @@ const VERTEX_SHADER = `
   uniform mat3 u_matrix;
   varying vec2 v_texcoord;
 
-  uniform float u_colorMap;
-  varying vec2 v_colorMap;
-
   void main() {
     // Multiply the position by the matrix.
-    // gl_Position = a_position;
     gl_Position = vec4(u_matrix*vec3(a_position.xy,1.0),1.0);
     
     // Pass the texcoord to the fragment shader.
     v_texcoord = vec2(a_texcoord.x,a_texcoord.y);
-    // v_color = vec3(u_column.x, u_limFilters.x, u_limFilters.y);
-    v_colorMap = vec2(u_colorMap,0);
   }
   `;
 

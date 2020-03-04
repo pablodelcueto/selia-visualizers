@@ -73,7 +73,7 @@ export default class Toolbox extends React.Component{
                 
 
                 <select style = {buttonstyle} onChange={(event)=>  {
-                                                    this.handleWindowFunctionChange(event.target.value)}} > 
+                                                    this.handleWindowFunctionChange(event.target.value)}} >                                                        
                     <optgroup label = "Window Type">
                     <option value="hann" >Hann</option>
                     <option value = "hamming"> Hamming </option>
@@ -115,7 +115,12 @@ export default class Toolbox extends React.Component{
                     </optgroup>
                 </select>   
 
-                <input type = {"range"} min="0" max="1" onChange={ (event) => this.handleMinFilterChange(event.target.value)} />
+                <input id="minFilter"style = {buttonstyle} type = {"range"} min="0" max="1" step="0.1"  onChange=
+                                                                    { (event) => this.handleMinFilterChange(event.target.value)} />
+                <label htmlFor = "minFilter" style={{margin:'10px'}}> Filtro inferior </label>
+                <input id="maxFilter" style = {buttonstyle} type={"range"} min = '0' max= '1' step="0.1"  onChange=
+                                                                    {(event)=> this.handleMaxFilterChange(event.target.value)} />
+                <label htmlFor="maxFilter" style={{margin:'10px'}}> Filtro superior </label> 
             </div> 
             )
     }

@@ -323,8 +323,17 @@ class Visualizer extends VisualizerBase {
     }
 
     modifyColorMap(newColor) {
-        console.log(newColor)
-        this.artist.glHandler.color = newColor; 
+        this.artist.glHandler.setColor(newColor);
+    }
+
+    modifyMinFilter(newValue) {
+        this.artist.glHandler.setMinFilter(newValue);
+        this.artist.glHandler.setFilters();
+    }
+
+    modifyMaxFilter(newValue) {
+        this.artist.glHandler.setMaxFilter(newValue)
+        this.artist.glHandler.setFilters();
     }
 
 } 
