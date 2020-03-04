@@ -1,5 +1,5 @@
-import {PROGRAMS, PROGRAM_1, PROGRAM_2} from './Shaders/sourcesDictionary';
-import {RANGE_AMPLITUDE} from './artist';
+import { PROGRAMS, PROGRAM_1, PROGRAM_2 } from './Shaders/sourcesDictionary';
+import { RANGE_AMPLITUDE } from './artist';
 
 
 export default class webGLChalan{
@@ -16,12 +16,13 @@ export default class webGLChalan{
     }
 
     adjustSize() {    
-      this.gl.viewport(-this.canvas.width,-this.canvas.height, 2*this.gl.canvas.width, 2*this.gl.canvas.height);
+      this.gl.viewport(-this.canvas.width, -this.canvas.height, 2 * this.gl.canvas.width, 2 * this.gl.canvas.height);
     }
 
     init(){
       this.colorImage = new Image(100,100)
       this.colorImage.src = './colormaps.bmp';
+      this.color = 0.6;
 
       var floatTextures = this.gl.getExtension('OES_texture_float');
       if (!this.gl) {
@@ -80,11 +81,15 @@ export default class webGLChalan{
 
 
     setLocations(){ 
-        this.positionLocation=this.gl.getAttribLocation(this.program, 'a_position');
-        this.texcoordLocation=this.gl.getAttribLocation(this.program, 'a_texcoord');
+        this.positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+        this.texcoordLocation = this.gl.getAttribLocation(this.program, 'a_texcoord');
         this.textureLocation = this.gl.getUniformLocation(this.program, 'u_texture');
         this.colorTextureLocation = this.gl.getUniformLocation(this.program, 'u_color');
         this.matrixUniform = this.gl.getUniformLocation(this.program, 'u_matrix');
+        
+        this.columnUniform = this.gl.getUniformLocation(this.program, 'u_colorMap');
+        // this.colorLimFilters = this.gl.getUniformLocation(this.program, 'u_limites');
+        console.log('uniform location',  this.columnUniform);
     }
 
 //------------------------------------------------------------------------   
@@ -120,9 +125,6 @@ export default class webGLChalan{
     }
 
     setupPositionBuffer(initTime, finalTime, initFrequency, finalFrequency) {
-      // console.log('Times:', initTime, finalTime);
-      // console.log('Frequencies:', initFrequency, finalFrequency);
-      // let l = RANGE_AMPLITUDE;
       let gl = this.gl;
 
       var positionBuffer = gl.createBuffer();
@@ -136,19 +138,6 @@ export default class webGLChalan{
         finalTime, 0,
         initTime, maxFreq,
 
-        // initX, -1,
-        // l+initX, -1,
-        // initX, 1,
-        // l+initX, 1,
-        // l+initX, -1,
-        // initX, 1,
-
-        // -l+initX, -1,
-        //  l+initX, -1,
-        // -l+initX, 1,
-        //  l+initX, 1,
-        //  l+initX, -1,
-        // -l+initX, 1,
       ]);
       gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
       gl.enableVertexAttribArray(this.positionLocation);
@@ -241,44 +230,23 @@ export default class webGLChalan{
   draw(transformationMatrix){
     let gl = this.gl;
     // gl.clear(gl.COLOR_BUFFER_BIT);
+    // this.setColor(this.color);
     gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
     // Draw the geometry.
-    setTimeout(()=>gl.drawArrays(gl.TRIANGLES, 0, 6),0);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    // setTimeout(()=>gl.drawArrays(gl.TRIANGLES, 0, 6),0);
 
+  }
+
+  setColor(newColumn){
+    // console.log('TYPE OF newColorValue', newColumn);
+    this.gl.uniform1f(this.columnUniform, false, this.color);
+    // this.gl.drawArrays(this.gl.TRIANGLES,0,6);
   }
 
   resetTexture(){
     let gl = this.gl;
     gl.clear(gl.COLOR_BUFFER_BIT);
   } 
-
-  createRandomArray(n) {
-    let array = new Float32Array(n);
-    for (let i = 0; i < n; i++){
-      array[i] = Math.random();
-    }
-    return array;
-  }
-
-  createNonRandomArray(n){
-    let array = new Float32Array(n);
-    for (let i = 0; i< n/4-1; i++){
-      array[4*i+0] = 0;
-      array[4*i+1] = .33;
-      array[4*i+2] = .66;
-      array[4*i+3] = .99;
-    }
-  return array;
-  }
-
-  createDecreasingArray(n){
-    let array = new Float32Array(n);
-    for (let i=0; i < n; i++){
-       array[i] = i/n;
-    }
-    return array;
-  }
-
-
 
 }

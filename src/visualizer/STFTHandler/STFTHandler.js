@@ -7,7 +7,7 @@
 import * as tf from '@tensorflow/tfjs';
 
 // Tamaño máximo del buffer para los valores del STFT
-const STFT_BUFFER_MAX_SIZE = 1024 * 2000;
+const STFT_BUFFER_MAX_SIZE = 1024 * 20000;
 
 // Número de columnas a calcular en cada computo del STFT.
 const COLUMNS_PER_STFT_COMPUTATION = 20;
@@ -25,7 +25,7 @@ const SHIFT_COLUMN_BUFFER = 100;
 const INIT_CONFIG = {
     stft: {
         window_size: 1024,
-        hop_length: 256,
+        hop_length: 1024*.25,
         window_function: 'hann',
     },
     startTime: 0.0,
@@ -91,6 +91,7 @@ class STFTHandler {
         // Wait for Audio Handler to be ready and then start stft calculation and buffer filling.
         this.waitForAudioHandler()
             .then(() => {
+                this.audioLoaded = true;
                 // Setup starting time and indices references
                 this.startColumn = this.getStftColumnFromTime(this.config.startTime);
                 this.columnWidth = this.getStftColumnFromWavIndex(this.audioHandler.mediaInfo.size);
@@ -117,6 +118,20 @@ class STFTHandler {
             this.config.stft.window_function,
             this.config.stft.window_size,
         );
+        
+        if (this.audioLoaded){
+            console.log('resettingup');
+            this.startColumn = this.getStftColumnFromTime(this.config.startTime);
+            this.columnWidth = this.getStftColumnFromWavIndex(this.audioHandler.mediaInfo.size);
+            this.endColumn = Math.min(this.startColumn + this.bufferColumns, this.columnWidth);           
+        }
+
+        //Sets computed columns as 0. 
+        this.computed = {
+            first : this.startColumn,
+            last : this.startColumn,
+        }
+
 
         const bufferSize = (COLUMNS_PER_STFT_COMPUTATION - 1) * this.config.stft.window_size;
         this.tensorBuffer = tf.tensor1d(new Float32Array(bufferSize));
@@ -171,6 +186,21 @@ class STFTHandler {
      */
     setConfig(config) {
         // TODO
+        if ('window_size' in config.stft){
+            this.config.stft.window_size = config.stft.window_size;
+        }
+
+        if ('hop_length' in config.stft){
+            console.log('algo')
+            this.config.stft.hop_length = config.stft.hop_length;
+        }
+
+        if ('window_function' in config.stft){
+            this.config.stft.window_function = config.stft.window_function;
+            // this.setupSTFT();
+        }
+
+        this.setupSTFT();
         this.resetBuffer();
     }
 
@@ -284,7 +314,7 @@ class STFTHandler {
      * seconds.
      */
     getStftColumnFromTime(time) {
-        const wavIndex = this.audioHandler.getIndex(time);
+        const wavIndex = this.audioHandler.getWavIndexFromTime(time);
         return this.getStftColumnFromWavIndex(wavIndex);
     }
 
@@ -448,8 +478,6 @@ class STFTHandler {
     /** Deletes all the contents of the STFT buffer and restarts calculations. */
     resetBuffer() {
         this.STFTBuffer.fill(0);
-        this.computed.first = this.startColumn;
-        this.computed.last = this.startColumn;
         this.startSTFTCalculation();
     }
 
@@ -489,7 +517,8 @@ class STFTHandler {
         }
 
         this.getAudioData(this.computed.last)
-            .then((arrayResult) => this.computeSTFT(arrayResult))
+            .then((arrayResult) => {
+                return this.computeSTFT(arrayResult)})
             .then((STFTresult) => {
                 this.setSTFTtoBuffer(this.computed.last, STFTresult);
                 this.computed.last += COLUMNS_PER_STFT_COMPUTATION;
@@ -572,17 +601,17 @@ class STFTHandler {
      */
     async computeSTFT(wavArray) {
         // TODO: Set buffer data instead of creating a new one
-        this.tensorBuffer = tf.tensor1d(new Float32Array(wavArray.data));
-        this.frames = tf.signal.frame(
-            this.tensorBuffer,
-            this.config.stft.window_size,
-            this.config.stft.hop_length,
-        );
+        return tf.tidy(() => {
+            let tensorBuffer = tf.tensor1d(new Float32Array(wavArray.data));
+            let frames = tf.signal.frame(
+                tensorBuffer,
+                this.config.stft.window_size,
+                this.config.stft.hop_length,
+            );
 
-        this.windowed_frames = this.STFTWindowFunction.mul(this.frames);
-        this.tensordb = tf.abs(this.windowed_frames.rfft()).flatten();
-
-        return this.tensordb.data();
+            let windowed_frames = this.STFTWindowFunction.mul(frames);
+            return tf.abs(windowed_frames.rfft()).flatten();
+        }).data();
     }
 
     /** Checks if the STFT buffer has enough space for a new stft calculation */

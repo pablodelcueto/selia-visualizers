@@ -1,21 +1,20 @@
-import {RANGE_AMPLITUDE} from './Artist/artist' 
-// const RANGE_AMPLITUDE = 10;
-
 import React from 'react';
 import VisualizerBase from '../VisualizerBase';
-import Artist from './Artist/artist2'
+import Artist from './Artist/artist2';
 import STFTHandler from './STFTHandler/STFTHandler';
 import AudioFile from './Audio/audioFile';
 import Tools from './Tools';
 
 
-var config = {
+const config = {
     STFT: { 
         window_size: 1024,
         hop_length: 256,
         window_function: 'hann',
-      },
-      startWAVindex: 0,   
+        scale: 'log',
+    },
+    startWAVindex: 0, 
+    initialSecondsPerWindow : 10,  
 }
 
 class Visualizer extends VisualizerBase {
@@ -24,11 +23,12 @@ class Visualizer extends VisualizerBase {
     // description = "long story";
     // configuration_schema = "longer story";
 
-    init(){
+    init() {
         this.audioFile = new AudioFile(this.itemInfo);
         this.STFTRetriever = new STFTHandler(this.audioFile);
         this.artist = new Artist(this, this.STFTRetriever);
-        this.config=config;
+        this.config = config;
+        this.createInfoWindow();
 
         this.initialMousePosition = null;
         this.last = null;
@@ -36,71 +36,105 @@ class Visualizer extends VisualizerBase {
         this.dragged = false;
         
         this.zoomSwitchPosition = "off";
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/4, 1);
-
+        // this.scope = window.setTimeout(()=>this.startDrawing(), 5000);
+        this.STFTRetriever.waitForAudioHandler()
+        .then(()=>{
+            this.initialColumnsPerWindow = this.STFTRetriever.getStftColumnFromTime(this.config.initialSecondsPerWindow)
+            this.SVGtransformationMatrix = this.svg.createSVGMatrix().scaleNonUniform(1/this.config.initialSecondsPerWindow, 1);  
+            // this.startDrawing();
+            // clearTimeout(this.scope);
+            // this.startDrawing();  
+        })
         setTimeout(() => this.startDrawing(), 500);
-    }
+        // this.startDrawing();
+        }
 
-    adjustSize(){
+    adjustSize() {
         VisualizerBase.prototype.adjustSize.call(this);
 
-        if ('artist' in this){
+        if ('artist' in this) {
             this.artist.adjustSize();
         }
     }
 
+    createInfoWindow() {
+        this.infoWindow = document.createElement('div');
+        document.getElementById('canvasContainer').appendChild(this.infoWindow);
+        this.infoWindow.setAttribute('style', 'left: 1500px; top: 30px; position:absolute; background-color:rgba(0,0,0,0.4); width: 150px');
+        const timeParragraph = document.createElement('p');
+        const frequencyParragraph = document.createElement('p');
+        timeParragraph.setAttribute('id', 'timeInformation');
+        timeParragraph.setAttribute('style', 'color: white');
+        frequencyParragraph.setAttribute('id', 'frequencyInformation');
+        frequencyParragraph.setAttribute('style', 'color: white');
+        this.infoWindow.appendChild(timeParragraph);
+        this.infoWindow.appendChild(frequencyParragraph);
+    }
+
+
     startDrawing() {
         this.draw();
+        // this.startDrawing();
         setTimeout(() => this.startDrawing(), 200);
     }
 
-    setConfig(){   
-
+    setConfig() {   
+        this.STFTRetriever.config = this.config;
     }
-    getConfig(){
+
+    getConfig() {
         //Debe hacer una lectura del estado del toolbox 
         return this.config;
     }
 
     getEvents() {
-        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);    
-        this.mouseDown = this.mouseDown.bind(this);    
+        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);   
+        this.mouseDown = this.mouseDown.bind(this);
         this.mouseUp = this.mouseUp.bind(this);
-        this.onMouseMove =this.onMouseMove.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
         this.mouseScroll = this.mouseScroll.bind(this);
-        return {"mousedown": this.mouseDown,
-                "mousemove": this.onMouseMove,
-                "mouseup": this.mouseUp, 
-                "mousewheel": this.mouseScroll,
-            };
+        return {
+            mousedown: this.mouseDown,
+            mousemove: this.onMouseMove,
+            mouseup: this.mouseUp,
+            mousewheel: this.mouseScroll,
+        };
     }
 
-    renderToolbar(){
-        return <Tools id="toolbox" switchButton ={() => this.zoomActivator()}
-                                   increaseBrightness = {() => this.changeBright(-5)}
-                                   decreaseBrightness = {() => this.changeBright(5)}
-                                   windowSize = {(size) => this.windowSizeModification(size)} />
+    renderToolbar() {
+        return (
+            <Tools
+                id = 'toolbox'
+                switchButton = { () => this.zoomActivator()}
+                showInfoWindow = {() => this.showInfoWindow()}
+                modifyWindowFunction = {(newWindowFunction) => this.modifyWindowFunction(newWindowFunction)}
+                modifyHopLength = {(newLength) => this.modifyHopLength(newLength)}
+                modifyWindowSize = {(newWindowSize) => this.modifyWindowSize(newWindowSize)} 
+                modifyColorMap = {(newColor) => this.modifyColorMap(newColor)} 
+                modifyMinFilter = {(newValue) => this.modifyMinFilter(newValue)}
+                modifyMaxFilter = {(newValue) => this.modifyMaxFilter(newValue)} />
+        );
     }
 
 
-    SVGmatrixToArray(matrix){
-        let a= matrix.a;
-        let b= matrix.b;
-        let c= matrix.c;
-        let d= matrix.d;
-        let e= matrix.e;
-        let f= matrix.f;
+    SVGmatrixToArray(matrix) {
+        let a = matrix.a;
+        let b = matrix.b;
+        let c = matrix.c;
+        let d = matrix.d;
+        let e = matrix.e;
+        let f = matrix.f;
         var matrixArray = new Float32Array([a,b,0,c,d,0,e,f,1]);
         return matrixArray;
     }
 
-    zoomActivator(){
-        switch (this.zoomSwitchPosition){
-            case "on":
-                this.zoomSwitchPosition = "off"; 
+    zoomActivator() {
+        switch (this.zoomSwitchPosition) {
+            case 'on':
+                this.zoomSwitchPosition = 'off'; 
                 break
-            case "off":
-                this.zoomSwitchPosition = "on";
+            case 'off':
+                this.zoomSwitchPosition = 'on';
                 break
         }    
     } 
@@ -108,12 +142,10 @@ class Visualizer extends VisualizerBase {
 // ---------------------------------------------------------------------
 
     draw() { //data Loaded from file with loadFile2 could be reused.
-        // this.computeBordersTime()
         let glArray = this.SVGmatrixToArray(this.SVGtransformationMatrix);
-        let initialTime = this.canvasToPoint(this.createPoint(0,1));
-        let finalTime = this.canvasToPoint(this.createPoint(1,0));
-        this.artist.draw(initialTime.x, finalTime.x, glArray);   // artist2
-        // this.artist.draw(glArray) //artist    
+        let initialTime = this.canvasToPoint(this.createPoint(0,0)).x;
+        let finalTime = this.canvasToPoint(this.createPoint(1,0)).x;
+        this.artist.draw(initialTime, finalTime, glArray);   
 
     }
 
@@ -126,7 +158,7 @@ class Visualizer extends VisualizerBase {
         return center;
     }
 
-    canvasToPoint(p){ //takes into acount how the canvas has been moved by the transformation.
+    canvasToPoint(p){ 
         var pt = this.createPoint(p.x,p.y)
         return pt.matrixTransform(this.SVGtransformationMatrix.inverse());
     }
@@ -134,16 +166,6 @@ class Visualizer extends VisualizerBase {
     pointToCanvas(p){ 
         var pt = this.createPoint(p.x,p.y);
         return pt.matrixTransform(this.SVGtransformationMatrix);
-    }
-   
-    pointToTime(point){
-        let tiempo = (point.x)/(RANGE_AMPLITUDE)*this.artist.GLbuffer.secondsInBuffer; //+1 porque init comienza en -1 por el viewport
-        return tiempo
-    }
-
-    timeToPoint(time){
-        let point = this.createPoint(time/this.artist.GLbuffer.secondsInBuffer*RANGE_AMPLITUDE,0);
-        return point
     }
 
 
@@ -163,30 +185,30 @@ class Visualizer extends VisualizerBase {
 
     
 
-    scaleOnCenter(factor){
-        let center = this.centerFinder(); 
-        let matrix = this.SVGtransformationMatrix.translate(center.x,center.y);
+    scaleOnCenter(factor) {
+        let center = this.centerFinder();
+        let matrix = this.SVGtransformationMatrix.translate(center.x, center.y);
         matrix = matrix.scaleNonUniform(factor.x, factor.y);
         matrix = matrix.translate(-center.x, -center.y)
         this.SVGtransformationMatrix = matrix;
         return this.SVGtransformationMatrix;
     }
 
-    zoomOnPoint(factor, fixedPoint){
-        if ((factor < 1 && this.SVGtransformationMatrix.a > 1/10)
-        || (factor >1 && this.SVGtransformationMatrix.a < 10)){
-            let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x,fixedPoint.y);
+    zoomOnPoint(factor, fixedPoint) {
+        if ( (factor < 1 && this.SVGtransformationMatrix.a > 1 / 30)
+        ||  (factor > 1 && this.SVGtransformationMatrix.a < 30)){
+            let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
             matrix = matrix.scaleNonUniform(factor, 1);
             matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
-            this.SVGtransformationMatrix = matrix;           
-            this.draw();            
+            this.SVGtransformationMatrix = matrix;         
+            // this.draw();  
         }
-        else{
-            alert('No more zoom')
-        }
+        // else{
+        //     console.log('No more zoom')
+        // }
     }
 
-    changeBright(addition){
+    changeBright(addition) {
         this.config.brightness += addition;
         this.draw();
     }
@@ -197,17 +219,17 @@ class Visualizer extends VisualizerBase {
     getMouseEventPosition(event) { //Posicion relativa al viewPort (rango de -1 a 1 en ambas direcciones)
         let x = event.offsetX || (event.pageX - this.canvas.offsetLeft);
         let y = event.offsetY || (event.pageY - this.canvas.offsetTop);        
-        x = x/this.canvas.width ; 
-        y = -1*y/this.canvas.height+1;
-        let point = this.createPoint(x,y);
+        x = x/this.canvas.width;
+        y = -1*y/this.canvas.height + 1;
+        const point = this.createPoint(x, y);
         return point;
     }
 
     mouseDown(event){ //Obtiene la posicion inicial para los siguientes eventos.
         this.last = this.getMouseEventPosition(event);
+        // console.log('canvas', this.last)
         this.dragStart = this.canvasToPoint(this.last);
-        console.log(this.dragStart);
-        // let tiempo = this.pointToTime(this.dragStart);
+        // console.log('tiempo', this.dragStart.x, 'frequencia', this.dragStart.y*24000);
         this.dragged = true;
     }
 
@@ -223,6 +245,9 @@ class Visualizer extends VisualizerBase {
                 this.dragStart = this.canvasToPoint(this.last);
             }
         }
+        let value = this.canvasToPoint(this.getMouseEventPosition(event));
+        document.getElementById('timeInformation').innerHTML = 'Tiempo:    ' +  value.x.toFixed(2).toString() + ' s';
+        document.getElementById('frequencyInformation').innerHTML = 'Frecuencia:    ' +   (24000*value.y).toFixed(2).toString() + ' Hz';      
     }
 
             
@@ -246,28 +271,62 @@ class Visualizer extends VisualizerBase {
         }
     }
 
-    mouseScroll(event){
+    mouseScroll(event) {
         let mousePosition = this.getMouseEventPosition(event);
-        let fixedPoint = this.canvasToPoint(mousePosition)
+        let  fixedPoint = this.canvasToPoint(mousePosition);
         let factor = null;
-        let dir = event.deltaY; 
-        if (!dir == 0){
-            (dir <0 ) ? factor = 1.04 : factor = .96;
+        let dir = event.deltaY;
+        if (!dir == 0) {
+            (dir < 0) ? factor = 1.04 : factor = 0.96;
+
             this.zoomOnPoint(factor, fixedPoint);
         }
     }
 
-    windowSizeModification(size){
-        let factor = this.config.windowSize/size;
-        let factorsToAdaptTransfMatrix = this.createPoint(1/factor,factor);
-        // this.SVGtransformationMatrix = this.SVGtransformationMatrix.scaleNonUniform(1/factor,factor); 
-        this.SVGtransformationMatrix = this.scaleOnCenter(factorsToAdaptTransfMatrix)
-        // console.log(this.SVGtransformationMatrix);
-        this.config.numberOfFrequencies = this.config.numberOfFrequencies*(1/factor);
-        this.config.resultLength = this.config.resultLength*factor;
-        this.config.windowSize=size;
-        this.draw();
+
+    showInfoWindow() {
+        if (this.infoWindow.style.display === 'block') {
+            this.infoWindow.style.display = 'none';
+        } else {
+            this.infoWindow.style.display = 'block';
+        }
     }
+
+    modifyWindowFunction(newWindowFunction) {
+        console.log('type2');
+        const config = {
+            stft: {'window_function' : newWindowFunction},
+        }
+        this.config.STFT.window_function = newWindowFunction;
+        this.STFTRetriever.setConfig(config);
+    }
+
+    modifyWindowSize(newWindowSize) {
+        console.log('this.startDrawing', this.startDrawing);
+        clearTimeout(this.scope),
+        this.artist.glHandler.setupTextureCoordinatesBuffer();
+        let config= {
+                    stft : {'window_size' : newWindowSize},
+        }        
+        this.config.STFT.window_size = newWindowSize
+        this.STFTRetriever.setConfig(config)
+        this.startDrawing();
+    }
+
+    modifyHopLength(newWindowHop) {
+        console.log(this.STFTRetriever.config.stft.hop_length);
+        let config = {
+            stft: {'hop_length' : newWindowHop},
+        };
+        this.STFTRetriever.setConfig(config);
+        console.log(this.STFTRetriever.config.stft.hop_length);
+    }
+
+    modifyColorMap(newColor) {
+        console.log(newColor)
+        this.artist.glHandler.color = newColor; 
+    }
+
 } 
 
 export default Visualizer;

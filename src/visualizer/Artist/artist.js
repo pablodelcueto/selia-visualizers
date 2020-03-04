@@ -51,6 +51,7 @@ export default class Artist{
 
     adjustSizes(){
         this.chalan.adjustSize();
+        this.axisHandler.resizeAxisCanvas();
     }
 
     getConfig(){ 

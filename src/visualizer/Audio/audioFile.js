@@ -33,8 +33,7 @@ export default class AudioFile {
     readHeader() {
         const header = headerReader(this.rawDataArray);
         const { fmt } = header;
-        const duration = (8.0 * header.dataSize)
-            / (fmt.nChannels * fmt.wBitsPerSample * fmt.nSamplesPerSec);
+        const duration = (8.0 * header.dataSize) / (fmt.nChannels * fmt.wBitsPerSample * fmt.nSamplesPerSec);
 
         this.mediaInfo = {
             totalSize: header.chunkSize + 8,
@@ -54,15 +53,17 @@ export default class AudioFile {
         return index * this.mediaInfo.channels + channel;
     }
 
+    getWavIndexFromTime(time, channel) {
+        return Math.floor(time * this.mediaInfo.sampleRate);
+    }
+
     getTime(index) {
-        const indexNoChannel = Math.floor(index / this.mediaInfo.channels);
-        return indexNoChannel / this.mediaInfo.sampleRate;
+        return index / this.mediaInfo.sampleRate;
     }
 
     bufferIndexToWavIndex(index) {
         return Math.floor(
-            8 * (index - this.mediaInfo.dataStart)
-            / (this.mediaInfo.sampleSize * this.mediaInfo.channels),
+            8 * (index - this.mediaInfo.dataStart) / (this.mediaInfo.sampleSize * this.mediaInfo.channels),
         );
     }
 

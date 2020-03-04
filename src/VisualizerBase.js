@@ -65,7 +65,7 @@ class VisualizerBase {
   }
 
   adjustSize() {
-    this.canvas.style.width = '99%';
+    this.canvas.style.width = '100%';
     this.canvas.style.height = '100%';
     this.canvas.width  = this.canvas.offsetWidth;
     this.canvas.height = this.canvas.offsetHeight;
