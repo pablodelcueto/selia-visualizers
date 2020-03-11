@@ -355,10 +355,10 @@ class Visualizer extends VisualizerBase {
     }
 
     reproduce(time) { //    time is normalized so it should be multiplied by audio duration.
-        // this.reproductionTime = this.normalizedToRealTime(time);
-        this.reproductionTime = time;
+        this.framesPerSecond = this.audioFile.mediaInfo.sampleRate;
+        this.reproductionTime = this.normalizedToRealTime(time);
         console.log('primer tiempo', Date.now());
-        this.audioReproductor.readAndReproduce(this.reproductionTime, () => this.animatedMotion(this.reproductionTime));
+        this.audioReproductor.reproduce(this.reproductionTime, () => this.animatedMotion(this.reproductionTime));
             // .then(() => {
             //     this.animatedMotion(this.reproductionTime);
             // });

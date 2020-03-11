@@ -11,7 +11,7 @@ export default class Reproductor {
     }
 
     async readAndReproduce(initialTime, callback) {        
-        this.source = this.audioCtx.createBufferSource();
+        // this.source = this.audioCtx.createBufferSource();
         const checkIfLoaded = async () => {
             if (this.audioFile.isDone()) {
                 await this.audioCtx.decodeAudioData(
