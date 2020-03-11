@@ -42,7 +42,7 @@ export default class AudioFile {
             sampleSize: fmt.wBitsPerSample,
             dataStart: header.dataStart,
             size: header.dataSize,
-            duration,
+            durationTime: duration,
         };
     }
 

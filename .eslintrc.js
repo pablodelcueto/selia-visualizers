@@ -15,7 +15,21 @@ module.exports = {
     "plugins": [
         "react"
     ],
+
+    "overrides": [
+    {
+      "files": ["*.js"],
+      "rules": {
+        "react/jsx-filename-extension": "off",
+        "react/destructuring-assignment": "off",
+        "react/prop-types": "off"
+      }
+    }
+    ],
+
     "rules": {
+        "react/jsx-indent": [2, 4, {checkAttributes: true, indentLogicalExpressions: true}],
+        "react/jsx-indent-props": [2, 4],
         "indent": [
             "error",
             4

@@ -186,16 +186,16 @@ class STFTHandler {
      */
     setConfig(config) {
         // TODO
-        if ('window_size' in config.stft){
+        if ('window_size' in config.stft) {
             this.config.stft.window_size = config.stft.window_size;
         }
 
-        if ('hop_length' in config.stft){
+        if ('hop_length' in config.stft) {
             console.log('algo')
             this.config.stft.hop_length = config.stft.hop_length;
         }
 
-        if ('window_function' in config.stft){
+        if ('window_function' in config.stft) {
             this.config.stft.window_function = config.stft.window_function;
             // this.setupSTFT();
         }
