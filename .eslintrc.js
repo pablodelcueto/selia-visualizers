@@ -28,6 +28,8 @@ module.exports = {
     ],
 
     "rules": {
+        "no-plusplus":"off",
+        "prefer-destructuring": ["error", {"object": true, "array": false}],
         "react/jsx-indent": [2, 4, {checkAttributes: true, indentLogicalExpressions: true}],
         "react/jsx-indent-props": [2, 4],
         "indent": [

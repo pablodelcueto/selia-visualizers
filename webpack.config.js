@@ -14,6 +14,14 @@ const config = {
            use: ['style-loader', 'css-loader'],
          },
          {
+           test: /\.png$/i,
+           use: [
+             {
+               loader: 'url-loader',
+             },
+           ],
+         },
+         {
            test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
            use: [
              {

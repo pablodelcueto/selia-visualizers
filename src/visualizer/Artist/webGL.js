@@ -1,232 +1,334 @@
-import {PROGRAMS} from './Shaders/sourcesDictionary';
+import {
+    VERTEX_SHADER, VERTEX_LOADING_SHADER,
+    FRAGMENT_SHADER, FRAGMENT_LOADING_SHADER,
+} from './Shaders/loadingShaders';
+import colormapImage from './colormaps.png';
+
+/**
+* @param {Object} gl- webGL context of the visualizerCanvas
+* @param {Object} program - webGL program.
+* @param {string} vertexSource - source for the webGL vertexShader linked to program.
+* @param {string} fragmentSource -source for the webGL fragmentShader linked to program.
+* Execute the basic webGL comands to run a GL program.
+*/
+function shadersInit(gl, program, vertexSource, fragmentSource) {
+    if (!gl) {
+        alert('No webgl context');
+        return;
+    }
+    const floatTextures = gl.getExtension('OES_texture_float');
+    if (!floatTextures) {
+        alert('no floating point texture support');
+        return;
+    }
+
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader, vertexSource);
+    gl.compileShader(vertexShader);
+    gl.attachShader(program, vertexShader);
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(vertexShader));
+    }
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader, fragmentSource);
+    gl.compileShader(fragmentShader);
+    gl.attachShader(program, fragmentShader);
+    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(fragmentShader));
+    }
+
+    gl.linkProgram(program);
+    gl.useProgram(program);
+}
+
+
+
+function setupBackgroundMatrix(gl, program, locations, matrix) {
+    const matrixLocation = locations.matrixUniformLocation;
+    gl.uniformMatrix3fv(matrixLocation, false, matrix)
+}
+    
+
+function setupBackgroundProgramLocations(gl, program) {
+    const position = gl.getAttribLocation(program, 'al_position');
+    const matrixUniform = gl.getUniformLocation(program, 'u_matrix');
+
+    return {
+        positionLocation: position,
+        matrixUniformLocation: matrixUniform,
+    };
+
+    // gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
+    // gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+    // gl.enableVertexAttribArray(positionLocation);
+    // gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
+    // gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+}
+
+/**
+* @param {Object} gl - webGL context of the visualizerCanvas.
+* @param {int} textureCoordinatesLocations - JS variable with memory location of
+* a_texcoord, attribute with the vertices defining the bounding box and orientation
+* of the spectrogram texture.
+* Sets the typedArray vertices as such attribute.
+*/
+function setupTextureCoordinatesBuffer(gl, textureCoordinatesLocation) {
+    const vertices = new Float32Array([
+        0, 0,
+        0, 1,
+        1, 0,
+        1, 1,
+        0, 1,
+        1, 0,
+    ]);
+    const texcoordBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(textureCoordinatesLocation);
+    gl.vertexAttribPointer(textureCoordinatesLocation, 2, gl.FLOAT, false, 0, 0);
+}
+
+/**
+* @param {Object} gl - webGL context of the visualizerCanvas.
+* @param {Object} colorImage - bmp image used to define the colorMaps.
+* @param {Object} colorTexture - webGL texture containing colorImage.
+*/
+function setupColorTextureImage(gl, colorImage, colorTexture) {
+    gl.bindTexture(gl.TEXTURE_2D, colorTexture);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.FLOAT,
+        colorImage,
+    );
+}
+
+
+/**
+* @param {Object} gl - webGL context of the visualizerCanvas.
+* @param {Object} texture - webGL texture cointaining stft results.
+* Actives texture unit 0 and bind in with texture variable.
+*/
+function bindArrayTexture(gl, texture) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+}
+
+/**
+* @param {Object} gl - webGL context of the visualizerCanvas.
+* @param {Object} texture - webGL texture.
+* @param {Object} textureLocation - Corresponding to the memory location of the texture.
+* Defines textureLocation unit  as 1 and binds texture to that unit.
+*/
+function bindColorTexture(gl, texture, textureLocation) {
+    gl.uniform1i(textureLocation, 1); // texture unit 1
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+}
+
+
+//--------------------------------------------------------------------------
+
 
 export default class webGLChalan {
-    constructor() {
-        this.canvas = document.getElementById('visualizerCanvas');
-
-
-        this.gl = this.canvas.getContext('webgl');
-        this.adjustSize();
-
-        this.program = this.gl.createProgram();
-        this.dimensions = { width: null, height: null };
+    /**
+    * Class used to handle the webGL actiona on the visualizerCanvas.
+    */
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.gl = canvas.getContext('webgl');
+        this.adjustCanvasViewport();
         this.init();
+        this.initBackgroundProgram();
     }
 
-    adjustSize() {  
-        this.gl.viewport(-this.canvas.width, -this.canvas.height, 2 * this.gl.canvas.width, 2 * this.gl.canvas.height);
+    /**
+    * Defines webGl viewport
+    */
+    adjustCanvasViewport() {
+        this.gl.viewport(
+            -this.canvas.width,
+            -this.canvas.height,
+            2 * this.gl.canvas.width,
+            2 * this.gl.canvas.height,
+        );
     }
 
+    
     init() {
-        this.colorImage = new Image(100,100)
-        this.colorImage.src = './colormaps.bmp';
-        this.color = 0.6;
-        this.minFilter = 0.0;
-        this.maxFilter = 1.0;
-
-        var floatTextures = this.gl.getExtension( 'OES_texture_float' );
-        if (!this.gl) {
-            alert('No webgl context');
-            return;
-        }
-        if (!floatTextures) {
-            alert('no floating point texture support');
-            return;
-        }
-        const gl = this.gl;
-        // Clear the canvas
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        this.shadersInit(gl, 'Using Textures');
-        gl.linkProgram(this.program);
-        gl.useProgram(this.program)
+        this.program = this.gl.createProgram();
+        shadersInit(this.gl, this.program, VERTEX_SHADER, FRAGMENT_SHADER);
+        // Texture containing results of stft.
+        this.texture = this.gl.createTexture();
+        // Texture containing image for colorMap
+        this.colorTexture = this.gl.createTexture();
+        // Image used to extract the colorMaps.
+        this.colorImage = new Image(100, 100);
+        this.colorImage.src = colormapImage;
+        this.colorImage.onload = () => this.setTextures();
         this.setLocations();
-        this.setColor(0.5);
-        this.setFilters(0.0, 1.0);
+        this.setMinFilter(0);
+        this.setMaxFilter(1);
     }
 
-    shadersInit(gl, programType) {
-        gl = this.gl;
-        const vertexShader = gl.createShader(gl.VERTEX_SHADER);
-        const vertexSource = this.vertexSourceMap(programType);
-        gl.shaderSource(vertexShader, vertexSource);
-        gl.compileShader(vertexShader);
-        gl.attachShader(this.program, vertexShader);
-        if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(vertexShader));
-            return null;
-        }
-              
-        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
-        this.fragmentSource = this.fragmentSourceMap(programType);
-        gl.shaderSource(fragmentShader, this.fragmentSource);
-        gl.compileShader(fragmentShader);
-        gl.attachShader(this.program, fragmentShader);    
-        if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-            alert(gl.getShaderInfoLog(fragmentShader));
-            return null;
-        }
+    initBackgroundProgram() {
+        this.loadingProgram = this.gl.createProgram();
+        shadersInit(this.gl, this.loadingProgram, VERTEX_LOADING_SHADER, FRAGMENT_LOADING_SHADER);
+        this.verticesBuffer = this.gl.createBuffer();
+        this.backgroundLocations = setupBackgroundProgramLocations(this.gl, this.loadingProgram);
+        this.matrixUniform2 = this.backgroundLocations.matrixUniformLocation;
     }
 
-
-    vertexSourceMap(programTypeName) {
-        return PROGRAMS[programTypeName][0];
+    setBackgroundVertices(finalTime, maxFrequency, transformationMatrix) {
+        this.gl.useProgram(this.loadingProgram);
+        const positionLocation = this.backgroundLocations.positionLocation;
+        const positions = new Float32Array([
+            0, -maxFrequency,
+            finalTime, -maxFrequency,
+            0, 2*maxFrequency,
+            finalTime, -maxFrequency,
+            0, 2*maxFrequency,
+            finalTime, 2*maxFrequency,
+        ]);
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.verticesBuffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(positionLocation);
+        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+        this.gl.uniformMatrix3fv(this.matrixUniform2, false, transformationMatrix);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
-    fragmentSourceMap(programTypeName) {
-        return PROGRAMS[programTypeName][1];
-    }
-
-    setLocations() { 
+    /**
+    * Creates js variables for webgl attributes and uniforms locations.
+    */
+    setLocations() {
         this.positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+        // coordinates and orientation of the shape bounded to texture (2 triangles)
         this.texcoordLocation = this.gl.getAttribLocation(this.program, 'a_texcoord');
+
         this.textureLocation = this.gl.getUniformLocation(this.program, 'u_texture');
         this.colorTextureLocation = this.gl.getUniformLocation(this.program, 'u_color');
+
+        // matrix transformation
         this.matrixUniform = this.gl.getUniformLocation(this.program, 'u_matrix');
-        
+        // this.matrixUniform2 = this.gl.getUniformLocation(this.loadingProgram, 'u_matrix');     
+        // number of line in the colorMap image
         this.columnUniform = this.gl.getUniformLocation(this.program, 'u_colorMap');
-        this.limitsUniform = this.gl.getUniformLocation(this.program, 'u_limits');
+        // object with inferior and superior colorMap limits
+        // this.limitsUniform = this.gl.getUniformLocation(this.program, 'u_limits');
+        this.infFilterUniform = this.gl.getUniformLocation(this.program, 'u_minLim');
+        this.supFilterUniform = this.gl.getUniformLocation(this.program, 'u_maxLim');
     }
 
-    setTextures(array) { 
-        const gl = this.gl;      
-        this.setupTextureCoordinatesBuffer();
-        this.setupTextures(array);
+    /**
+    * First it binds the colorTexture to the location in shaders and then fill with data provided by
+    * colorImage.
+    * Then binds the texture containing array data with the texture unit that will be used later on
+    * and fill that texture and set it with shape and orientation
+    */
+    setTextures() {
+        this.gl.useProgram(this.program);
+        bindColorTexture(this.gl, this.colorTexture, this.colorTextureLocation);
+        setupColorTextureImage(this.gl, this.colorImage, this.colorTexture);
+        bindArrayTexture(this.gl, this.texture);
+        setupTextureCoordinatesBuffer(this.gl, this.texcoordLocation);
     }
-
-    setupTextureCoordinatesBuffer() {
-        const gl = this.gl;
-        const texcoordBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-        gl.bufferData(
-            gl.ARRAY_BUFFER,
-            new Float32Array([
-                0, 0,
-                0, 1,
-                1, 0,
-                1, 1,
-                0, 1,
-                1, 0,
-            ]),
-            gl.STATIC_DRAW,
-        );
-        gl.enableVertexAttribArray(this.texcoordLocation);
-        gl.vertexAttribPointer(this.texcoordLocation, 2, gl.FLOAT, false, 0, 0);
-    }
-
-    setupPositionBuffer(initTime, finalTime, initFrequency, finalFrequency) {
-        const gl = this.gl;
-
-        var positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        const maxFreq = 1;
+ 
+    /**
+    * @param {number} initTime - time corresponding to left border in Canvas
+    * @param {number} finalTime - time corresponding to rigth border in Canvas
+    * Positions the texture  such that [initTime,finalTime] occupies the whole
+    * canvas base after matrix multiplication.
+    * Complete frequencies range is loaded in texture. 
+    */
+    setupPositionBuffer(initTime, finalTime, maxFrequency) {
+        const positionBuffer = this.gl.createBuffer();
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
         const positions = new Float32Array([
             initTime, 0,
             finalTime, 0,
-            initTime, maxFreq,
-            finalTime, maxFreq,
+            initTime, maxFrequency,
+            finalTime, maxFrequency,
             finalTime, 0,
-            initTime, maxFreq,
+            initTime, maxFrequency,
         ]);
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-        gl.enableVertexAttribArray(this.positionLocation);
-        gl.vertexAttribPointer(this.positionLocation, 2, gl.FLOAT, false, 0, 0);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
+        this.gl.enableVertexAttribArray(this.positionLocation);
+        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
     }
 
-    setupTextures() {
-        this.setupColorTexture();
-        this.bindTextures();
-    }
-  
-
+    /**
+    * @param {array} textureArray - Contains stft data to load on texture.
+    * @param {int} width - The number of points in the base of the texture.
+    * @param {int} height - The number of points in the height of the texture.
+    * Fills the texture containing the results of the stft. Those textures will
+    * be used to obtain a color from the colorMap to each time and frequency.
+    */
     setupArrayTexture(textureArray, width, height) {
-        const gl = this.gl;
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
 
-        this.texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.texImage2D(
-            gl.TEXTURE_2D,
+        this.gl.texImage2D(
+            this.gl.TEXTURE_2D,
             0,
-            gl.LUMINANCE,
+            this.gl.LUMINANCE,
             height,
-            width, 
-            0, 
-            gl.LUMINANCE,
-            gl.FLOAT,
+            width,
+            0,
+            this.gl.LUMINANCE,
+            this.gl.FLOAT,
             textureArray,
         );
-        this.bindTextures();
     }
 
-    setupColorTexture() {
-        const gl = this.gl;
-
-        this.colorTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
-
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-        gl.texImage2D(
-            gl.TEXTURE_2D,
-            0,
-            gl.RGBA,
-            gl.RGBA,
-            gl.FLOAT,
-            this.colorImage
-        );
-    }
-
-    bindTextures() {
-        const gl = this.gl;
-
-        gl.uniform1i(this.textureLocation, 0);  // texture unit 0
-        gl.uniform1i(this.colorTextureLocation, 1);  // texture unit 1
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.colorTexture);
-    }
-
+    /**
+    * @param {Object} transformationMatrix - Matrix transformation corresponding to
+    * translations and scales in the time x frequencies space.
+    */
     draw(transformationMatrix) {
-        const gl = this.gl;
-        gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
+        this.gl.useProgram(this.program);
+        this.gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
         // Draw the geometry.
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
+    /**
+    * @param {number} newColumn - number between 0 and 1 used to define the line of the
+    * colorMap image.
+    * The range [0,1] is translated to a range of color Maps.
+    */
     setColor(newColumn) {
         this.gl.uniform1f(this.columnUniform, newColumn);
     }
 
-    setFilters() {
-        this.gl.uniform2f(this.limitsUniform, this.minFilter, this.maxFilter);
-    }
-
+    /**
+    * @param {number} newValue - colorMap inferior filter value.
+    */
     setMinFilter(newValue) {
         this.minFilter = newValue;
+        this.gl.uniform1f(this.infFilterUniform, newValue);
     }
 
+    /**
+    * @param {number} newValue - colorMap superior filter value.
+    */
     setMaxFilter(newValue) {
         this.maxFilter = newValue;
+        this.gl.uniform1f(this.supFilterUniform, newValue);
     }
 
     resetTexture() {
-        const gl = this.gl;
-        gl.clear(gl.COLOR_BUFFER_BIT);
-    }  
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
 }
