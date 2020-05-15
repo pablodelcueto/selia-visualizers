@@ -1,44 +1,66 @@
 /**
-* STFT Handler Module.
+* STFTHandler module.
 *
-* @module STFTHandlerModule
-* @see module:visualizer/STFTHandler/STFTHandler
+* @module STFTHandler/STFTHandler
+* @see module:STFTHandler/STFTHandler.js
 */
 import * as tf from '@tensorflow/tfjs';
 
-// Tamaño máximo del buffer para los valores del STFT
+/**
+* A STFTData object stores the information returned by the STFTHandler when requested.
+* @typedef module:STFTHandler/STFTHandler.STFTData
+* @type {Object}
+* @property {int} start - The number of the first spectrogram column
+* included in the returned data.
+* @property {int} end - The number of the last spectrogram column included
+* in the returned data.
+* @property {Object} data - An array holding the spectrogram data.
+* @property {Object} computed - Information on the currently computed columns.
+* @property {Object} computed.first - Lowest computed column number.
+* @property {Object} computed.last - Highest computed column number.
+*/
+
+/** STFT values Buffer max size */
 const STFT_BUFFER_MAX_SIZE = 1024 * 20000;
 
-// Número de columnas a calcular en cada computo del STFT.
+/** Columns number used on each STFT computation. */
 const COLUMNS_PER_STFT_COMPUTATION = 10;
 
-// Read audio component behaviour
+/** Time in miliseconds between file header checks */
 const CHECK_HEADER_DELAY = 5;
+/** Time in miliseconds between consecutive WAV values reads */
 const CHECK_READABILITY_DELAY = 5;
+/** Max number of consecuive tries checking if WAV is ready  */
 const MAX_TRIES_AUDIO_READ = 10000;
+/** Max number of consecutive tries reading WAV data */
 const MAX_TRIES_GET_AUDIO_DATA = 10000;
 
-// STFT buffer shift behaviour
+/** STFT buffer shift behaviour. */
 const SHIFT_COLUMN_HOP = 400;
+/** Max number of columns shifted while traying to save data. */
 const MAX_NORMAL_SHIFT_SEPARATION = 5000;
+/** Number of STFT computations added when shift occurs */
 const EXTRA_HOPS_SHIFT = 10;
+/** Number to create limits movement whitout shifting */
 const COLUMN_SEPARATION_SHIFT_OCURRANCE = 100;
 
-const INIT_CONFIG = {
-    stft: {
-        window_size: 1024,
-        hop_length: 1024 * 0.25,
-        window_function: 'hann',
-    },
-    startTime: 0.0,
-};
-
-
+/**
+* Gets largest multiple of COLUMNS_PER_STFT_COMPUTATION smaller than value.
+* @function
+* @param {number} value - Float number.
+* @return {number} 
+*/
 function floorRound(value) {
     return Math.floor(value / COLUMNS_PER_STFT_COMPUTATION) * COLUMNS_PER_STFT_COMPUTATION;
 }
 
 
+/**
+* Gets smallest multiple of COLUMNS_PER_STFT_COMPUTATION larger than value.
+* @function
+* @param {Number} value - Float number.
+* @return {Number}
+*/
 function ceilRound(value) {
     return Math.ceil(value / COLUMNS_PER_STFT_COMPUTATION) * COLUMNS_PER_STFT_COMPUTATION;
 }
@@ -46,6 +68,7 @@ function ceilRound(value) {
 
 /**
  * Get windowing function for the short time fourier transform.
+ * @function
  * @param {string} windowFunction - Type of windowing function: hann, hamming or none
  * @param {int}    size           - Size of window.
  * @return {tf.Tensor} - The window function as a tensorflow tensor.
@@ -75,6 +98,26 @@ function getTensorWindowFunction(windowFunction, size) {
  * might not be large enough to store the whole spectrogram, when the requested data falls outside
  * the buffer window, the buffer will drop some data, shift, and start the computation of the
  * demanded portions.
+ *
+ * @property {bool} shouldWait - Indicates if async computations must wait.
+ * @property {Object} config - STFT computations initial configurations
+ * @property {Object} [config.stft] - Contains parameters for STFT computations.
+ * @property {Object} [config.stft.windows_size] - Size of window used on STFT computation.
+ * @property {Object} [config.stft.window_hop] - Size of hop between consecutive windows in
+ * STFT computation.
+ * @property {Object} [config.stft.function_type] - Type of function used in STFT computation.
+ * @property {int} bufferColumnHeight - Number of values in each spectrogram column.
+ * @property {int} bufferColumns - Number of STFTcolumns on STFTBuffer.
+ * @property {int} columnWidth - Number of total STFTcolumns that could be extracted from WAV.
+ * @property {int} startColumn - Number of column where STFTBuffer should start relative
+ * to columnWidth.
+ * @property {int} endColumn - Number of column where STFTBuffer should end relative
+ * to columnWidth.
+ * @property {Object} computed - Contains first and last columns already loaded in STFTBuffer
+ * relative to columnWidth.
+ * @property {Object} tensorBuffer - tf.tensor.
+ * @property {Object} STFTBuffer - Buffer with STFT results.
+ * @property {string} Shifting - String refering if shift is being backward or forward.
  */
 class STFTHandler {
     /**
@@ -91,12 +134,12 @@ class STFTHandler {
      * transform. Options are: 'hann', 'hamming', 'linear'.
      * @param {number} [configs.startTime] - Time from which to start the computation of the STFT.
      */
-    constructor(audioHandler) {
+    constructor(audioHandler, config) {
         this.audioHandler = audioHandler;
         this.shouldWait = false;
 
         // Copy base configuration
-        this.config = { ...INIT_CONFIG };
+        this.config = config;
 
         // Wait for Audio Handler to be ready and then start stft calculation and buffer filling.
         this.waitForAudioHandler()
@@ -199,19 +242,7 @@ class STFTHandler {
         this.resetBuffer();
     }
 
-    /**
-    * A STFTData object stores the information returned by the STFTHandler when requested.
-    * @typedef module:STFTHandler.STFTData
-    * @type {Object}
-    * @property {boolean} start - The number of the first spectrogram column
-    * included in the returned data.
-    * @property {boolean} end - The number of the last spectrogram column included
-    * in the returned data.
-    * @property {boolean} data - An array holding the spectrogram data.
-    * @property {Object} computed - Information on the currently computed columns.
-    * @property {Object} computed.first - Lowest computed column number.
-    * @property {Object} computed.last - Highest computed column number.
-    */
+    
 
     /**
      * Returns data from the STFT buffer as requested by the user.
@@ -232,7 +263,7 @@ class STFTHandler {
      * declaring endColum = startColumn + durationColumns.
      * @param {number} [durationTime] - Similar to durationColumns. Will be translated into
      * durationColumns.
-     * @return {module:STFTHandler.STFTData} An object that contains the requested data or portions
+     * @return {module:STFTHandler/STFTHandler.STFTData} An object that contains the requested data or portions
      * of it, and information on the current state of the STFThandler.
      */
     read({

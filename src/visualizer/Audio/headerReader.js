@@ -1,3 +1,11 @@
+/**
+* File header reader module.
+*
+* @module Audio/headerReader
+* @see module:Audio/headerReader.js
+*/
+
+
 // WAVE format codes.
 const WAVE_FORMAT_PCM = 0x0001;
 const WAVE_FORMAT_IEEE_FLOAT = 0x0003;
@@ -13,11 +21,19 @@ const WAVE_FORMAT_MAP = {
 };
 
 /**
+* @typedef module:Audio/headerReader.chunk
+* @type {Object} 
+* @property {number} index - Chunk initial index in file.
+* @property {string} id - Chunk identifier.
+* @property {number} size - Chunk size.
+* @property {Object} chunk - Chunk data.   
+*/
+
+/**
+* Read information in a file header chunk.
 * @param {Object} array - Array containing data to read.
 * @param {int} index - Initial Index in array to read.
-* @return {Object} - Returns an object with a chunk of data corresponding to data desired
-* and properties of it.
-* Used to read data on RIFF format chunks.
+* @return {module:Audio/headerReader.chunk} 
 */
 function readChunk(array, index) {
     // id fmt subchunk describes  sound's data format
@@ -34,8 +50,9 @@ function readChunk(array, index) {
 }
 
 /**
+* Get chunks in file header.
 * @param {Obejct} array - Array containing RIFF format WAVE file.
-* @return {Object} with all chunks in format of readChunk result.
+* @return {Object} - With chunks contained in WAV header.
 */
 function getChunks(array) {
     const chunks = {};
@@ -43,6 +60,7 @@ function getChunks(array) {
     let index = 0;
     while (index < 10000) { // constant to avoid method to repeat inside audio data.
         const chunkInfo = readChunk(array, index);
+        console.log('chunkInfo', chunkInfo);
         chunks[chunkInfo.id] = chunkInfo;
         if (chunkInfo.id === 'data') break;
         index += 8 + chunkInfo.size;
@@ -50,12 +68,24 @@ function getChunks(array) {
     return chunks;
 }
 
+
 /**
+* Format info in header.
+* @typedef module:Audio/headerReader.formatInfo
+* @type {Object}
+* @property {number} fmtTagCode - WAV format code.
+* @property {number} fmtTag - WAV format name.
+* @property {string} nChannels - Number of channels.
+* @property {number} nSamplesPerSec - Samples per second.
+* @property {number} mAvgBytesPerSec - Average bytes per second.
+* @property {number} nBlockAlign - Bytes number for one sample including all channels.
+* @property {number} wBitsPerSample - Bits per sample.
+*/
+
+/**
+* Data in fmt chunk.
 * @param {Object} array -  WAV array (with RIFF format data).
-* Used to decode data inside fmt chunk.
-* @return {Object} with format chunk info: WAV format, number of channels,
-* samples frequency, average bytes per second, number of blocks align and
-* bits per sample.
+* @return {module:Audio/headerReader.formatInfo} 
 */
 function readFormatInformation(array, size) {
     const formatInfo = {};
@@ -81,8 +111,9 @@ function readFormatInformation(array, size) {
 }
 
 /** 
+* Data in fact chunk (it migth not exist).
 * @param {Object} array - WAV array (with RIFF format data).
-* @return {Object}  with fact chunk info: File size or number of samples. 
+* @return {Object}  Fact chunk info
 */
 function readFactInformation(array) {
     const factInfo = {};
@@ -90,12 +121,22 @@ function readFactInformation(array) {
     return factInfo;
 }
 
+/** 
+* @typedef module:Audio/headerReader.headerInfo
+* @type {Object}
+* @property {string} chunkId - "RIFF".
+* @property {number} chunkSize - Bytes file size.
+* @property {string} wavId - "WAVE".
+* @property {module:Audio/headerReader.formatInfo} fmt - Format information.
+* @property {Object} fact - Fact information if available.
+* @property {number} dataSize - Data size in bytes.
+* @property {number} dataStart - Data initial byte.
+*/ 
 
 /**
+* Get file header data.
 * @param {Object} array -  WAV array (with RIFF format data).
-* @return {Object} headerInfo - Object containing decoded info.
-* reads WAV chunks and sets results in headerInfo Object, adding dataStart index of WAV,
-* which is index where audio data starts.  
+* @return {module:Audio/headerReader.headerInfo} 
 */
 function headerReader(array) {
     const headerInfo = {};
@@ -117,7 +158,10 @@ function headerReader(array) {
     headerInfo.dataSize = chunks.data.size;
     headerInfo.dataStart = chunks.data.index;
 
+    console.log('headerInfo', headerInfo);
+
     return headerInfo;
 }
+
 
 export default headerReader;

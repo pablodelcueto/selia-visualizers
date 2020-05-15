@@ -1,24 +1,27 @@
 import React from 'react';
 import VisualizerBase from '../VisualizerBase';
-import Artist from './Artist/artist2';
+import Artist from './Artist/artist';
 import STFTHandler from './STFTHandler/STFTHandler';
 import AudioFile from './Audio/audioFile';
 import Reproductor from './Audio/reproductor';
 import Tools from './Tools';
 
-/** */
-
-const config = {
-    STFT: {
-        window_size: 512,
-        hop_length: 256,
+/** STFT configurations */
+const INIT_CONFIG = {
+    stft: {
+        window_size: 1024,
+        hop_length: 1024 * 0.25,
         window_function: 'hann',
-        scale: 'log',
     },
-    startWAVindex: 0,
-    initialSecondsPerWindow: 10,
+    startTime: 0.0,
 };
 
+/** Seconds per canvas frame */
+const INITIAL_SECONDS_PER_WINDOW = 10;
+
+/**
+* @class 
+*/
 
 class Visualizer extends VisualizerBase {
     // name = "Spectrum visualizer";
@@ -27,13 +30,13 @@ class Visualizer extends VisualizerBase {
     // configuration_schema = "longer story";
 
     init() {
-        this.config = config;
+        this.config = INIT_CONFIG;
         // Class dealing with raw audio file. 
         this.audioFile = new AudioFile(this.itemInfo.url);
         // Audio Reproduction class
         this.audioReproductor = new Reproductor(this.audioFile);
         // Class computing the Discrete Fourior Transform of the WAV file
-        this.STFTRetriever = new STFTHandler(this.audioFile);
+        this.STFTRetriever = new STFTHandler(this.audioFile, INIT_CONFIG);
        
         this.canvasContainer = document.getElementById('canvasContainer');
         // Class dealing with webGL and axis responsabilities.
@@ -53,7 +56,7 @@ class Visualizer extends VisualizerBase {
                 this.SVGtransformationMatrix = this.svg.createSVGMatrix()
                     .translate(1 / 2, 0)
                     .scaleNonUniform(
-                        1 / this.config.initialSecondsPerWindow,
+                        1 / INITIAL_SECONDS_PER_WINDOW,
                         2 / this.audioFile.mediaInfo.sampleRate,
                     );
                 this.initMatrix = this.SVGtransformationMatrix;
@@ -345,7 +348,7 @@ class Visualizer extends VisualizerBase {
 
         this.scale(factorPoint);
         this.translatePointToLeft(this.createPoint(rectangle.x, rectangle.y));
-        this.artist.quitZoomingBox();
+        this.artist.axisHandler.isZooming = false;
     }
 
     /**
@@ -472,7 +475,7 @@ class Visualizer extends VisualizerBase {
             },
             startTime: this.leftBorderTime(),
         };
-        this.config.STFT.window_function = newWindowFunction;
+        this.config.stft.window_function = newWindowFunction;
         this.STFTRetriever.setConfig(conf);
         this.artist.forcingDraw = true;
     }
@@ -488,7 +491,7 @@ class Visualizer extends VisualizerBase {
             },
             startTime: this.leftBorderTime(),
         };   
-        this.config.STFT.window_size = newWindowSize;
+        this.config.stft.window_size = newWindowSize;
         this.STFTRetriever.setConfig(conf);
         this.artist.forcingDraw = true;
     }
@@ -504,6 +507,7 @@ class Visualizer extends VisualizerBase {
             },
             startTime: this.leftBorderTime(),
         };
+        this.config.stft.hop_length = newWindowHop;
         this.STFTRetriever.setConfig(conf);
         this.artist.forcingDraw = true;
     }

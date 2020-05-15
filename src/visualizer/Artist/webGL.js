@@ -1,15 +1,30 @@
+/**
+* Sketching module.
+*
+* @module Artist/webGL
+* @see module:visualizer/Artist/webGL
+*/
 import {
     VERTEX_SHADER, VERTEX_LOADING_SHADER,
     FRAGMENT_SHADER, FRAGMENT_LOADING_SHADER,
 } from './Shaders/loadingShaders';
 import colormapImage from './colormaps.png';
 
+    
 /**
-* @param {Object} gl- webGL context of the visualizerCanvas
+* Object with attribute and uniform locations for background program.
+* @typedef module:Artist/webGL.backgroundLocations
+* @type {Object} 
+* @property {number} positionLocation - gl attribute location.
+* @property {number} matrixUniformLocation - gl uniform location.
+*/
+
+/**
+* Links shaders source to a webGL program.
+* @param {Object} gl - webGL context.
 * @param {Object} program - webGL program.
 * @param {string} vertexSource - source for the webGL vertexShader linked to program.
 * @param {string} fragmentSource -source for the webGL fragmentShader linked to program.
-* Execute the basic webGL comands to run a GL program.
 */
 function shadersInit(gl, program, vertexSource, fragmentSource) {
     if (!gl) {
@@ -41,15 +56,13 @@ function shadersInit(gl, program, vertexSource, fragmentSource) {
     gl.useProgram(program);
 }
 
-
-
-function setupBackgroundMatrix(gl, program, locations, matrix) {
-    const matrixLocation = locations.matrixUniformLocation;
-    gl.uniformMatrix3fv(matrixLocation, false, matrix)
-}
-    
-
-function setupBackgroundProgramLocations(gl, program) {
+/**
+* Gets background program locations.
+* @param {Object} gl - webGL context.
+* @program {Object} program -Program to load locations from.
+* @return {Object}  Object with attribute and uniform locations given by webGL background program.
+*/
+function getBackgroundProgramLocations(gl, program) {
     const position = gl.getAttribLocation(program, 'al_position');
     const matrixUniform = gl.getUniformLocation(program, 'u_matrix');
 
@@ -57,21 +70,12 @@ function setupBackgroundProgramLocations(gl, program) {
         positionLocation: position,
         matrixUniformLocation: matrixUniform,
     };
-
-    // gl.bindBuffer(gl.ARRAY_BUFFER, verticesBuffer);
-    // gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-    // gl.enableVertexAttribArray(positionLocation);
-    // gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
-    // gl.drawArrays(gl.TRIANGLES, 0, 3);
-
 }
 
 /**
-* @param {Object} gl - webGL context of the visualizerCanvas.
-* @param {int} textureCoordinatesLocations - JS variable with memory location of
-* a_texcoord, attribute with the vertices defining the bounding box and orientation
-* of the spectrogram texture.
-* Sets the typedArray vertices as such attribute.
+* Sets texture abstact coordinates defining shape and orientation to its respective location.
+* @param {Object} gl - webGL context.
+* @param {int} textureCoordinatesLocations - Abstract texture coordinates location.
 */
 function setupTextureCoordinatesBuffer(gl, textureCoordinatesLocation) {
     const vertices = new Float32Array([
@@ -90,11 +94,34 @@ function setupTextureCoordinatesBuffer(gl, textureCoordinatesLocation) {
 }
 
 /**
-* @param {Object} gl - webGL context of the visualizerCanvas.
-* @param {Object} colorImage - bmp image used to define the colorMaps.
-* @param {Object} colorTexture - webGL texture containing colorImage.
+* Binds texture unit 0 with texture.
+* @param {Object} gl - webGL context.
+* @param {Object} texture - webGL texture (will cointain stft results).
 */
-function setupColorTextureImage(gl, colorImage, colorTexture) {
+function bindArrayTexture(gl, texture) {
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+}
+
+/**
+* Binds textures unit 1 with texture.
+* @param {Object} gl - webGL context.
+* @param {Object} texture - webGL texture.
+* @param {Object} location - Corresponding to the memory location of the colorTexture.
+*/
+function bindColorTexture(gl, texture, location) {
+    gl.uniform1i(location, 1); // texture unit 1
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+}
+
+/**
+* Sets bmp image to extract color maps as texture.
+* @param {Object} gl - webGL context.
+* @param {Object} colorImage - bmp image used to define the colorMaps.
+* @param {Object} colorTexture - webGL texture created to contain colorImage.
+*/
+function setupImageAsColorTexture(gl, colorImage, colorTexture) {
     gl.bindTexture(gl.TEXTURE_2D, colorTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -112,46 +139,44 @@ function setupColorTextureImage(gl, colorImage, colorTexture) {
 }
 
 
-/**
-* @param {Object} gl - webGL context of the visualizerCanvas.
-* @param {Object} texture - webGL texture cointaining stft results.
-* Actives texture unit 0 and bind in with texture variable.
-*/
-function bindArrayTexture(gl, texture) {
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-}
-
-/**
-* @param {Object} gl - webGL context of the visualizerCanvas.
-* @param {Object} texture - webGL texture.
-* @param {Object} textureLocation - Corresponding to the memory location of the texture.
-* Defines textureLocation unit  as 1 and binds texture to that unit.
-*/
-function bindColorTexture(gl, texture, textureLocation) {
-    gl.uniform1i(textureLocation, 1); // texture unit 1
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-}
-
-
 //--------------------------------------------------------------------------
 
-
-export default class webGLChalan {
-    /**
-    * Class used to handle the webGL actiona on the visualizerCanvas.
+/**
+* Class used to handle the webGL actions on the visualizerCanvas.
+* Create two programs using webGL context. backgroundProgram takes care of sketching gray 
+* backgraound each time specProgram fills texture with new data for the spectrogram.
+* @class
+* @property {Object} specProgram - webGL program dealing with spectrogram layer.
+* @property {Object} backgroundProgram - webGL program dealing with background layer.
+* @property {Object} gl - webGL context.
+* @property {Object} texture - To fill with STFT values.
+* @property {Object} colorImage - bmp image.
+* @property {Object} colorTexture - colorImage texture.
+* @property {Object} backgroundLocations - backgroundProgram locations.
+* @property {int} positionLocation - specProgram position attribute location.
+* @property {int} texcoordLocation - specProgram texture coordinates attribute location. 
+* @property {int} colorTextureLocation - specProgram colorTexture uniform location.
+* @property {int} matrixUniform - specProgram matrix transformation uniform location.
+* @property {Number} columnUniform - specProgram column uniform location for color map.
+* @property {Number} infFilterUniform - specProgram inferior filter uniform location.
+* @property {Number} supFilterUniform - specProgram superior filter uniform location.
+*/
+class webGLHandler {
+    /** 
+    * Creates a webGL handler.
+    * @constructor 
+    * @param {Object} canvas - webGL context canvas.
     */
     constructor(canvas) {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl');
         this.adjustCanvasViewport();
-        this.init();
+        this.initSpecProgram();
         this.initBackgroundProgram();
     }
 
     /**
-    * Defines webGl viewport
+    * Adjust webGl viewport
     */
     adjustCanvasViewport() {
         this.gl.viewport(
@@ -162,10 +187,12 @@ export default class webGLChalan {
         );
     }
 
-    
-    init() {
-        this.program = this.gl.createProgram();
-        shadersInit(this.gl, this.program, VERTEX_SHADER, FRAGMENT_SHADER);
+    /**
+     * Initialize specProgram.
+    */
+    initSpecProgram() {
+        this.specProgram = this.gl.createProgram();
+        shadersInit(this.gl, this.specProgram, VERTEX_SHADER, FRAGMENT_SHADER);
         // Texture containing results of stft.
         this.texture = this.gl.createTexture();
         // Texture containing image for colorMap
@@ -179,16 +206,25 @@ export default class webGLChalan {
         this.setMaxFilter(1);
     }
 
+    /**
+    * Initializer backgroundProgram.
+    */
     initBackgroundProgram() {
-        this.loadingProgram = this.gl.createProgram();
-        shadersInit(this.gl, this.loadingProgram, VERTEX_LOADING_SHADER, FRAGMENT_LOADING_SHADER);
+        this.backgroundProgram = this.gl.createProgram();
+        shadersInit(this.gl, this.backgroundProgram, VERTEX_LOADING_SHADER, FRAGMENT_LOADING_SHADER);
         this.verticesBuffer = this.gl.createBuffer();
-        this.backgroundLocations = setupBackgroundProgramLocations(this.gl, this.loadingProgram);
+        this.backgroundLocations = getBackgroundProgramLocations(this.gl, this.backgroundProgram);
         this.matrixUniform2 = this.backgroundLocations.matrixUniformLocation;
     }
 
-    setBackgroundVertices(finalTime, maxFrequency, transformationMatrix) {
-        this.gl.useProgram(this.loadingProgram);
+    /**
+    * Draws gray background.
+    * @param {number} finalTime - finalTime loaded on specProgram texture.
+    * @param {number} maxFrequency - maxFrequency loaded on specProgram texture.
+    * @param {Object} transformationMatrix - Matrix uniform loaded in specProgram.
+    */
+    drawBackground(finalTime, maxFrequency, transformationMatrix) {
+        this.gl.useProgram(this.backgroundProgram);
         const positionLocation = this.backgroundLocations.positionLocation;
         const positions = new Float32Array([
             0, -maxFrequency,
@@ -207,47 +243,45 @@ export default class webGLChalan {
     }
 
     /**
-    * Creates js variables for webgl attributes and uniforms locations.
+    * Set variables to access the adress for webgl attribute and uniform locations used in specProgram.
     */
     setLocations() {
-        this.positionLocation = this.gl.getAttribLocation(this.program, 'a_position');
+        this.positionLocation = this.gl.getAttribLocation(this.specProgram, 'a_position');
         // coordinates and orientation of the shape bounded to texture (2 triangles)
-        this.texcoordLocation = this.gl.getAttribLocation(this.program, 'a_texcoord');
+        this.texcoordLocation = this.gl.getAttribLocation(this.specProgram, 'a_texcoord');
 
-        this.textureLocation = this.gl.getUniformLocation(this.program, 'u_texture');
-        this.colorTextureLocation = this.gl.getUniformLocation(this.program, 'u_color');
+        this.textureLocation = this.gl.getUniformLocation(this.specProgram, 'u_texture');
+        this.colorTextureLocation = this.gl.getUniformLocation(this.specProgram, 'u_color');
 
         // matrix transformation
-        this.matrixUniform = this.gl.getUniformLocation(this.program, 'u_matrix');
-        // this.matrixUniform2 = this.gl.getUniformLocation(this.loadingProgram, 'u_matrix');     
+        this.matrixUniform = this.gl.getUniformLocation(this.specProgram, 'u_matrix');
+        // this.matrixUniform2 = this.gl.getUniformLocation(this.backgroundProgram, 'u_matrix');     
         // number of line in the colorMap image
-        this.columnUniform = this.gl.getUniformLocation(this.program, 'u_colorMap');
+        this.columnUniform = this.gl.getUniformLocation(this.specProgram, 'u_colorMap');
         // object with inferior and superior colorMap limits
-        // this.limitsUniform = this.gl.getUniformLocation(this.program, 'u_limits');
-        this.infFilterUniform = this.gl.getUniformLocation(this.program, 'u_minLim');
-        this.supFilterUniform = this.gl.getUniformLocation(this.program, 'u_maxLim');
+        // this.limitsUniform = this.gl.getUniformLocation(this.specProgram, 'u_limits');
+        this.infFilterUniform = this.gl.getUniformLocation(this.specProgram, 'u_minLim');
+        this.supFilterUniform = this.gl.getUniformLocation(this.specProgram, 'u_maxLim');
     }
-
+ 
     /**
-    * First it binds the colorTexture to the location in shaders and then fill with data provided by
-    * colorImage.
-    * Then binds the texture containing array data with the texture unit that will be used later on
-    * and fill that texture and set it with shape and orientation
+     * Sets spectrogram textures, the one asigning stft values to (time,frequency) coordinates and the other 
+     * asigns color to those values.
     */
     setTextures() {
-        this.gl.useProgram(this.program);
+        this.gl.useProgram(this.specProgram);
         bindColorTexture(this.gl, this.colorTexture, this.colorTextureLocation);
-        setupColorTextureImage(this.gl, this.colorImage, this.colorTexture);
+        setupImageAsColorTexture(this.gl, this.colorImage, this.colorTexture);
         bindArrayTexture(this.gl, this.texture);
         setupTextureCoordinatesBuffer(this.gl, this.texcoordLocation);
     }
  
     /**
-    * @param {number} initTime - time corresponding to left border in Canvas
-    * @param {number} finalTime - time corresponding to rigth border in Canvas
-    * Positions the texture  such that [initTime,finalTime] occupies the whole
-    * canvas base after matrix multiplication.
-    * Complete frequencies range is loaded in texture. 
+    * Positions the texture in order to appear on canvas.
+    * Complete frequencies range is always loaded on texture.
+    * @param {number} initTime - time corresponding to initial time in texture.
+    * @param {number} finalTime - time corresponding to final time in texture.
+    * @param {number} maxFrequency - Highest frequency in stft computations.
     */
     setupPositionBuffer(initTime, finalTime, maxFrequency) {
         const positionBuffer = this.gl.createBuffer();
@@ -266,11 +300,11 @@ export default class webGLChalan {
     }
 
     /**
+    * Fills the texture containing the results of the stft. These texture will
+    * be used to obtain a color from the colorMap for each time and frequency pair.
     * @param {array} textureArray - Contains stft data to load on texture.
     * @param {int} width - The number of points in the base of the texture.
     * @param {int} height - The number of points in the height of the texture.
-    * Fills the texture containing the results of the stft. Those textures will
-    * be used to obtain a color from the colorMap to each time and frequency.
     */
     setupArrayTexture(textureArray, width, height) {
         this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -293,27 +327,29 @@ export default class webGLChalan {
     }
 
     /**
+    * Draws part of spectrogram matching matrix transformation results.
     * @param {Object} transformationMatrix - Matrix transformation corresponding to
-    * translations and scales in the time x frequencies space.
+    * translations and scales in the [Time, Frequencies] space.
     */
     draw(transformationMatrix) {
-        this.gl.useProgram(this.program);
+        this.gl.useProgram(this.specProgram);
         this.gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
         // Draw the geometry.
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
     /**
-    * @param {number} newColumn - number between 0 and 1 used to define the line of the
-    * colorMap image.
-    * The range [0,1] is translated to a range of color Maps.
+    * Turns one column from colorTexture the colorMap.
+    * The range [0,1] is translated into a range of colors depending on this column.
+    * @param {number} newColumn - Column number.
     */
     setColor(newColumn) {
         this.gl.uniform1f(this.columnUniform, newColumn);
     }
 
     /**
-    * @param {number} newValue - colorMap inferior filter value.
+    * Set inferior filter value for colorMap.
+    * @param {number} newValue - Inferior value used by colorMap.
     */
     setMinFilter(newValue) {
         this.minFilter = newValue;
@@ -321,14 +357,14 @@ export default class webGLChalan {
     }
 
     /**
-    * @param {number} newValue - colorMap superior filter value.
+    * Set superior filter value for colorMap.
+    * @param {number} newValue - Superior value used by colorMap.
     */
     setMaxFilter(newValue) {
         this.maxFilter = newValue;
         this.gl.uniform1f(this.supFilterUniform, newValue);
     }
 
-    resetTexture() {
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    }
 }
+
+export default webGLHandler;

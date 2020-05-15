@@ -1,14 +1,44 @@
+/**
+* Audio file reader module.
+*
+* @module Audio/audioFile
+* @see module:Audio/audioFile.js
+*/
 import headerReader from './headerReader';
 
+ /**
+* A audioData object stores the information returned by the audioFile when requested.
+* @typedef module:Audio/audioFile.audioData
+* @type {Object}
+* @property {int} start - The number of the first buffer index
+* included in the returned data.
+* @property {int} end - The number of the last buffer index
+* in the returned data.
+* @property {Object} data - An array holding the raw data.
+* @property {int} lastIndex - Last buffer index already loaded with audio data. 
+*/
 
+/** Audio maximum bytes size. */
 const MAX_FILE_SIZE = 50000000; // 50 MB
+/** Audio minimum bytes size. */
 const MINIMUM_DATA_SIZE = 10240; // 10.24 KB
+/** Time between header revisions. */
 const CHECK_HEADER_DELAY = 5;
+/** Maximun number of tries at file reading. */
 const MAX_TRIES_AUDIO_READ = 10000;
 
-export default class AudioFile {
+/**
+* Class serving audio data from external direction to STFTHandler.
+* This class waits until WAV header has been readed to start serving audio data.
+* @class
+* @property {module:Audio/audioFile.mediaInfo} mediaInfo - WAV configurations.
+* @property {Object} rawDataArray - Array with WAV data. 
+* @property {number} loadingProgress - File percentage loaded in rawDataArray.
+*/
+class AudioFile {
     /**
-    * This class waits until header in WAV file has been read and then it starts reading the whole file
+    * Constructs an AudioFile object.
+    * @constructor
     * @param {string} url - WAV file url.
     */
     constructor(url) {
@@ -26,7 +56,7 @@ export default class AudioFile {
     }
 
     /**
-    * Starts reading data on url.
+    * Starts reading data from url.
     * @param {string} url - WAV file url.
     */
     startLoading(url) {
@@ -37,20 +67,35 @@ export default class AudioFile {
             });
     }
 
+    /**
+    * Checks if buffer finished loading audio data.
+    * @param {boolean} True in case it has finished.
+    */
     isDone() {
         return this.isDone;
     }
 
+/** 
+* Media info object stores information about the audio file format.
+* @typedef module:Audio/audioFile.mediaInfo
+* @type {Object}
+* @property {number} totalSize - File total size in bytes.
+* @property {number} sampleRate - Number of samples per second.
+* @property {number} channels - Number of channels.
+* @property {number} sampleSize - Bits per sample.
+* @property {number} dataStart - Data starting byte.
+* @property {number} size - Data size in bytes.
+* @property {number} durationTime - Audio file duration time.
+*/
+
     /**
-    * @return {Object} Object containing WAV info: totalSize, sampleRate, channels, sampleSize,
-    * dataStart, size, durationTime.
-    * 
+    * Extract file header information.
+    * @return {module:Audio/audioFile.mediaInfo} 
     */
     readHeader() {
         const header = headerReader(this.rawDataArray);
         const { fmt } = header;
         const duration = (8.0 * header.dataSize) / (fmt.nChannels * fmt.wBitsPerSample * fmt.nSamplesPerSec);
-
         return {
             totalSize: header.chunkSize + 8,
             sampleRate: fmt.nSamplesPerSec,
@@ -63,37 +108,40 @@ export default class AudioFile {
     }
 
     /**
+    * WAV index matching given time and channel.
     * @param {number} time - Time.
-    * @param {int} channel - Specifies number of channel requested.
-    * @return {int} data array index matched with time in requested channel.
+    * @param {int} channel - Audio channel.
+    * @return {int} WAV index.
     */
     getIndex(time, channel) {
         if (!(channel)) channel = 0;
 
-        const index = Math.floor(time * this.mediaInfo.sampleRate);
+        const index = this.getWavIndexFromTime(time);
         return index * this.mediaInfo.channels + channel;
     }
 
     /**
+    * WAV index matching time.
     * @param {number} time - Time.
-    * @return {int} WAV index matched with time.
+    * @return {int} WAV index.
     */
     getWavIndexFromTime(time) {
         return Math.floor(time * this.mediaInfo.sampleRate);
     }
 
     /**
+    * Audio time matching WAV index.
     * @param {int} index - WAV index.
-    * @return {number} time of audio matching index.
+    * @return {number} Audio time.
     */
     getTime(index) {
         return index / this.mediaInfo.sampleRate;
     }
 
     /**
-    * @param {int} bufferIndex - WAV index.
-    * @return {int} first WAV index composing bufferIndex value.
-    * Each buffer value is composed of 8 values in WAV, buffer is Uint8Array.
+    * Get WAV index from raw file buffer index.
+    * @param {int} bufferIndex - Buffer index value.
+    * @return {int} WAV index matching bufferIndex value.
     */
     bufferIndexToWavIndex(bufferIndex) {
         return Math.floor(
@@ -102,13 +150,15 @@ export default class AudioFile {
     }
 
     /**
-    * @return {int} WAV index corresponding to last  value loaded in buffer.
+    * Get last WAV index loaded in buffer.
+    * @return {int} WAV index.
     */
     getLastWavIndex() {
         return this.bufferIndexToWavIndex(this.lastIndex);
     }
 
     /**
+    * Answers back if WAV index is already ready to read inside buffer.
     * @param {int} index - WAV index.
     * @return {boolean} True in case WAV index value has already been loaded to buffer.
     */
@@ -117,6 +167,7 @@ export default class AudioFile {
     }
 
     /**
+    * Checks if index exists in file.
     * @param {int} index - index number.
     * @return {boolean} True in case index number is one of WAV file.
     */
@@ -125,14 +176,20 @@ export default class AudioFile {
     }
 
     /**
-    * @param {Object} Contains different posibilities to request data. It could be for
-    * example: initialIndex and finalIndex, or in could be initialIndex and duration in Time.
-    * It can also specify channel requested.
-    * @return {Object} With initial and final index from data obtained, data and value of last
-    * buffer index.
-    * Used to extract data in buffer.
+    * Extracts audio data from buffer.
+    *
+    * It migth return just the loaded fraction of the requested data.
+    *
+    * @param {number} [startIndex] - First buffer index in requested slice.
+    * @param {number} [startTime] - Initial time in requested slice. Alternative to startIndex.
+    * @param {number} [endIndex] - Final buffer index in requested slice.
+    * @param {number} [endTime] - Final time in requested slice. Alternative to endIndex.
+    * @param {number} [durationIndex] - Slice length of requested data.
+    * @param {number} [durationTime] - Time length of requested data. Alternative to durationIndex.
+    * @param {number} [channel] - Requested audio channel. 
+    * @return {module:Audio/audioFile.audioData} An objecct that contains results of requested data and indicators
+    * specifying initial index and final index of returned data.
     */
-    /* eslint-disable no-param-reassign */
     read({
         startIndex = 0,
         startTime = null,
@@ -185,14 +242,12 @@ export default class AudioFile {
             lastIndex: lastBufferIndex,
         };
     }
-    /* eslint-enable no-param-reassign */
 
     /**
     * @param {int} start - buffer index to start slicing buffer.
     * @param {int} end - buffer index to end slicing buffer.
     * @return {Object} - subBuffer of buffer from start to end.
     */
-    /* eslint-disable no-param-reassign */
     getSlice(start, end) {
         const [dataStart] = [this.mediaInfo.dataStart];
         const [sampleSize] = [this.mediaInfo.sampleSize];
@@ -211,10 +266,10 @@ export default class AudioFile {
             return new BigInt64Array(this.rawDataArray.slice(start, end).buffer);
         }
     }
-    /* eslint-enable no-param-reassign */
 
 
     /**
+    * Checks if media info is ready.
     * @return {boolen} False if mediaInfo is missing or if buffer hasn't reach a minimum size.
     */
     isReady() {
@@ -223,9 +278,9 @@ export default class AudioFile {
     }
 
     /**
+    * Fills mediaInfo data and streams data from server into rawDataArray.
     * @param{Object} stream - Flow of data from url.
-    * Asynchronously data is streamed from server and set into audioBuffer this.rawDataArray.
-    * It also computes loading progress.
+    * @async
     */
     async readStream(stream) {
         while (true) {
@@ -233,6 +288,7 @@ export default class AudioFile {
 
             if (done) { // waits untill audio buffer is filled or data is over.
                 this.done = true;
+                console.log('mediaInfo', this.mediaInfo);
                 break;
             }
 
@@ -251,7 +307,7 @@ export default class AudioFile {
     }
 
     /**
-    * Keeps checking every CHECK_HEADER_DELAY if buffer is ready to start asking information to it.
+    * Waits until buffer can serve data.
     */
     waitUntilReady() {
         let tries = 0;
@@ -276,3 +332,5 @@ export default class AudioFile {
         });
     }
 }
+
+export default AudioFile;

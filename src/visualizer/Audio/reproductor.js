@@ -1,38 +1,55 @@
 /**
-* @param {object} audioFile - Class uncoding wav file.
-* This class is used to reproduce wav file in sync with a visualizer animation.
+* Audio player module.
+*
+* @module Audio/reproductor
+* @see module:Audio/reproductor.js
 */
 
-export default class Reproductor {
+/**
+* Class used to define and use an audioContext for audioFile.
+* This class is used to reproduce wav file in synchronization with an animation.
+* @class 
+* @property {Object} audioFile - Audio file.
+* @property {Object} audioCtx - AudioContext.
+*/
+class Reproductor {
+    /**
+    * Creates a Reproductor Object.
+    * @constructor
+    * @param {object} audioFile - Class uncoding wav file.
+    */
     constructor(audioFile) {
         this.audioFile = audioFile;
         // boolean used to give several actions to play/pause button.
-        this.isPlaying = false;
         this.init();
     }
 
     /**
-    * creates a proper audioContext
+    * Creates the audioContext.
     */
     init() {
         this.audioCtx = new AudioContext();
+
     }
 
     /**
-    * @return time passed since autioContext was initialized.
+    * Time passed since autioContext was initialized.
+    * @return {number}
     */
     getTime() {
         return this.audioCtx.currentTime;
     }
 
     /**
+    * Start reproduction.
+    * AudioContext decode data into a decodedBuffer and send it to destination by setting the result
+    * in bufferSource which has to be initialized every call.
     * @param {number} initialTime - Reproduction initial time.
-    * @param {function} callback -
-    * audioContext decode data into a decodedBuffer and sets the result in audioContext bufferSource
-    * which is played after connecting with audioContext.destination.
-    * At the end, callback is executed.
+    * @param {function} callback - Animation function.
+    * @async
     */
-    readAndReproduce(initialTime, callback) {      
+    reproduce(initialTime, callback) {      
+        this.source = this.audioCtx.createBufferSource();
         const checkIfLoaded = () => {
             if (this.audioFile.isDone()) {
                 this.audioCtx.decodeAudioData(
@@ -54,23 +71,11 @@ export default class Reproductor {
     }
 
     /**
-    * @param {number} initialTime - Initial time of sound reproduction.
-    * @param {function} callback - Visualizer animation in sync with audio reproduction.
-    * Every time reproductor stops, context need to create a new source and fill it with decoded data.
-    */
-    reproduce(initialTime, callback) {
-        if (this.source != null) {
-            this.source.stop();
-        }
-        this.source = this.audioCtx.createBufferSource();
-        this.readAndReproduce(initialTime, callback);
-    }
-
-    /**
-    * Used to stop audio reproduction.
+    * Stops audio reproduction.
     */
     stop() {
         this.source.stop();
     }
-
 }
+
+export default Reproductor;

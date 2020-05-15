@@ -1,87 +1,69 @@
-/**
-* AxisHandler module.
+/** 
+* Axis module.
 *
-*@module AxisHandler
-*@see module: visualizer/Artist/axis.js
+* @module Artist/axis
+* @see module: Artist/axis.js
 */
 
 /**
+* A relativePosition Object containng a time and its canvas pixel coordinates.
+* @typedef module:Artist/axis.relativePosition
+* @type {Object}
+* @property {number} time - Time value.
+* @property {number} position - Relative x-position in canvas corresponding to time.
+*/
+
+/** Number of mark lines on vertical axis. */
+const FREQUENCY_LINES = 50;
+/** Maximum pixels between two consecutive marks in horizontal axis. */
+const MAX_PIXELS_MARK_STEP = 400;
+/** Minimum pixels between two consecutive marks in horizontal axis. */
+const MIN_PIXELS_MARK_STEP = MAX_PIXELS_MARK_STEP / 10;
+
+/**
+* Rounds a value to nearest number with only ceros after precision number of digits.
 * @param {int} precision - Number of digits after point.
 * @param {number} value - Value to round.
+* @param {return} Value precision rounded.
 */
 function roundValue(precision, value) {
     return Math.round(value * 10 ** precision) / 10 ** precision.toString();
 }
 
 /**
-* Class that handles sketching the axis lines and values.
-* The class constucts a second canvas for drawing axis using 2d-context. in that canvas.
-* Also takes care of drawing rectangles inside second canvas.
+* Class used to sketch the axis lines and values.
+* @class
+* @property {boolean} isZooming - Control variable to avoid clearing context.
+* @property {number} audioLentgh - Time audio duration.
+* @property {number} precision - Digits precision indicator.
 */
-
-export default class AxisConstructor {
+class Axis {
     /**
     * Creates an axisHandler Object
-    * @param {Object} canvas - The canvas with another graphics context under the one with axis.
-    * @param {Object} canvasContainer - Canvas container div where a second div with another context
-    * will be paired.
+    * @constructor
+    * @param {class} visualizer - Class with time-canvas translator.
+    * @param {Object} canvas - The 2d-context canvas.
     */
-    constructor(canvas, canvasContainer) {
-        this.canvasContainer = canvasContainer;
-        this.visualizerCanvas = canvas;
-        // Used to construct single rectangles
+    constructor(visualizer, canvas, context) {
+        this.visualizer = visualizer;
+        this.canvas = canvas;
+        this.ctx = context;
         this.isZooming = false;
         this.audioLength = 1;
-        // Data used by 2d-context to draw zooming Rectangles
-        this.rect = {
-            x: 0,
-            y: 0,
-            baseLength: 0,
-            heightLength: 0,
-        };
+        this.precision = 0;
         this.init();
     }
 
     /**
-    * Constructs a second canvas and sets a 2d-context to it.
+    * Sketch central vertical line and axis visibility rectangles.
     */
     init() {
-        this.constructCanvas();
-        this.ctx = this.canvas.getContext('2d');
         this.drawMarkLine();
         this.drawAxisRectangles();
     }
 
     /**
-    * Takes shape attributes from the original canvas and copies them to the canvas
-    * to overlap them properly
-    * It also makes this new Canvas ignorant to events so all the functionality in the
-    * first one could remain.
-    */
-    constructCanvas() {
-        const originalStyle = this.visualizerCanvas.style;
-        this.canvas = document.createElement('canvas');
-        this.canvas.setAttribute('id', '2dCanvas');
-        this.canvasContainer.appendChild(this.canvas);
-        this.resizeAxisCanvas();
-        this.canvas.setAttribute('style', originalStyle.cssText + 'z-index:1; pointer-events:none');
-    }
-
-    /**
-    * Resize the new 2d-context canvas to the same size as visualizer canvas.
-    */
-    resizeAxisCanvas() {
-        const desiredWidth = this.visualizerCanvas.width;
-        const desiredHeight = this.visualizerCanvas.height;
-
-        if (this.canvas.width !== desiredWidth || this.canvas.height !== desiredHeight) {
-            this.canvas.width = desiredWidth;
-            this.canvas.height = desiredHeight;
-        }
-    }
-
-    /**
-    * Draws two rectangles to let scales to be always visible.
+    * Draws shady white rectangles to improve scales visibility.
     */
     drawAxisRectangles() {
         this.ctx.fillStyle = 'rgba(255, 255, 255, .6)';
@@ -91,7 +73,7 @@ export default class AxisConstructor {
     }
 
     /**
-    *Draws the line used to set the x-coordinates axis at the bottom of canvas.
+    *Draws time axis base line.
     */
     drawBaseLine() {
         this.ctx.beginPath();
@@ -103,7 +85,7 @@ export default class AxisConstructor {
     }
 
     /**
-    * Draws the red middle line
+    * Draws the red middle line corresponding to execution time.
     */
     drawMarkLine() {
         this.ctx.beginPath();
@@ -115,36 +97,22 @@ export default class AxisConstructor {
         this.ctx.closePath();
     }
 
-    /**
-    * @param {int} xCoord - Pixel coordinate x for left superior corner of rectangle.
-    * @param {int} yCoord - Pixel coordinate y for left superior corner of rectangle.
-    * @param {int} base - Rectangle base length in pixels.
-    * @param {int} height - Rectangle height length in pixels.
-    * First this method erases the previoulsy drawed rectangle with values in this.rect
-    * then it draws the new rectangle and sets that rectangle as this.rect values.
+    /** 
+    * Draws axis.
+    * @param {number} initialTime - Requested initial time.
+    * @param {number} finalTime - Requested final time.
+    * @param {number} initialFrequency - Requested initial frequency. 
+    * @param {number} finalFrequency - Requested final frequency.
+    * @param {number} zoomFactor - Visualizer matrix transformation time factor.
     */
-    drawZoomRectangle(xCoord, yCoord, base, height) {
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = 'rgba(256,256,256,0.5)';
-        this.isZooming = true;
-        this.ctx.clearRect(
-            this.rect.x - 1,
-            this.rect.y - 1,
-            this.rect.baseLength + 2,
-            this.rect.heightLength + 2,
-        );
-        this.rect = {
-            x: xCoord,
-            y: yCoord,
-            baseLength: base,
-            heightLength: height,
-        };
-        this.ctx.strokeRect(this.rect.x, this.rect.y, this.rect.baseLength, this.rect.heightLength);
+    drawAxis(initialTime, finalTime, zoomFactor, initialFrequency, finalFrequency) {
+        this.computeTimePrecision(zoomFactor);
+        this.adjustHorizontalAxis(initialTime, finalTime);
+        this.adjustVerticalAxis(initialFrequency / 1000, finalFrequency / 1000); // To express in kH.
     }
 
-    /**
-    * @param {boolean} zooming - Boolean used to clear some scales while moving mouse just in case
-    * zooming is false.
+    /** Clears sketched data.
+    * @param {boolean} zooming - Boolean used to avoid clear zooming rectangles.
     */
     clear(zooming) {
         if (!zooming) {
@@ -156,16 +124,51 @@ export default class AxisConstructor {
     }
 
     /**
-    * Draws the vertical lines and corresponding values in the horizontal Axis.
-    * @param {number} initialTime - First time to appear in the horizontal Axis.
-    * @param {number} timeStep - Time between one time mark and the next one.
-    * @param {int} initialPixelTraslation - Number of pixels to the left of
-    * canvas where initialTime should be positioned.
-    * @param {int} pixelStep - Number of pixels between one time mark and the next one.
-    * @param {int} numberOfTicks - Number of marks in x-Axis inside Canvas.
-    * @param {int} precision - Number of decimals precision in time values
+     * Ajust the temporal axis in the requested range.
+     *
+     * Computes left time and position nearest to requested times and uses those values to compute
+     * initialPixelTraslation, pixelStep, timeStep, and number of ticks.
+     * Calls tickHorizontalScale to sketch the horizontal axis with corresponding values.
+     * @param {Number} initialTime - Requested initial time.
+     * @param {Number} finalTime - Requested final time.
     */
-    drawHorizontalScale(initialTime, timeStep, initialPixelTranslation, pixelStep, numberOfTicks, precision) {
+    adjustHorizontalAxis(initialTime, finalTime) {
+        const leftValues = this.leftTimeAndPositionWithPrecision(initialTime);
+        const rightValues = this.leftTimeAndPositionWithPrecision(finalTime);
+        // Number of pixels between outside precise times.
+        const width = rightValues.relativePosition - leftValues.relativePosition;
+        // const width = this.visualizer.canvas.width;
+        // Total time between outside precise times.
+        const duration = (rightValues.precisionTime - leftValues.precisionTime);
+        // Number of marks fitting on horizontal axis according to duration and precision
+        // considering every time with precision digit gets a mark.
+        const numSteps = duration * 10 ** this.precision;
+        const timeStep = 1 / (10 ** this.precision);
+        const pixelStep = width / numSteps;
+
+
+        this.tickHorizontalScale(
+            leftValues.precisionTime,
+            timeStep,
+            Math.floor(leftValues.relativePosition),
+            pixelStep,
+            numSteps,
+            this.precision,
+        );
+    }
+
+    /**
+     * Draws all the ticks and time values for some of them.
+     *
+     * @param {number} initialTime - First time to appear in the horizontal Axis.
+     * @param {number} timeStep - Time between one time mark and the next one.
+     * @param {int} initialPixelTraslation - Number of pixels to the left of
+     * canvas where initialTime should be positioned.
+     * @param {int} pixelStep - Number of pixels between one time mark and the next one.
+     * @param {int} numberOfTicks - Number of marks in x-Axis inside Canvas.
+     * @param {int} precision - Number of decimals precision in time values.
+    */
+    tickHorizontalScale(initialTime, timeStep, initPixelTranslation, pixelStep, numberOfTicks, precision) {
         let timeValue = initialTime;
         const preciseTimeStep = roundValue(precision, timeStep);
         const tagOffset = (precision < 1 ? 1 : 5);
@@ -184,10 +187,10 @@ export default class AxisConstructor {
                 this.ctx.fillText(
                     roundValue(precision, timeValue),
                     // timeValue,
-                    initialPixelTranslation + i * pixelStep + 3, this.canvas.height - 5,
+                    initPixelTranslation + i * pixelStep + 3, this.canvas.height - 5,
                 );
-                this.ctx.moveTo(initialPixelTranslation + i * pixelStep, this.canvas.height - 30);
-                this.ctx.lineTo(initialPixelTranslation + i * pixelStep, this.canvas.height - 5);
+                this.ctx.moveTo(initPixelTranslation + i * pixelStep, this.canvas.height - 30);
+                this.ctx.lineTo(initPixelTranslation + i * pixelStep, this.canvas.height - 5);
                 // this.ctx.font = (20 - precision * 3).toString() + 'px serif';
                 this.ctx.font = '17px serif';
             }
@@ -197,16 +200,37 @@ export default class AxisConstructor {
         this.ctx.closePath();
     }
 
+     /**
+     * Adjust frequency values in the requested range.
+     *
+     * Computes number of pixels each mark should skip to fill
+     * linearly the vertical Axis and the frequency step for each skip.
+     * Calls tickVerticalScale to sketch values.
+     * @param {number} initialFrequency - Frequency value of the inferior border in sketch.
+     * @param {number} finalFrequency - Frequency value of the superior border in sketch.
+    */
+    adjustVerticalAxis(initialFrequency, finalFrequency) {
+        const frequencyStep = (finalFrequency - initialFrequency) / FREQUENCY_LINES;
+        const pixelStep = this.visualizer.canvas.height / FREQUENCY_LINES;
+        this.tickVerticalScale(
+            initialFrequency,
+            finalFrequency,
+            FREQUENCY_LINES,
+            frequencyStep,
+            pixelStep,
+        );
+    }
+
     /**
+    * Draws all the ticks and frequency values for some of them.
     * @param {number} initialFrequency - Frequency initializing bottom of canvas.
     * @param {number} finalFrequency - Frequency for canvas top.
     * @param {int} numOfTicks - Number of marks or ticks in vertical scale.
-    * @param {number} frequencyStep - Frequency difference between two consecutive marks
+    * @param {number} frequencyStep - Frequency difference between consecutive marks
     * in vertical scale.
-    * @param {int} pixelStep - Number of pixels between two consecutive marks in vertical scale.
-    * Draws all the ticks and then it print 1 frequency value every 5 marks.
+    * @param {int} pixelStep - Number of pixels between consecutive marks in vertical scale.
     */
-    drawVerticalScale(initialFrequency, finalFrequency, numOfTicks, frequencyStep, pixelStep) {
+    tickVerticalScale(initialFrequency, finalFrequency, numOfTicks, frequencyStep, pixelStep) {
         let frequencyValue = initialFrequency;
         this.ctx.beginPath();
         this.ctx.lineWigdth = 0.4;
@@ -236,4 +260,48 @@ export default class AxisConstructor {
         this.ctx.stroke();
         this.ctx.closePath();
     }
+
+    /**
+     * Round time (to the left) to the given precision and return its corresponding canvas position.
+     *
+     * Nearest left time considering digits precision to a given time and its
+     * relative position in canvas.
+     * @param {int} precision - Defines how many digits after decimal point will be considered in
+     * time values.
+     * @param {number} time - Time without considering digits precision.
+     * @return {module:Artist/axis.relativePosition} Left precision time and
+     * its relative position in canvas.
+    */
+    leftTimeAndPositionWithPrecision(time) {
+        const leftPreciseTime = Math.floor(time * (10 ** this.precision)) / (10 ** this.precision);
+        const timePosition = this.visualizer.pointToCanvas(
+            this.visualizer.createPoint(leftPreciseTime, 0),
+        );
+        const relativeLeftValues = {
+            relativePosition: timePosition.x * this.visualizer.canvas.width,
+            precisionTime: leftPreciseTime,
+        };
+        return relativeLeftValues;
+    }
+
+    /**
+    * This method evaluates the distance between consecutive time marks and modifies
+    * precision property so consecutive lines don't get too apart nor too close.
+    * In case zoomOut makes consecutive marks to be too apart,
+    * precision increases so more marks are sketched.
+    * In case zoomIn makes consecutive marks to be too close,
+    * precision decreaces so less marks are sketched.
+    * @param {number} zoomFactor - Visualizer transformation time scale zoom factor.
+    */
+    computeTimePrecision(zoomFactor) {
+        if ((this.visualizer.canvas.width / (10 ** this.precision)) * zoomFactor
+            < MIN_PIXELS_MARK_STEP) {
+            this.precision = this.precision - 1;
+        } else if ((this.visualizer.canvas.width / (10 ** this.precision)) * zoomFactor
+                    > MAX_PIXELS_MARK_STEP) {
+            this.precision = this.precision + 1;
+        }
+    }
 }
+
+export default Axis;

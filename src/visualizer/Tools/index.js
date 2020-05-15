@@ -1,3 +1,9 @@
+/**
+* module for tool box. 
+* @module Tools/index
+* @see module:Tools.index.js
+*/
+
 // This file should be used to code tge component related to the tools needed in visualizator
 import React from 'react';
 import ReactDOM from 'react-dom';
@@ -11,6 +17,12 @@ const menuStyle = {
 const buttonStyle = {
     align: 'left',
     width: '50%',
+    margin: '10px',
+};
+
+const sliderStyle = {
+    align: 'left',
+    width: '90%',
     margin: '10px',
 };
 
@@ -35,6 +47,15 @@ const infoWindowStyle = {
     display: 'none',
 };
 
+/**
+* Creates canvas representing block.
+* @param {Object} props - Properties.
+* @param {number} props.initialTime - Left border canvas time.
+* @param {number} props.finalTime - Rigth border canvas time.
+* @param {number} props.audioDurarion - Audio file duration.
+* @param {number} props.containerLength - Canvas container length.
+* @return {Object} React element.
+*/
 function SliderDiv(props) {
     const initialPixel = (props.initialTime / props.audioDuration) * props.containerLength;
     const pixelLength = props.containerLength
@@ -53,21 +74,36 @@ function SliderDiv(props) {
     )
 }
 
+/**
+* Creates cursor information window.
+* @param {Object} props - Properties.
+* @param {number} props.time - Cursor position time.
+* @param {number} props.frequency - Cursor position frequency.
+* @return {Object} React element.
+*/
 function InfoWindow(props) {
     return (
         <div
             id = "infoWindow"
             style={infoWindowStyle}>
-            <p style={{color: '#ffffff'}}>
+            <p style={{ color: '#ffffff' }}>
                 {props.time}
             </p>
-            <p style={{color: '#ffffff'}}>
+            <p style={{ color: '#ffffff' }}>
                 {props.frequency}
             </p>    
         </div>
     )
 }
 
+/**
+* Creates a functional stripe with a slider div.
+* @param {Object} props - Properties.
+* @param {method} props.onMouseMove - Event Listener.
+* @param {method} props.onMouseUp - Event Listener. 
+* @param {method} props.onMouseDown - Event Listener.
+* @return {Object} React Element.
+*/
 function CanvasSliderDiv(props) {
     return (
         <div
@@ -84,16 +120,211 @@ function CanvasSliderDiv(props) {
     );
 }
 
+/**
+* Creates information window and zooming tool switches.
+* @param {Object} props - Properties.
+* @param {Method} props.switchButton - Activates zooming tool.
+* @param {Method} props.showHideInfoWindow - Show or hide information window.
+* @param {Object} React element.
+*/
+function SwitchButtons(props) {
+    return (
+        <div>
+            <div className="custom-control custom-switch">
+                <input
+                    style={sliderStyle}
+                    type="checkbox"
+                    id="customSwitch1"
+                    className="custom-control-input"
+                    onChange={() => { props.switchButton(); }}
+                />
+                <label className="custom-control-label" htmlFor="customSwitch1">
+                    Zoom Tool.
+                </label>
+            </div>
+            <div className="custom-control custom-switch">
+                <input
+                    style={menuStyle}
+                    type="checkbox"
+                    id="informationWindowSwitch"
+                    className="custom-control-input"
+                    onChange={() => { props.showHideInfoWindow() }}
+                />
+                <label className="custom-control-label" htmlFor="informationWindowSwitch">
+                    Information window.
+                </label>
+            </div>
+        </div>
+    );
+}
+
+/**
+* Creates action buttons.
+* @param {Object} props - Properties.
+* @param {Method} props.revertAction - Returns to previous zoom scale.
+* @param {Method} props.home - Returns to initial time and frequency state.
+* @param {Object} React element.
+*/
+function ActionBottons(props) {
+    return (
+        <div>
+            <button
+                style={buttonStyle}
+                onClick={() => props.revertAction()} >
+                Visualizacion previa
+            </button>
+
+            <button
+                style={buttonStyle}
+                onClick={() => props.home()}
+            >
+                Vista Initial
+            </button>   
+        </div>
+    );
+}
+
+/**
+* Creates menus to modify STFT configurations.
+* @param {Object} props - Properties.
+* @param {Method} props.handleWindowFunctionChange - Sets windowing type. 
+* @param {Method} props.showHideInfoWindow - Show or hide information window.
+* @param {Object} React element.
+*/
+function STFTmenus(props) {
+    return (
+        <div>
+            <select
+                style={menuStyle}
+                onChange={(event) => {
+                    props.handleWindowFunctionChange(event.target.value);
+                }}
+            >
+                <optgroup label="Window Type">
+                    <option value="hann">Hann</option>
+                    <option value="hamming"> Hamming </option>
+                    <option value="float32"> Linear </option>
+                </optgroup>
+            </select>
+
+            <select
+                style={menuStyle}
+                onChange={(event) => {
+                    props.handleWindowSizeChange(event.target.value);
+                }}
+            >
+                <optgroup label="Window Size">
+                    <option value="512">512</option>
+                    <option value="1024">1024</option>
+                    <option value="2048">2048</option>
+                </optgroup>
+            </select>
+
+            <select
+                style={menuStyle}
+                onChange={(event) => {
+                    props.handleWindowHopChange(event.target.value);
+                }}
+            >
+                <optgroup label="Hop Length">
+                    <option value="256">256</option>
+                    <option value="512">512</option>
+                    <option value="1024">1024</option>
+                </optgroup>
+            </select>
+        </div>
+    );
+}
+
+function ColorMenu(props) {
+    return (
+        <div>
+            <select
+                style={menuStyle}
+                onChange={(event) => {props.handleColorMapChange(event.target.value)}}       
+            >
+                <optgroup label="Color map">
+                    <option value="0">Grass</option>
+                    <option value="0.1"> Phanton Grass</option>
+                    <option value="0.2"> Purple Haze </option>
+                    <option value="0.3"> Grays </option>
+                    <option value="0.4"> Fish tank </option>
+                    <option value="0.6"> Pink Floyd</option>
+                    <option value="0.7"> Dark Sunset</option>
+                    <option value="0.8"> Grapes </option>
+                    <option value="0.9"> Kind of Blue  </option>
+                    <option value="1.0"> Magma </option>
+                </optgroup>
+            </select>
+
+        </div>
+    );
+}
+
+function ColorFilters(props) {
+    return (
+        <div>
+            <div>
+                <label style={sliderStyle}>
+                    Filtro inferior:
+                    <input
+                        id="minFilter"
+                        name="minFilter"
+                        style={menuStyle}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        onChange={(event) => props.handleMinFilterChange(event.target.value)}
+                        value={props.lim_inf}
+                    />
+                </label>
+            </div>
+            <div>
+                <label style={sliderStyle}>
+                    Filtro superior:
+                    <input
+                        id="maxFilter"
+                        name="maxFilter"
+                        style={menuStyle}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        onChange={(event) => props.handleMaxFilterChange(event.target.value)}
+                        value={props.lim_sup}
+                    />
+                </label>
+            </div>
+        </div>
+    )
+}    
+
+ 
+function Reproductor(props) {
+    return (
+        <div>
+            <button
+                style={{margin:'10px'}}
+                type="button"
+                className="play"
+                onClick={() => props.reproduce()}
+            >
+                Play/Pause
+            </button>
+        </div>    
+        )
+}
 //--------------------------------------------------------
 
 
-export default class Toolbox extends React.Component {
+class Toolbox extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            window_size: props.config.STFT.window_size,
-            window_function: props.config.STFT.window_function,
-            hop_length: props.config.STFT.hop_length,
+            window_size: props.config.stft.window_size,
+            window_function: props.config.stft.window_function,
+            hop_length: props.config.stft.hop_length,
             color_map: '0.0',
             lim_inf: 0,
             lim_sup: 1,
@@ -104,7 +335,6 @@ export default class Toolbox extends React.Component {
             cursorInfo: { time: 0, frequency: 0 },
         };
 
-        // console.log('tools config', props.config);
         this.props.audioFile.waitUntilReady().then(() => {
             this.setState({ duration: this.props.audioFile.mediaInfo.durationTime });
         })
@@ -157,6 +387,7 @@ export default class Toolbox extends React.Component {
 
     handleColorMapChange(color) {
         this.setState({ color_map: color });
+        console.log('this.state', this.state);
         this.props.modifyColorMap(parseFloat(color));
     }
 
@@ -265,156 +496,44 @@ export default class Toolbox extends React.Component {
                     </div>,
                     this.props.canvasContainer,
                 )}
-                <div className="custom-control custom-switch">
-                    <input
-                        type="checkbox"
-                        id="customSwitch1"
-                        className="custom-control-input"
-                        onChange={() => {
-                            this.props.switchButton();
-                        }}
-                    />
-                    <label className="custom-control-label" htmlFor="customSwitch1">
-                        Zoom Tool
-                    </label>
-                </div>
+                
                 <div>
-                    <button
-                        style={buttonStyle}
-                        onClick={() => this.props.revertAction()}
-                    >
-                        Visualizacion previa
-                    </button>
-
-                    <button
-                        style={buttonStyle}
-                        onClick={() => this.props.home()}
-                    >
-                        Vista Initial
-                    </button>   
+                    <SwitchButtons 
+                        zoomSwitchButton={() => this.props.switchButton()} 
+                        infoSwitchButton={() => this.showHideInfoWindow()} />
                 </div>
 
-                <div className="custom-control custom-switch" >
+                <div>
+                    <ActionBottons 
+                        home={() => this.props.home()}
+                        revertAction={() => this.props.revertAction()} />
+                </div>
 
-                    <input
-                        style={buttonStyle}
-                        type="checkbox"
-                        id="informationWindowSwitch"
-                        className="custom-control-input"
-                        onChange={() => this.showHideInfoWindow()} 
-                    />
-                    <label  className="custom-control-label" htmlFor="informationWindowSwitch">
-                        Information Window
-                    </label>
+                <div>
+                    <STFTmenus
+                        handleWindowFunctionChange={(value) => this.handleWindowFunctionChange(value)}
+                        handleWindowSizeChange={(value) => this.handleWindowSizeChange(value)}
+                        handleWindowHopChange={(value) => this.handleWindowHopChange(value)} />
+                </div>
 
-                </div>    
+                <div>
+                    <ColorMenu
+                        handleColorMapChange={(value) => this.handleColorMapChange(value)}/>
+                </div>
 
-
-                <select
-                    style={menuStyle}
-                    onChange={(event) => {
-                        this.handleWindowFunctionChange(event.target.value);
-                    }}
-                    value={this.state.window_function}
-                >
-                    <optgroup label="Window Type">
-                        <option value="hann">Hann</option>
-                        <option value="hamming"> Hamming </option>
-                        <option value="float32"> Linear </option>
-                    </optgroup>
-                </select>
-
-                <select
-                    style={menuStyle}
-                    onChange={(event) => {
-                        this.handleWindowSizeChange(event.target.value);
-                    }}
-                    value={this.state.window_size}
-                >
-                    <optgroup label="Window Size">
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                        <option value="2048">2048</option>
-                    </optgroup>
-                </select>
-
-                <select
-                    style={menuStyle}
-                    onChange={(event) => {
-                        this.handleWindowHopChange(event.target.value)
-                    }}
-                    value={this.state.hop_length}
-                >
-                    <optgroup label="Hop Length">
-                        <option value="256">256</option>
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                    </optgroup>
-                </select>
-
-
-                <select
-                    style={menuStyle}
-                    onChange={(event) => this.handleColorMapChange(event.target.value)}
-                    value={this.state.color_map}                 
-                >
-                    <optgroup label="Color map">
-                        <option value="0">Grass</option>
-                        <option value="0.1"> Phanton Grass</option>
-                        <option value="0.2"> Purple Haze </option>
-                        <option value="0.3"> Grays </option>
-                        <option value="0.4"> Fish tank </option>
-                        <option value="0.6"> Pink Floyd</option>
-                        <option value="0.7"> Dark Sunset</option>
-                        <option value="0.8"> Grapes </option>
-                        <option value="0.9"> Kind of Blue  </option>
-                        <option value="1.0"> Magma </option>
-                    </optgroup>
-                </select>
-
-                <label style={buttonStyle}>
-                    Filtro inferior:
-                    <input
-                        id="minFilter"
-                        name="minFilter"
-                        style={menuStyle}
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        onChange={(event) => this.handleMinFilterChange(event.target.value)}
-                        value={this.state.lim_inf}
-                    />
-                </label>
-
-                <label style={buttonStyle}>
-                    Filtro superior:
-                    <input
-                        id="maxFilter"
-                        name="maxFilter"
-                        style={menuStyle}
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        onChange={(event) => this.handleMaxFilterChange(event.target.value)}
-                        value={this.state.lim_sup}
-                    />
-                </label>
-
-
+                <div>
+                    <ColorFilters
+                        handleMinFilterChange={(value) => this.handleMinFilterChange(value)}
+                        lim_inf={this.state.lim_inf}
+                        handleMaxFilterChange={(value) => this.handleMaxFilterChange(value)}
+                        lim_sup={this.state.lim_sup} />
+                </div>
                 <div>   
-                    <button
-                        style={{margin:'10px'}}
-                        type="button"
-                        className="play"
-                        onClick={() => this.reproduce()}
-                    >
-                        Play/Pause
-                    </button>
-
+                    <Reproductor reproduce={() => this.reproduce()} />
                 </div>
             </div>
         );
     }
 }
+
+export default Toolbox;
