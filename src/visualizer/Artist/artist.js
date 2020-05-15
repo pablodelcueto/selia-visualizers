@@ -71,7 +71,7 @@ class Artist {
 
     /**
     * Creates a new canvas and two auxiliar classes to draw using glContext and 2dContext.
-    */ 
+    */
     init() {
         this.constructCanvas();
         // Class used to fill proper data in a GL program in order to sketch parts of the
@@ -94,7 +94,7 @@ class Artist {
         this.visualizer.canvasContainer.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
         this.resize2dContextCanvas();
-        this.canvas.setAttribute('style', originalStyle.cssText + 'z-index:1; pointer-events:none');
+        this.canvas.setAttribute('style', `${originalStyle.cssText} z-index:1; pointer-events:none`);
     }
 
     /**
@@ -201,12 +201,15 @@ class Artist {
         return new Promise((resolve, reject) => {
             // Ask stftHandler for data between initial and final times.
             const data = this.stftHandler.read({ startTime: initialTime, endTime: finalTime });
+
             if (data.start - data.end === 0) {
-                reject('Texture is empty');
+                reject(new Error('Texture is empty'));
             }
+
             // Times from the data retrieved by the stftHandler
             const resultInitialTime = this.stftHandler.getTimeFromStftColumn(data.start);
             const resultFinalTime = this.stftHandler.getTimeFromStftColumn(data.end);
+
             // Save computed values to save some ops in the future.
             this.setLoadedData(resultInitialTime, resultFinalTime);
 
@@ -221,6 +224,7 @@ class Artist {
                 resultFinalTime,
                 this.maxFrequency,
             );
+
             resolve();
         });
     }
@@ -247,7 +251,7 @@ class Artist {
     setLoadedData(initialTime, finalTime) {
         this.textureLoadedValues.initialTime = initialTime;
         this.textureLoadedValues.finalTime = finalTime;
-    }    
+    }
 
     /**
     * @param {int} xCoord - Pixel coordinate x for left superior corner of rectangle.

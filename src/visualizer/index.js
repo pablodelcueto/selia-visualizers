@@ -10,8 +10,7 @@ import Tools from './Tools';
 const INIT_CONFIG = {
     stft: {
         window_size: 1024,
-        hop_length: 1024 * 0.25,
-        window_function: 'hann',
+        hop_length: 1024 * 0.25, window_function: 'hann',
     },
     startTime: 0.0,
 };
