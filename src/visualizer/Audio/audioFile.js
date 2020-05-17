@@ -292,6 +292,8 @@ class AudioFile {
             end: endIndex,
             data: array,
             lastIndex: lastBufferIndex,
+            startTime: this.getWavIndexFromTime(startIndex),
+            endTime: this.getWavIndexFromTime(endIndex)
         };
     }
 

@@ -17,7 +17,7 @@ import AxisDrawer from './axis';
  * a WebGLHandler and an AxisDrawer. The first one used to sketch via a webGL conext
  * on the visualizer canvas, and the latter sketch the horizontal and vertical axis using
  * 2d context of a new canvas positioned above the visualizer canvas.
- * .
+ *
  * @class
  *
  * When artist is commanded to draw, it first requests data from the
@@ -49,16 +49,7 @@ class Artist {
     constructor(visualizer, stftHandler) {
         this.stftHandler = stftHandler;
         this.visualizer = visualizer;
-        // // Class used to fill proper data in a GL program in order to sketch parts of the
-        // // spectrogram in a webGL context.
-        // this.glHandler = new WebGLhandler(visualizer.canvas);
-        // // Class used to sketch axis using a second canvas with a 2d context.
-        // this.axisHandler = new AxisDrawer(visualizer, visualizer.canvas, visualizer.canvasContainer);
-        // Data used to avoid extra computations.
-        this.textureLoadedValues = {
-            initialTime: 0,
-            finalTime: 0,
-        };
+
         // Data used to draw zoom rectangles.
         this.rect = {
             x: 0,
@@ -66,19 +57,15 @@ class Artist {
             baseLength: 0,
             heightLength: 0,
         };
-        this.init();
-    }
 
-    /**
-    * Creates a new canvas and two auxiliar classes to draw using glContext and 2dContext.
-    */
-    init() {
         this.constructCanvas();
+
         // Class used to fill proper data in a GL program in order to sketch parts of the
         // spectrogram in a webGL context.
-        this.glHandler = new WebGLhandler(this.visualizer.canvas);
+        this.glHandler = new WebGLhandler(visualizer.canvas, stftHandler);
+
         // Class used to sketch axis using a second canvas with a 2d context.
-        this.axisHandler = new AxisDrawer(this.visualizer, this.canvas, this.ctx);
+        this.axisHandler = new AxisDrawer(visualizer, this.canvas, this.ctx);
     }
 
     /**
@@ -153,104 +140,15 @@ class Artist {
      * by the webGL program linked.
     */
     draw(initialTime, finalTime, initialFrequency, finalFrequency, matrix) {
-        this.axisHandler.drawAxis(initialTime, finalTime, matrix[0], initialFrequency, finalFrequency);
-        this.setGLhandler(initialTime, finalTime, matrix)
-            .then(() => this.glHandler.draw(matrix))
-            .catch((error) => {
-                if (error !== 'Texture is empty') console.error(error);
-            });
-    }
-
-    /**
-     * Draw background box at requested limits.
-     *
-     * Sends data to glHandler to draw background layer between initialTime and finalTime.
-     * Used to pass setTextureAndDraw promise to draw method once background layer is settled.
-     *
-     * @param {number} initialTime - Time corresponding the the initialTime in texture.
-     * @param {number} finalTime - Time corresponding at end of texture.
-     * @param {Object} matrix - Float32Array useds to set matrix as uniform for the
-     * webGL background program.
-     * @return {Promise} Resolves when STFTHandler returns a non empty STFTData Object.
-     * @async
-    */
-    setGLhandler(initialTime, finalTime, matrix) {
-        const timeLength = finalTime - initialTime;
-        this.glHandler.drawBackground(this.visualizer.audioLength, this.maxFrequency, matrix);
-        return this.setTextureAndDraw(
-            initialTime - (0.5 * timeLength),
-            finalTime + (0.5 * timeLength),
+        this.axisHandler.drawAxis(
+            initialTime,
+            finalTime,
+            matrix[0],
+            initialFrequency,
+            finalFrequency,
         );
-    }
-
-    /**
-     * Load the requested spectrogram framgent into the GL texture.
-     *
-     * The method ask for data in range of [initTime, finalTime] and sets the glHandler texture with
-     * the results received from the STFTHandler.
-     *
-     * **Warning**: It could be just a fraction of the whole range.
-     *
-     * @param {number} initialTime - Time corresponding at beggining of texture.
-     * @param {number} finalTime - Time corresponding at end of texture.
-     * @return {Promise} Promise resolves when STFTHandler returns a non empty STFTData from read
-     * method.
-     * @async
-    */
-    setTextureAndDraw(initialTime, finalTime) {
-        return new Promise((resolve, reject) => {
-            // Ask stftHandler for data between initial and final times.
-            const data = this.stftHandler.read({ startTime: initialTime, endTime: finalTime });
-
-            if (data.start - data.end === 0) {
-                reject(new Error('Texture is empty'));
-            }
-
-            // Times from the data retrieved by the stftHandler
-            const resultInitialTime = this.stftHandler.getTimeFromStftColumn(data.start);
-            const resultFinalTime = this.stftHandler.getTimeFromStftColumn(data.end);
-
-            // Save computed values to save some ops in the future.
-            this.setLoadedData(resultInitialTime, resultFinalTime);
-
-            // Texture dimensions.
-            const width = data.end - data.start;
-            const height = this.stftHandler.bufferColumnHeight;
-
-            // Texture setup in webGL.
-            this.glHandler.setupArrayTexture(data.data, width, height);
-            this.glHandler.setupPositionBuffer(
-                resultInitialTime,
-                resultFinalTime,
-                this.maxFrequency,
-            );
-
-            resolve();
-        });
-    }
-
-    /**
-     * Check if requested data is already on glHandler texture.
-     * @param {number} requestedInitialTime - Expected time in the left border of canvas.
-     * @param {number} requestedFinalTime - Expected time in the right border of canvas.
-     * @return {boolean} - True if expected times are included inside the loaded texture.
-    */
-    requiredNewDataOnTexture(requestedInitialTime, requestedFinalTime) {
-        return (Math.max(requestedInitialTime, 0) < this.textureLoadedValues.initialTime
-                || requestedFinalTime > this.textureLoadedValues.finalTime);
-    }
-
-
-    /**
-     * Set loaded texture temporal limits.
-     *
-     * The time are saved to check if next draws will require to load new data on texture.
-     * @param {number} initialTime - Expected time in the left border of canvas.
-     * @param {number} finalTime - Expected time in the right border of canvas.
-    */
-    setLoadedData(initialTime, finalTime) {
-        this.textureLoadedValues.initialTime = initialTime;
-        this.textureLoadedValues.finalTime = finalTime;
+        const drawBounds = this.glHandler.draw(initialTime, finalTime, matrix);
+        return drawBounds;
     }
 
     /**

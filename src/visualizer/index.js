@@ -49,7 +49,7 @@ class Visualizer extends VisualizerBase {
         this.last = null;
         this.dragStart = null; 
         this.dragged = false;
-        this.STFTRetriever.waitForAudioHandler()
+        this.STFTRetriever.waitUntilReady()
             .then(() => {
                 this.artist.maxFrequency = this.audioFile.mediaInfo.sampleRate / 2;
                 this.SVGtransformationMatrix = this.svg.createSVGMatrix()

@@ -10,32 +10,25 @@ import {
 } from './Shaders/loadingShaders';
 import colormapImage from './colormaps.png';
 
+const TIME_BUFFER = 0.2;
 
 /**
-* Object with attribute and uniform locations for background program.
-* @typedef module:Artist/webGL.backgroundLocations
-* @type {Object}
-* @property {number} positionLocation - gl attribute location.
-* @property {number} matrixUniformLocation - gl uniform location.
-*/
-
-/**
-* Links shaders source to a webGL program.
+* Create GL program with the given shaders.
 * @param {Object} gl - webGL context.
 * @param {Object} program - webGL program.
 * @param {string} vertexSource - source for the webGL vertexShader linked to program.
 * @param {string} fragmentSource -source for the webGL fragmentShader linked to program.
 */
-function shadersInit(gl, program, vertexSource, fragmentSource) {
+function createProgram(gl, vertexSource, fragmentSource) {
     if (!gl) {
-        alert('No webgl context');
-        return;
+        throw new Error('No webgl context');
     }
+
+    const program = gl.createProgram();
 
     const floatTextures = gl.getExtension('OES_texture_float');
     if (!floatTextures) {
-        alert('no floating point texture support');
-        return;
+        throw new Error('no floating point texture support');
     }
 
     const vertexShader = gl.createShader(gl.VERTEX_SHADER);
@@ -44,7 +37,8 @@ function shadersInit(gl, program, vertexSource, fragmentSource) {
     gl.attachShader(program, vertexShader);
 
     if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(vertexShader));
+        const error = gl.getShaderInfoLog(vertexShader);
+        throw new Error(`Vertex shader compilation error: ${error}`);
     }
 
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -53,97 +47,102 @@ function shadersInit(gl, program, vertexSource, fragmentSource) {
     gl.attachShader(program, fragmentShader);
 
     if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(fragmentShader));
+        const error = gl.getShaderInfoLog(fragmentShader);
+        throw new Error(`Fragment shader compilation error: ${error}`);
     }
 
     gl.linkProgram(program);
     gl.useProgram(program);
+
+    return program;
 }
 
+
 /**
-* Gets background program locations.
-* @param {Object} gl - webGL context.
-* @program {Object} program -Program to load locations from.
-* @return {Object}  Object with attribute and uniform locations given by webGL background program.
-*/
-function getBackgroundProgramLocations(gl, program) {
-    const position = gl.getAttribLocation(program, 'al_position');
-    const matrixUniform = gl.getUniformLocation(program, 'u_matrix');
+ * Create GL program that handles background drawing.
+ */
+function createBackgroundProgram(gl) {
+    const program = createProgram(
+        gl,
+        VERTEX_LOADING_SHADER,
+        FRAGMENT_LOADING_SHADER,
+    );
 
     return {
-        positionLocation: position,
-        matrixUniformLocation: matrixUniform,
+        program,
+        buffers: {
+            vertices: gl.createBuffer(),
+        },
+        locations: {
+            positions: gl.getAttribLocation(program, 'al_position'),
+            matrix: gl.getUniformLocation(program, 'u_matrix'),
+        },
     };
 }
 
 /**
-* Sets texture abstact coordinates defining shape and orientation to its respective location.
-* @param {Object} gl - webGL context.
-* @param {int} textureCoordinatesLocations - Abstract texture coordinates location.
-*/
-function setupTextureCoordinatesBuffer(gl, textureCoordinatesLocation) {
-    const vertices = new Float32Array([
-        0, 0,
-        0, 1,
-        1, 0,
-        1, 1,
-        0, 1,
-        1, 0,
-    ]);
-    const texcoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, texcoordBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(textureCoordinatesLocation);
-    gl.vertexAttribPointer(textureCoordinatesLocation, 2, gl.FLOAT, false, 0, 0);
-}
+ * Create spectrogram program.
+ */
+function createSpectrogramProgram(gl) {
+    const program = createProgram(
+        gl,
+        VERTEX_SHADER,
+        FRAGMENT_SHADER,
+    );
 
-/**
-* Binds texture unit 0 with texture.
-* @param {Object} gl - webGL context.
-* @param {Object} texture - webGL texture (will cointain stft results).
-*/
-function bindArrayTexture(gl, texture) {
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-}
-
-/**
-* Binds textures unit 1 with texture.
-* @param {Object} gl - webGL context.
-* @param {Object} texture - webGL texture.
-* @param {Object} location - Corresponding to the memory location of the colorTexture.
-*/
-function bindColorTexture(gl, texture, location) {
-    gl.uniform1i(location, 1); // texture unit 1
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-}
-
-/**
-* Sets bmp image to extract color maps as texture.
-* @param {Object} gl - webGL context.
-* @param {Object} colorImage - bmp image used to define the colorMaps.
-* @param {Object} colorTexture - webGL texture created to contain colorImage.
-*/
-function setupImageAsColorTexture(gl, colorImage, colorTexture) {
-    gl.bindTexture(gl.TEXTURE_2D, colorTexture);
+    const spectrogram = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, spectrogram);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 
-    gl.texImage2D(
-        gl.TEXTURE_2D,
-        0,
-        gl.RGBA,
-        gl.RGBA,
-        gl.FLOAT,
-        colorImage,
-    );
+    const color = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, color);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+    return {
+        program,
+        textures: {
+            spectrogram,
+            color,
+        },
+        buffers: {
+            specCoords: gl.createBuffer(),
+            specPos: gl.createBuffer(),
+        },
+        locations: {
+            specPos: gl.getAttribLocation(program, 'a_position'),
+            specCoords: gl.getAttribLocation(program, 'a_texcoord'),
+            specTex: gl.getUniformLocation(program, 'u_texture'),
+            colorTex: gl.getUniformLocation(program, 'u_color'),
+            matrix: gl.getUniformLocation(program, 'u_matrix'),
+            colormap: gl.getUniformLocation(program, 'u_colorMap'),
+            filterInf: gl.getUniformLocation(program, 'u_minLim'),
+            filterSup: gl.getUniformLocation(program, 'u_maxLim'),
+        },
+    };
 }
 
 
-//--------------------------------------------------------------------------
+function setBufferData(gl, location, buffer, data, type) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, data, type);
+    gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(location);
+}
+
+
+function bindBuffer(gl, location, buffer) {
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(location);
+}
+
 
 /**
 * Class used to handle the webGL actions on the visualizerCanvas.
@@ -151,19 +150,9 @@ function setupImageAsColorTexture(gl, colorImage, colorTexture) {
 * backgraound each time specProgram fills texture with new data for the spectrogram.
 * @class
 * @property {Object} specProgram - webGL program dealing with spectrogram layer.
-* @property {Object} backgroundProgram - webGL program dealing with background layer.
 * @property {Object} gl - webGL context.
-* @property {Object} texture - To fill with STFT values.
 * @property {Object} colorImage - bmp image.
-* @property {Object} colorTexture - colorImage texture.
-* @property {Object} backgroundLocations - backgroundProgram locations.
-* @property {int} positionLocation - specProgram position attribute location.
-* @property {int} texcoordLocation - specProgram texture coordinates attribute location.
-* @property {int} colorTextureLocation - specProgram colorTexture uniform location.
 * @property {int} matrixUniform - specProgram matrix transformation uniform location.
-* @property {Number} columnUniform - specProgram column uniform location for color map.
-* @property {Number} infFilterUniform - specProgram inferior filter uniform location.
-* @property {Number} supFilterUniform - specProgram superior filter uniform location.
 */
 class webGLHandler {
     /**
@@ -171,12 +160,51 @@ class webGLHandler {
     * @constructor
     * @param {Object} canvas - webGL context canvas.
     */
-    constructor(canvas) {
+    constructor(canvas, stftHandler) {
         this.canvas = canvas;
         this.gl = canvas.getContext('webgl');
-        this.adjustCanvasViewport();
-        this.initSpecProgram();
-        this.initBackgroundProgram();
+        this.stftHandler = stftHandler;
+
+        this.spectrogram = createSpectrogramProgram(this.gl);
+        this.background = createBackgroundProgram(this.gl);
+
+        // Data used to avoid extra computations.
+        this.loaded = {
+            start: 0,
+            end: 0,
+        };
+
+        // Image used to extract the colorMaps.
+        const colorImage = new Image(100, 100);
+        colorImage.src = colormapImage;
+        colorImage.onload = () => this.init(colorImage);
+    }
+
+    /**
+     * Sets spectrogram textures, the one asigning stft values to (time,frequency) coordinates and
+     * the other assigns color to those values.
+     */
+    init(colorImage) {
+        this.stftHandler.waitUntilReady().then(() => {
+            this.adjustCanvasViewport();
+            this.initSpectrogramProgram(colorImage);
+            this.initBackgroundProgram();
+        });
+    }
+
+    initSpectrogramProgram(colorImage) {
+        this.gl.useProgram(this.spectrogram.program);
+
+        this.setMinFilter(0);
+        this.setMaxFilter(1);
+
+        this.setColorData(colorImage);
+        this.setSpectrogramCoords();
+    }
+
+    initBackgroundProgram() {
+        this.gl.useProgram(this.background.program);
+        this.setBackgroundPositions();
     }
 
     /**
@@ -192,187 +220,179 @@ class webGLHandler {
     }
 
     /**
-     * Initialize specProgram.
-    */
-    initSpecProgram() {
-        this.specProgram = this.gl.createProgram();
-
-        shadersInit(
-            this.gl,
-            this.specProgram,
-            VERTEX_SHADER,
-            FRAGMENT_SHADER,
-        );
-
-        // Texture containing results of stft.
-        this.texture = this.gl.createTexture();
-
-        // Texture containing image for colorMap
-        this.colorTexture = this.gl.createTexture();
-
-        // Image used to extract the colorMaps.
-        this.colorImage = new Image(100, 100);
-        this.colorImage.src = colormapImage;
-        this.colorImage.onload = () => this.setTextures();
-
-        this.setLocations();
-        this.setMinFilter(0);
-        this.setMaxFilter(1);
+     * Draws part of spectrogram matching matrix transformation results.
+     * @param {Object} transformationMatrix - Matrix transformation corresponding to
+     * translations and scales in the [Time, Frequencies] space.
+     */
+    draw(initialTime, finalTime, transformationMatrix) {
+        this.drawBackground(transformationMatrix);
+        this.drawSpectrogram(initialTime, finalTime, transformationMatrix);
+        return this.loaded;
     }
 
-    /**
-    * Initializer backgroundProgram.
-    */
-    initBackgroundProgram() {
-        this.backgroundProgram = this.gl.createProgram();
+    drawSpectrogram(initialTime, finalTime, transformationMatrix) {
+        this.useSpectrogramProgram();
 
-        shadersInit(
-            this.gl,
-            this.backgroundProgram,
-            VERTEX_LOADING_SHADER,
-            FRAGMENT_LOADING_SHADER,
-        );
+        if (this.shouldUpdateSpectrogram(initialTime, finalTime)) {
+            this.updateSpectrogram(initialTime, finalTime);
+            this.borrame = true;
+        }
 
-        this.verticesBuffer = this.gl.createBuffer();
-        this.backgroundLocations = getBackgroundProgramLocations(this.gl, this.backgroundProgram);
-        this.matrixUniform2 = this.backgroundLocations.matrixUniformLocation;
-    }
+        if (this.loaded.start === this.loaded.end) {
+            // Do not draw if no data has been loaded into spectrogram buffer
+            return;
+        }
 
-    /**
-    * Draws gray background.
-    * @param {number} finalTime - finalTime loaded on specProgram texture.
-    * @param {number} maxFrequency - maxFrequency loaded on specProgram texture.
-    * @param {Object} transformationMatrix - Matrix uniform loaded in specProgram.
-    */
-    drawBackground(finalTime, maxFrequency, transformationMatrix) {
-        this.gl.useProgram(this.backgroundProgram);
-        const { positionLocation } = this.backgroundLocations;
-        const positions = new Float32Array([
-            0, -maxFrequency,
-            finalTime, -maxFrequency,
-            0, 2 * maxFrequency,
-            finalTime, -maxFrequency,
-            0, 2 * maxFrequency,
-            finalTime, 2 * maxFrequency,
-        ]);
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.verticesBuffer);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(positionLocation);
-        this.gl.vertexAttribPointer(positionLocation, 2, this.gl.FLOAT, false, 0, 0);
-        this.gl.uniformMatrix3fv(this.matrixUniform2, false, transformationMatrix);
+        this.setSpectrogramMatrix(transformationMatrix);
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
     /**
-    * Set variables to access the adress for webgl attribute and uniform locations
-    * used in specProgram.
-    */
-    setLocations() {
-        this.positionLocation = this.gl.getAttribLocation(this.specProgram, 'a_position');
-
-        // coordinates and orientation of the shape bounded to texture (2 triangles)
-        this.texcoordLocation = this.gl.getAttribLocation(this.specProgram, 'a_texcoord');
-
-        this.textureLocation = this.gl.getUniformLocation(this.specProgram, 'u_texture');
-        this.colorTextureLocation = this.gl.getUniformLocation(this.specProgram, 'u_color');
-
-        // matrix transformation
-        this.matrixUniform = this.gl.getUniformLocation(this.specProgram, 'u_matrix');
-
-        // this.matrixUniform2 = this.gl.getUniformLocation(this.backgroundProgram, 'u_matrix')
-        // number of line in the colorMap image
-        this.columnUniform = this.gl.getUniformLocation(this.specProgram, 'u_colorMap');
-
-        // object with inferior and superior colorMap limits
-        // this.limitsUniform = this.gl.getUniformLocation(this.specProgram, 'u_limits');
-        this.infFilterUniform = this.gl.getUniformLocation(this.specProgram, 'u_minLim');
-        this.supFilterUniform = this.gl.getUniformLocation(this.specProgram, 'u_maxLim');
+     * Draws gray background.
+     * @param {number} endTime - Largest time loaded on specProgram texture.
+     * @param {number} maxFreq - Maximum frequency loaded on specProgram texture.
+     * @param {Object} transformationMatrix - Matrix uniform loaded in specProgram.
+     */
+    drawBackground(transformationMatrix) {
+        this.useBackgroundProgram();
+        this.setBackgroundMatrix(transformationMatrix);
+        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
-    /**
-     * Sets spectrogram textures, the one asigning stft values to (time,frequency) coordinates and
-     * the other assigns color to those values.
-     */
-    setTextures() {
-        this.gl.useProgram(this.specProgram);
-        bindColorTexture(this.gl, this.colorTexture, this.colorTextureLocation);
-        setupImageAsColorTexture(this.gl, this.colorImage, this.colorTexture);
-        bindArrayTexture(this.gl, this.texture);
-        setupTextureCoordinatesBuffer(this.gl, this.texcoordLocation);
+    useSpectrogramProgram() {
+        this.gl.useProgram(this.spectrogram.program);
+
+        this.bindSpectrogramBuffers();
+        this.bindSpectorgramTextures();
+    }
+
+    useBackgroundProgram() {
+        this.gl.useProgram(this.background.program);
+        this.bindBackgroundBuffers();
+    }
+
+    shouldUpdateSpectrogram(initialTime, finalTime) {
+        const startTime = Math.max(Math.min(initialTime, this.stftHandler.duration), 0);
+        const endTime = Math.max(Math.min(finalTime, this.stftHandler.duration), 0);
+
+        if (startTime < this.loaded.start || startTime > this.loaded.end) {
+            return true;
+        }
+
+        if (endTime < this.loaded.start || endTime > this.loaded.end) {
+            return true;
+        }
+
+        return false;
+    }
+
+    updateSpectrogram(initialTime, finalTime) {
+        const startTime = initialTime - TIME_BUFFER;
+        const endTime = finalTime + TIME_BUFFER;
+
+        const data = this.stftHandler.read({ startTime, endTime });
+
+        if (data.start - data.end === 0) {
+            return;
+        }
+
+        const width = data.end - data.start;
+        const { bufferColumnHeight, maxFreq } = this.stftHandler;
+
+        this.setSpectrogramPositions(data.startTime, data.endTime, maxFreq);
+        this.setSpectrogramData(data.data, width, bufferColumnHeight);
+
+        this.loaded.start = data.startTime;
+        this.loaded.end = data.endTime;
+    }
+
+    bindSpectrogramBuffers() {
+        const coordsLocation = this.spectrogram.locations.specCoords;
+        const coordsBuffer = this.spectrogram.buffers.specCoords;
+        bindBuffer(this.gl, coordsLocation, coordsBuffer);
+
+        const posLocation = this.spectrogram.locations.specPos;
+        const posBuffer = this.spectrogram.buffers.specPos;
+        bindBuffer(this.gl, posLocation, posBuffer);
+    }
+
+    bindBackgroundBuffers() {
+        const location = this.background.locations.positions;
+        const buffer = this.background.buffers.vertices;
+        bindBuffer(this.gl, location, buffer);
+    }
+
+    setBackgroundPositions() {
+        const { duration, maxFreq } = this.stftHandler;
+        const location = this.background.locations.positions;
+        const buffer = this.background.buffers.vertices;
+        const positions = new Float32Array([
+            0, -maxFreq,
+            duration, -maxFreq,
+            0, 2 * maxFreq,
+            duration, -maxFreq,
+            0, 2 * maxFreq,
+            duration, 2 * maxFreq,
+        ]);
+
+        setBufferData(this.gl, location, buffer, positions, this.gl.STATIC_DRAW);
+    }
+
+    setBackgroundMatrix(matrix) {
+        const location = this.background.locations.matrix;
+        this.gl.uniformMatrix3fv(location, false, matrix);
     }
 
     /**
     * Positions the texture in order to appear on canvas.
     * Complete frequencies range is always loaded on texture.
-    * @param {number} initTime - time corresponding to initial time in texture.
-    * @param {number} finalTime - time corresponding to final time in texture.
-    * @param {number} maxFrequency - Highest frequency in stft computations.
+    * @param {number} startTime - time corresponding to initial time in texture.
+    * @param {number} endTime - time corresponding to final time in texture.
+    * @param {number} maxFreq - Highest frequency in stft computations.
     */
-    setupPositionBuffer(initTime, finalTime, maxFrequency) {
-        //console.log({
-            //method: 'setupPositionBuffer',
-            //initTime,
-            //finalTime,
-            //maxFrequency,
-        //});
-        const positionBuffer = this.gl.createBuffer();
-        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, positionBuffer);
+    setSpectrogramPositions(startTime, endTime, maxFreq) {
+        const location = this.spectrogram.locations.specPos;
+        const buffer = this.spectrogram.buffers.specPos;
         const positions = new Float32Array([
-            initTime, 0,
-            finalTime, 0,
-            initTime, maxFrequency,
-            finalTime, maxFrequency,
-            finalTime, 0,
-            initTime, maxFrequency,
+            startTime, 0,
+            endTime, 0,
+            startTime, maxFreq,
+            endTime, maxFreq,
+            endTime, 0,
+            startTime, maxFreq,
         ]);
-        this.gl.bufferData(this.gl.ARRAY_BUFFER, positions, this.gl.STATIC_DRAW);
-        this.gl.enableVertexAttribArray(this.positionLocation);
-        this.gl.vertexAttribPointer(this.positionLocation, 2, this.gl.FLOAT, false, 0, 0);
+
+        setBufferData(this.gl, location, buffer, positions, this.gl.DYNAMIC_DRAW);
     }
 
     /**
     * Fills the texture containing the results of the stft. These texture will
     * be used to obtain a color from the colorMap for each time and frequency pair.
-    * @param {array} textureArray - Contains stft data to load on texture.
+    * @param {array} data - Contains stft data to load on texture.
     * @param {int} width - The number of points in the base of the texture.
     * @param {int} height - The number of points in the height of the texture.
     */
-    setupArrayTexture(textureArray, width, height) {
-        //console.log({
-            //method: 'setupArrayTexture',
-            //textureArray,
-            //width,
-            //height,
-        //});
-        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+    setSpectrogramData(data, width, height) {
+        const { gl } = this;
+        const texture = this.spectrogram.textures.spectrogram;
 
-        this.gl.texImage2D(
-            this.gl.TEXTURE_2D,
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(
+            gl.TEXTURE_2D,
             0,
-            this.gl.LUMINANCE,
+            gl.LUMINANCE,
             height,
             width,
             0,
-            this.gl.LUMINANCE,
-            this.gl.FLOAT,
-            textureArray,
+            gl.LUMINANCE,
+            gl.FLOAT,
+            data,
         );
     }
 
-    /**
-    * Draws part of spectrogram matching matrix transformation results.
-    * @param {Object} transformationMatrix - Matrix transformation corresponding to
-    * translations and scales in the [Time, Frequencies] space.
-    */
-    draw(transformationMatrix) {
-        this.gl.useProgram(this.specProgram);
-        this.gl.uniformMatrix3fv(this.matrixUniform, false, transformationMatrix);
-        // Draw the geometry.
-        this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+    setSpectrogramMatrix(matrix) {
+        const location = this.spectrogram.locations.matrix;
+        this.gl.uniformMatrix3fv(location, false, matrix);
     }
 
     /**
@@ -381,7 +401,7 @@ class webGLHandler {
     * @param {number} newColumn - Column number.
     */
     setColor(newColumn) {
-        this.gl.uniform1f(this.columnUniform, newColumn);
+        this.gl.uniform1f(this.spectrogram.locations.colormap, newColumn);
     }
 
     /**
@@ -390,7 +410,7 @@ class webGLHandler {
     */
     setMinFilter(newValue) {
         this.minFilter = newValue;
-        this.gl.uniform1f(this.infFilterUniform, newValue);
+        this.gl.uniform1f(this.spectrogram.locations.filterInf, newValue);
     }
 
     /**
@@ -399,7 +419,60 @@ class webGLHandler {
     */
     setMaxFilter(newValue) {
         this.maxFilter = newValue;
-        this.gl.uniform1f(this.supFilterUniform, newValue);
+        this.gl.uniform1f(this.spectrogram.locations.filterSup, newValue);
+    }
+
+    /**
+     * Sets texture abstact coordinates defining shape and orientation to its respective location.
+     * @param {Object} gl - webGL context.
+     * @param {int} textureCoordinatesLocations - Abstract texture coordinates location.
+     */
+    setSpectrogramCoords() {
+        const location = this.spectrogram.locations.specCoords;
+        const buffer = this.spectrogram.buffers.specCoords;
+        const vertices = new Float32Array([
+            0, 0,
+            0, 1,
+            1, 0,
+            1, 1,
+            0, 1,
+            1, 0,
+        ]);
+
+        setBufferData(this.gl, location, buffer, vertices, this.gl.STATIC_DRAW);
+    }
+
+    bindSpectorgramTextures() {
+        const { gl } = this;
+
+        gl.uniform1i(this.spectrogram.locations.specTex, 0);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.spectrogram.textures.spectrogram);
+
+        gl.uniform1i(this.spectrogram.locations.colorTex, 1);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, this.spectrogram.textures.color);
+    }
+
+    /**
+     * Sets bmp image to extract color maps as texture.
+     * @param {Object} gl - webGL context.
+     * @param {Object} colorImage - bmp image used to define the colorMaps.
+     * @param {Object} colorTexture - webGL texture created to contain colorImage.
+     */
+    setColorData(colorImage) {
+        const { gl } = this;
+
+        gl.bindTexture(gl.TEXTURE_2D, this.spectrogram.textures.color);
+
+        gl.texImage2D(
+            gl.TEXTURE_2D,
+            0,
+            gl.RGBA,
+            gl.RGBA,
+            gl.FLOAT,
+            colorImage,
+        );
     }
 }
 

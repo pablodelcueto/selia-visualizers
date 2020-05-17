@@ -28,19 +28,31 @@ const COLUMNS_PER_STFT_COMPUTATION = 10;
 
 /** Time in miliseconds between file header checks */
 const CHECK_HEADER_DELAY = 5;
+
+/** Time in miliseconds between stft handler checks */
+const CHECK_STFT_DELAY = 50;
+
 /** Time in miliseconds between consecutive WAV values reads */
 const CHECK_READABILITY_DELAY = 5;
-/** Max number of consecuive tries checking if WAV is ready  */
+
+/** Max number of consecutive tries checking if WAV is ready  */
 const MAX_TRIES_AUDIO_READ = 10000;
+
 /** Max number of consecutive tries reading WAV data */
 const MAX_TRIES_GET_AUDIO_DATA = 10000;
 
+/** Max number of consecutive tries for checking if STFT handler is ready */
+const MAX_TRIES_STFT_READY = 10000;
+
 /** STFT buffer shift behaviour. */
 const SHIFT_COLUMN_HOP = 400;
+
 /** Max number of columns shifted while traying to save data. */
 const MAX_NORMAL_SHIFT_SEPARATION = 5000;
+
 /** Number of STFT computations added when shift occurs */
 const EXTRA_HOPS_SHIFT = 10;
+
 /** Number to create limits movement whitout shifting */
 const COLUMN_SEPARATION_SHIFT_OCURRANCE = 100;
 
@@ -117,7 +129,7 @@ function getTensorWindowFunction(windowFunction, size) {
  * relative to columnWidth.
  * @property {Object} tensorBuffer - tf.tensor.
  * @property {Object} STFTBuffer - Buffer with STFT results.
- * @property {string} Shifting - String refering if shift is being backward or forward.
+ * @property {string} shifting - String refering if shift is being backward or forward.
  */
 class STFTHandler {
     /**
@@ -137,6 +149,7 @@ class STFTHandler {
     constructor(audioHandler, config) {
         this.audioHandler = audioHandler;
         this.shouldWait = false;
+        this.ready = false;
 
         // Copy base configuration
         this.config = config;
@@ -147,6 +160,7 @@ class STFTHandler {
                 // Setup for stft calculations
                 this.setupSTFT();
                 this.startSTFTCalculation();
+                this.ready = true;
             });
     }
 
@@ -158,6 +172,7 @@ class STFTHandler {
         this.columnWidth = floorRound(this.getStftColumnFromWavIndex(
             this.audioHandler.mediaInfo.size - this.config.stft.window_size,
         ));
+
         // Short Time Fourier Transform auxiliary variables
         this.STFTWindowFunction = getTensorWindowFunction(
             this.config.stft.window_function,
@@ -174,6 +189,9 @@ class STFTHandler {
         const tensorSize = (COLUMNS_PER_STFT_COMPUTATION - 1) * this.config.stft.window_size;
         this.tensorBuffer = tf.tensor1d(new Float32Array(tensorSize));
         this.STFTBuffer = new Float32Array(this.bufferColumns * this.bufferColumnHeight);
+
+        this.duration = this.audioHandler.mediaInfo.durationTime;
+        this.maxFreq = this.audioHandler.mediaInfo.sampleRate / 2;
     }
 
     /**
@@ -198,6 +216,29 @@ class STFTHandler {
                     // Will wait for a set time and check again if audio reader is ready
                     setTimeout(checkIfReady, CHECK_HEADER_DELAY);
                 }
+            };
+
+            checkIfReady();
+        });
+    }
+
+    waitUntilReady() {
+        let tries = 0;
+
+        return new Promise((resolve, reject) => {
+            const checkIfReady = () => {
+                // Will reject the promise after many tries.
+                if (tries > MAX_TRIES_STFT_READY) {
+                    reject();
+                }
+
+                if (this.ready) {
+                    resolve();
+                }
+
+                tries += 1;
+                // Will wait for a set time and check again if stft handler is ready
+                setTimeout(checkIfReady, CHECK_STFT_DELAY);
             };
 
             checkIfReady();
@@ -326,6 +367,8 @@ class STFTHandler {
         return {
             start: startingColumn,
             end: endingColumn,
+            startTime: this.getTimeFromStftColumn(startingColumn),
+            endTime: this.getTimeFromStftColumn(endingColumn),
             data: array,
             computed: this.computed,
         };
