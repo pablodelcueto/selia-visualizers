@@ -60,7 +60,6 @@ function getChunks(array) {
     let index = 0;
     while (index < 10000) { // constant to avoid method to repeat inside audio data.
         const chunkInfo = readChunk(array, index);
-        console.log('chunkInfo', chunkInfo);
         chunks[chunkInfo.id] = chunkInfo;
         if (chunkInfo.id === 'data') break;
         index += 8 + chunkInfo.size;
@@ -158,7 +157,6 @@ function headerReader(array) {
     headerInfo.dataSize = chunks.data.size;
     headerInfo.dataStart = chunks.data.index;
 
-    console.log('headerInfo', headerInfo);
 
     return headerInfo;
 }

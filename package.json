@@ -6,7 +6,8 @@
   "scripts": {
     "start": "concurrently \"node app.js\" \"webpack-dev-server\"",
     "build": "NODE_ENV=production webpack --mode production",
-    "test": "jest"
+    "test": "jest",
+    "docs": "jsdoc -c jsdoc.json"
   },
   "keywords": [
     "selia",
@@ -24,6 +25,7 @@
     "@babel/preset-react": "^7.0.0",
     "@fortawesome/fontawesome-free": "^5.10.2",
     "babel-loader": "^8.0.6",
+    "better-docs": "^2.0.1",
     "bootstrap": "^4.3.1",
     "concurrently": "^4.1.2",
     "css-loader": "^3.2.0",
@@ -50,6 +52,7 @@
     "@tensorflow/tfjs-node": "^1.2.8",
     "cors": "^2.8.5",
     "eslint-config-airbnb": "^18.0.1",
+    "prop-types": "^15.7.2",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-input-slider": "^5.1.4"

@@ -288,7 +288,6 @@ class AudioFile {
 
             if (done) { // waits untill audio buffer is filled or data is over.
                 this.done = true;
-                console.log('mediaInfo', this.mediaInfo);
                 break;
             }
 
