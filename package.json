@@ -6,7 +6,8 @@
   "scripts": {
     "start": "concurrently \"node app.js\" \"webpack-dev-server\"",
     "build": "NODE_ENV=production webpack --mode production",
-    "test": "jest"
+    "test": "jest",
+    "docs": "jsdoc -c jsdoc.json"
   },
   "keywords": [
     "selia",
@@ -51,6 +52,7 @@
     "@tensorflow/tfjs-node": "^1.2.8",
     "cors": "^2.8.5",
     "eslint-config-airbnb": "^18.0.1",
+    "prop-types": "^15.7.2",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-input-slider": "^5.1.4"

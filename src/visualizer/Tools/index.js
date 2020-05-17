@@ -8,6 +8,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+
 const menuStyle = {
     align: 'left',
     width: '90%',
@@ -48,38 +49,19 @@ const infoWindowStyle = {
 };
 
 /**
-* Creates canvas representing block.
-* @param {Object} props - Properties.
-* @param {number} props.initialTime - Left border canvas time.
-* @param {number} props.finalTime - Rigth border canvas time.
-* @param {number} props.audioDurarion - Audio file duration.
-* @param {number} props.containerLength - Canvas container length.
-* @return {Object} React element.
-*/
-function SliderDiv(props) {
-    const initialPixel = (props.initialTime / props.audioDuration) * props.containerLength;
-    const pixelLength = props.containerLength
-        * (Math.abs(props.finalTime - props.initialTime) / props.audioDuration);
-    return (
-        <div
-            id = "sliderDiv"
-            style={{
-                left: initialPixel,
-                position: 'absolute',
-                width: pixelLength,
-                height: '20px',
-                zIndex: '2', 
-                backgroundColor: 'rgba(0,0,0,0.3)',
-            }} />
-    )
-}
-
-/**
 * Creates cursor information window.
-* @param {Object} props - Properties.
+* @component
+* @param {Object} props - React properties.
 * @param {number} props.time - Cursor position time.
 * @param {number} props.frequency - Cursor position frequency.
 * @return {Object} React element.
+* @example
+* return (
+*     <InfoWindow 
+*        time="0 sec"
+*        frequency="57 hKz"
+*     />
+*)
 */
 function InfoWindow(props) {
     return (
@@ -96,13 +78,59 @@ function InfoWindow(props) {
     )
 }
 
+
 /**
-* Creates a functional stripe with a slider div.
-* @param {Object} props - Properties.
-* @param {method} props.onMouseMove - Event Listener.
-* @param {method} props.onMouseUp - Event Listener. 
-* @param {method} props.onMouseDown - Event Listener.
+* Creates canvas representing block.
+* @param {Object} props - React properties.
+* @param {number} props.initialPixel - Block left border pixel.
+* @param {number} props.pixelLength - Block length in pixels.
+* @return {Object} React element.
+* @component
+* @example 
+* return (
+*    <SliderDiv 
+*       initialPixel="230"
+*       pixelLength="60"
+*    />
+* )
+*/
+function SliderDiv(props) {
+    return (
+        <div
+            id = "sliderDiv"
+            style={{
+                left: props.initialPixel,
+                position: 'absolute',
+                width: props.pixelLength,
+                height: '20px',
+                zIndex: '2', 
+                backgroundColor: 'rgba(0,0,0,0.3)',
+            }} />
+    )
+}
+
+
+/**
+* Creates a fast time translations slider.
+* @component
+* @param {Object} props - React properties.
+* @param {Method} props.onMouseMove - Event Listener.
+* @param {Method} props.onMouseUp - Event Listener.
+* @param {Method} props.onMouseDown - Event Listener.
+* @param {number} props.initialPixel - Slider left border pixel.
+* @param {number} props.pixelLength - Slider pixels length.
 * @return {Object} React Element.
+* @component
+* @example
+* return (
+*     <CanvasSliderDiv
+*        onMouseMove={() => onMouseMoveExampleMethod()}
+*        onMouseUp={() => onMouseUpExampleMethod()}
+*        onMouseDown={() => onMouseDownExampleMethod()}
+*        initialPixel="50"
+*        pixelLength="30"
+*    />
+* )
 */
 function CanvasSliderDiv(props) {
     return (
@@ -112,20 +140,27 @@ function CanvasSliderDiv(props) {
             onMouseUp={props.onMouseUp}
             onMouseDown={props.onMouseDown}>
             <SliderDiv
-                initialTime={props.initialTime}
-                finalTime={props.finalTime}
-                audioDuration={props.audioDuration}
-                containerLength={props.canvasDivLength} />
+                initialPixel={props.initialPixel}
+                pixelLength={props.pixelLength}
+                 />
         </div>
     );
 }
 
 /**
-* Creates information window and zooming tool switches.
-* @param {Object} props - Properties.
+* Creates information window and zooming tool activator/deactivators.
+* @param {Object} props - React properties.
 * @param {Method} props.switchButton - Activates zooming tool.
 * @param {Method} props.showHideInfoWindow - Show or hide information window.
-* @param {Object} React element.
+* @return {Object} React element.
+* @component
+* @example 
+* return (
+*    <SwitchButtons
+*        switchButton={() => swithButtonExampleMethod()}
+*        showHideInfoWindow={() => hideExampleMethod()}
+*        />
+* )    
 */
 function SwitchButtons(props) {
     return (
@@ -148,7 +183,7 @@ function SwitchButtons(props) {
                     type="checkbox"
                     id="informationWindowSwitch"
                     className="custom-control-input"
-                    onChange={() => { props.showHideInfoWindow() }}
+                    onChange={() => { props.infoSwitchButton() }}
                 />
                 <label className="custom-control-label" htmlFor="informationWindowSwitch">
                     Information window.
@@ -160,12 +195,20 @@ function SwitchButtons(props) {
 
 /**
 * Creates action buttons.
-* @param {Object} props - Properties.
-* @param {Method} props.revertAction - Returns to previous zoom scale.
-* @param {Method} props.home - Returns to initial time and frequency state.
-* @param {Object} React element.
+* Used to return to a previous time and frequency states.
+* @param {Object} props - React properties.
+* @param {Method} props.revertAction - Reset last zooming tool transformation.
+* @param {Method} props.home - Resets all previous transformations.
+* @return {Object} React element.
+* @component
+* @example
+* return ( 
+*        <ActionButtons 
+*            home = {() => homeExampleMethod()}
+*            revertAction = {() => revertActionExampleMethod()} />
+* )
 */
-function ActionBottons(props) {
+function ActionButtons(props) {
     return (
         <div>
             <button
@@ -186,10 +229,22 @@ function ActionBottons(props) {
 
 /**
 * Creates menus to modify STFT configurations.
-* @param {Object} props - Properties.
-* @param {Method} props.handleWindowFunctionChange - Sets windowing type. 
-* @param {Method} props.showHideInfoWindow - Show or hide information window.
-* @param {Object} React element.
+*
+* Values to modify are: window type, window size, and window hop.
+* @component
+* @param {Object} props - React properties.
+* @param {Method} props.handleWindowFunctionChange - Sets STFT computations windowing type.
+* @param {Method} props.handleWindowSizeChange - Sets STFT computations window size.
+* @param {Method} props.handleWindowHopChange - Sets STFT computations window hop.
+* @return {Object} React element.
+* @component
+* @example
+* return(
+*    <STFTmenus 
+*       handleWindowFunctionChange={() => modifyFunctionExampleMethod()}
+*       handleWindowSizeChange={() => modifySizeExampleMethod()}
+*       handleWindowHopChange={() => modifyHopExampleMethod()} />
+* )
 */
 function STFTmenus(props) {
     return (
@@ -236,6 +291,18 @@ function STFTmenus(props) {
     );
 }
 
+/**
+* @component
+* Creates color map selector.
+* @param {Method} props.handleColorMapChange - Sets a color map.
+* @return {Object} React element.
+* @example
+* return (
+*     <ColorMenu
+*        handleColorMapChange={() => colorMapSelector()} 
+*     />
+* )
+*/
 function ColorMenu(props) {
     return (
         <div>
@@ -261,6 +328,22 @@ function ColorMenu(props) {
     );
 }
 
+/**
+* Creates color filter sliders.
+* Used to limit color map minimum and maximum values.
+* @component
+* @param {Object} props - React properties.
+* @param {Method} props.handleMinFilterChange - Sets inferior filter for the color map.
+* @param {Method} props.handleMaxFilterChange - Sets superior filter for the color map.
+* @return {Object} React element.
+* @example
+* return (
+*     <ColorFilters
+*        handleMinFilterChange={() => minFilterSelector()}
+*        handleMaxFilterChange={() => maxFilterSelector()}
+*     />
+* )
+*/
 function ColorFilters(props) {
     return (
         <div>
@@ -300,7 +383,18 @@ function ColorFilters(props) {
     )
 }    
 
- 
+/**
+* Creates an audio reproduction button.
+* @component
+* @param {Method} props.reproduce - Audio reproduction method.
+* @return {Object} React element.
+* @example
+* return (
+*     <Reproductor
+*        reproduce={()=>reproduceExampleMethod()}
+*     />
+* )
+*/
 function Reproductor(props) {
     return (
         <div>
@@ -316,16 +410,35 @@ function Reproductor(props) {
         )
 }
 //--------------------------------------------------------
-
-
+/**
+* This class link all menus, slider, and buttons in toolBox with corresponding 
+* methods in visualizer required once a modification has been done.
+* Ther's two types of tools, some of them exist inside the canvas and some of them outside.
+* The ones inside canvas are CanvasSliderDiv & InformationWindow which are specially handled with
+* a React Portal method.
+* @class
+*/
 class Toolbox extends React.Component {
+    /**
+    * Creates a toolBox.
+    * @constructor 
+    * @param {module:index.toolBoxProps} props - React properties.
+    * @property {Object} state - ToolBox information state.
+    * @property {number} state.window_size - STFT window size.
+    * @property {number} state.lim_inf - Inferior filter color slider values.
+    * @property {number} state.lim_sup - Superior filter color slider values.
+    * @property {number} state.duration - Audio file duration.
+    * @property {number} state.initialTime - Left time on visualization.
+    * @property {number} state.finalTime - Rigth time on visulaization.
+    * @property {boolean} state.dragging - Indicates if representing slider should move.
+    * @property {Object} state.cursorInfo - Information of positiones cursor.
+    * @property {number} state.cursorInfo.time - Time value in cursor point .
+    * @property {number} state.cursorInfo.frequency - Frequency value in cursor point.
+    */ 
     constructor(props) {
         super(props);
         this.state = {
             window_size: props.config.stft.window_size,
-            window_function: props.config.stft.window_function,
-            hop_length: props.config.stft.hop_length,
-            color_map: '0.0',
             lim_inf: 0,
             lim_sup: 1,
             duration: 1,
@@ -368,26 +481,18 @@ class Toolbox extends React.Component {
     handleWindowSizeChange(value) {
         this.setState({ window_size: value });
         this.props.modifyWindowSize(value);
-        // this.props.modifyWindowSize(parseInt(value, 10));
     }
 
     handleWindowFunctionChange(type) {
-        this.setState({ window_function: type });
         this.props.modifyWindowFunction(type);
     }
 
     handleWindowHopChange(newHopLength) {
         const hopLength = Math.min(this.state.window_size, newHopLength);
-        this.setState({ hop_length: hopLength });
-        this.setState(
-            () => ({ hop_length: hopLength }),
-            () => this.props.modifyHopLength(hopLength),
-        );
+        this.props.modifyHopLength(hopLength);
     }
 
     handleColorMapChange(color) {
-        this.setState({ color_map: color });
-        console.log('this.state', this.state);
         this.props.modifyColorMap(parseFloat(color));
     }
 
@@ -470,6 +575,17 @@ class Toolbox extends React.Component {
         });
     }
 
+    computeInitialPixel() {
+        const initialPixel = (this.state.initialTime / this.state.duration);
+        return initialPixel * this.props.canvas.width;
+    }
+
+    computePixelLength() {
+        const pixelLength = this.props.canvas.width
+            * (Math.abs(this.state.finalTime - this.state.initialTime) / this.state.duration);
+        return pixelLength;
+    }
+
     draggingOutDiv(event) {
         if (this.state.dragging) {
             this.dragDivSlider(event);
@@ -482,11 +598,8 @@ class Toolbox extends React.Component {
                 {ReactDOM.createPortal(
                     <div>
                         <CanvasSliderDiv 
-                            canvas={this.props.canvas}
-                            audioDuration={this.state.duration}
-                            initialTime={this.state.initialTime}
-                            finalTime={this.state.finalTime}
-                            canvasDivLength={this.props.canvas.width}
+                            initialPixel={this.computeInitialPixel()}
+                            pixelLength={this.computePixelLength()}
                             onMouseDown={(event) => this.clickingDiv(event)}
                             onMouseMove={(event) => this.dragDivSlider(event)}
                             onMouseUp={(event) => this.unclickingDiv(event)} />
@@ -504,7 +617,7 @@ class Toolbox extends React.Component {
                 </div>
 
                 <div>
-                    <ActionBottons 
+                    <ActionButtons 
                         home={() => this.props.home()}
                         revertAction={() => this.props.revertAction()} />
                 </div>
