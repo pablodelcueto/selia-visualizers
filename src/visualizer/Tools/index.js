@@ -183,7 +183,7 @@ function SwitchButtons(props) {
                     type="checkbox"
                     id="informationWindowSwitch"
                     className="custom-control-input"
-                    onChange={() => { props.showHideInfoWindow() }}
+                    onChange={() => { props.infoSwitchButton() }}
                 />
                 <label className="custom-control-label" htmlFor="informationWindowSwitch">
                     Information window.
@@ -603,7 +603,7 @@ class Toolbox extends React.Component {
                             onMouseDown={(event) => this.clickingDiv(event)}
                             onMouseMove={(event) => this.dragDivSlider(event)}
                             onMouseUp={(event) => this.unclickingDiv(event)} />
-                        infoWindow = <InfoWindow 
+                        <InfoWindow 
                             time={this.state.cursorInfo.time}
                             frequency={this.state.cursorInfo.frequency} />
                     </div>,
