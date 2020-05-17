@@ -10,8 +10,7 @@ import Tools from './Tools';
 const INIT_CONFIG = {
     stft: {
         window_size: 1024,
-        hop_length: 1024 * 0.25,
-        window_function: 'hann',
+        hop_length: 1024 * 0.25, window_function: 'hann',
     },
     startTime: 0.0,
 };
@@ -50,7 +49,7 @@ class Visualizer extends VisualizerBase {
         this.last = null;
         this.dragStart = null; 
         this.dragged = false;
-        this.STFTRetriever.waitForAudioHandler()
+        this.STFTRetriever.waitUntilReady()
             .then(() => {
                 this.artist.maxFrequency = this.audioFile.mediaInfo.sampleRate / 2;
                 this.SVGtransformationMatrix = this.svg.createSVGMatrix()

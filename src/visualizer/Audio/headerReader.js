@@ -1,5 +1,5 @@
 /**
-* File header reader module.
+* WAV File header reader module.
 *
 * @module Audio/headerReader
 * @see module:Audio/headerReader.js
@@ -22,36 +22,36 @@ const WAVE_FORMAT_MAP = {
 
 /**
 * @typedef module:Audio/headerReader.chunk
-* @type {Object} 
+* @type {Object}
 * @property {number} index - Chunk initial index in file.
 * @property {string} id - Chunk identifier.
 * @property {number} size - Chunk size.
-* @property {Object} chunk - Chunk data.   
+* @property {Object} chunk - Chunk data.
 */
 
 /**
 * Read information in a file header chunk.
 * @param {Object} array - Array containing data to read.
 * @param {int} index - Initial Index in array to read.
-* @return {module:Audio/headerReader.chunk} 
+* @return {module:Audio/headerReader.chunk}
 */
 function readChunk(array, index) {
-    // id fmt subchunk describes  sound's data format
-    // id data subchunk contains the size of the data and the sound. 
+    // id fmt subchunk describes sound's data format
+    // id data subchunk contains the size of the data and the sound.
     const id = String.fromCharCode.apply(this, array.slice(index, index + 4));
     const size = new Uint32Array(array.slice(index + 4, index + 8).buffer)[0];
     const chunk = array.slice(index + 8, index + 8 + size);
     return {
         index: index + 20, // 8 of id and size plus 12 of RIFF header
-        id: id,
-        size: size,
-        chunk: chunk
+        id,
+        size,
+        chunk,
     };
 }
 
 /**
 * Get chunks in file header.
-* @param {Obejct} array - Array containing RIFF format WAVE file.
+* @param {Object} array - Array containing RIFF format WAVE file.
 * @return {Object} - With chunks contained in WAV header.
 */
 function getChunks(array) {
@@ -82,9 +82,9 @@ function getChunks(array) {
 */
 
 /**
-* Data in fmt chunk.
+* get data from fmt chunk.
 * @param {Object} array -  WAV array (with RIFF format data).
-* @return {module:Audio/headerReader.formatInfo} 
+* @return {module:Audio/headerReader.formatInfo}
 */
 function readFormatInformation(array, size) {
     const formatInfo = {};
@@ -109,8 +109,8 @@ function readFormatInformation(array, size) {
     return formatInfo;
 }
 
-/** 
-* Data in fact chunk (it migth not exist).
+/**
+* Get data from fact chunk (it might not exist).
 * @param {Object} array - WAV array (with RIFF format data).
 * @return {Object}  Fact chunk info
 */
@@ -120,7 +120,7 @@ function readFactInformation(array) {
     return factInfo;
 }
 
-/** 
+/**
 * @typedef module:Audio/headerReader.headerInfo
 * @type {Object}
 * @property {string} chunkId - "RIFF".
@@ -130,12 +130,12 @@ function readFactInformation(array) {
 * @property {Object} fact - Fact information if available.
 * @property {number} dataSize - Data size in bytes.
 * @property {number} dataStart - Data initial byte.
-*/ 
+*/
 
 /**
 * Get file header data.
 * @param {Object} array -  WAV array (with RIFF format data).
-* @return {module:Audio/headerReader.headerInfo} 
+* @return {module:Audio/headerReader.headerInfo}
 */
 function headerReader(array) {
     const headerInfo = {};
@@ -156,7 +156,6 @@ function headerReader(array) {
 
     headerInfo.dataSize = chunks.data.size;
     headerInfo.dataStart = chunks.data.index;
-
 
     return headerInfo;
 }
