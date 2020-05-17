@@ -1,5 +1,5 @@
 /**
-* Sketching module.
+* Module that contains all WebGL functionalities.
 *
 * @module Artist/webGL
 * @see module:visualizer/Artist/webGL
@@ -10,14 +10,14 @@ import {
 } from './Shaders/loadingShaders';
 import colormapImage from './colormaps.png';
 
-const TIME_BUFFER = 0.2;
-
 /**
 * Create GL program with the given shaders.
-* @param {Object} gl - webGL context.
-* @param {Object} program - webGL program.
-* @param {string} vertexSource - source for the webGL vertexShader linked to program.
-* @param {string} fragmentSource -source for the webGL fragmentShader linked to program.
+* @param {WebGLRenderingContext} gl - webGL context.
+* @param {string} vertexSource - source for the webGL vertexShader linked to the program.
+* @param {string} fragmentSource - source for the webGL fragmentShader linked to
+* the program.
+* @return {WebGLProgram} - The compiled GL program.
+* @throws Will throw an error if compilation isn't successful.
 */
 function createProgram(gl, vertexSource, fragmentSource) {
     if (!gl) {
@@ -59,7 +59,25 @@ function createProgram(gl, vertexSource, fragmentSource) {
 
 
 /**
+ * WebGL Program resources object.
+ * Objects of this type contain all the webGL references required in the program,
+ * including textures, buffers and locations.
+ * @typedef {Object} ProgramResources
+ * @property {WebGLProgram} program - The webGL program.
+ * @property {Object.<string, WebGLBuffer>} buffers - An object containing all
+ * buffers required in the program.
+ * @property {Object.<string, number|WebGLUniformLocation>} locations - An object
+ * containing all the locations required in the program.
+ * @property {Object.<string, WebGLTexture>} [textures] - An object containing all
+ * the textures required in the program.
+ */
+
+/**
  * Create GL program that handles background drawing.
+ * @param {WebGLRenderingContext} gl - webGL context.
+ * @return {module:Artist/webGL~ProgramResources} - Web GL program object containing the
+ * GL program, textures, locations and buffers corresponding to GL Program that draws
+ * the background.
  */
 function createBackgroundProgram(gl) {
     const program = createProgram(
@@ -82,6 +100,10 @@ function createBackgroundProgram(gl) {
 
 /**
  * Create spectrogram program.
+ * @param {WebGLRenderingContext} gl - webGL context.
+ * @return {module:Artist/webGL~ProgramResources} - Web GL program object containing the
+ * GL program, textures, locations and buffers corresponding to GL Program that draws
+ * the spectrogram.
  */
 function createSpectrogramProgram(gl) {
     const program = createProgram(
@@ -128,15 +150,28 @@ function createSpectrogramProgram(gl) {
     };
 }
 
-
-function setBufferData(gl, location, buffer, data, type) {
+/**
+ * Set data to WebGLBuffer and bind attribute to buffer data.
+ * @param {WebGLRenderingContext} gl - The rendering context.
+ * @param {number} location - Vertex attribute location.
+ * @param {WebGLBuffer} buffer - Buffer to which data is being set.
+ * @param {Float32Array} data - Floating array with data to set.
+ * @param {GLenum} usage - A GLenum specifying the intended usage pattern of the data
+ * store for optimization purposes.
+ */
+function setBufferData(gl, location, buffer, data, usage) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, type);
+    gl.bufferData(gl.ARRAY_BUFFER, data, usage);
     gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(location);
 }
 
-
+/**
+ * Set bind vertex attribute to buffer.
+ * @param {WebGLRenderingContext} gl - The rendering context.
+ * @param {number} location - Vertex attribute location.
+ * @param {WebGLBuffer} buffer - Buffer containing attribute data.
+ */
 function bindBuffer(gl, location, buffer) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
@@ -148,27 +183,39 @@ function bindBuffer(gl, location, buffer) {
 * Class used to handle the webGL actions on the visualizerCanvas.
 * Create two programs using webGL context. backgroundProgram takes care of sketching gray
 * backgraound each time specProgram fills texture with new data for the spectrogram.
-* @class
-* @property {Object} specProgram - webGL program dealing with spectrogram layer.
-* @property {Object} gl - webGL context.
-* @property {Object} colorImage - bmp image.
-* @property {int} matrixUniform - specProgram matrix transformation uniform location.
+* @property {HTMLCanvasElement} canvas - HTML Canvas on which to draw the spectrogram.
+* @property {WebGLRenderingContext} gl - webGL context.
+* @property {module:STFTHandler/STFTHandler~STFTHandler} stftHandler - A STFTHandler that
+* contains the spectrogram data.
+* @property {module:Artist/webGL~ProgramResources} spectrogram - ProgramResources object
+* that contains the spectrogram program resources.
+* @property {module:Artist/webGL~ProgramResources} background - ProgramResources object
+* that contains the background program resources.
+* @property {Object} loaded - Object that tracks the bounding times currently loaded
+* within the WebGLTexture of the spectrogram.
+* @property {number} loaded.start - Time of first SFTF column loaded into the
+* spectrogram texture.
+* @property {number} loaded.end - Time of last SFTF column loaded into the
+* spectrogram texture.
 */
-class webGLHandler {
+class WebGLHandler {
     /**
     * Creates a webGL handler.
     * @constructor
-    * @param {Object} canvas - webGL context canvas.
+    * @param {HTMLCanvasElement} canvas - webGL context canvas.
+    * @param {module:STFTHandler/STFTHandler~STFTHandler} stftHandler -
+    * A STFTHandler that contains the spectrogram data.
     */
     constructor(canvas, stftHandler) {
         this.canvas = canvas;
-        this.gl = canvas.getContext('webgl');
         this.stftHandler = stftHandler;
+
+        this.gl = canvas.getContext('webgl');
 
         this.spectrogram = createSpectrogramProgram(this.gl);
         this.background = createBackgroundProgram(this.gl);
 
-        // Data used to avoid extra computations.
+        // Keep track of first and last spectrogram columns loaded into webgl buffer.
         this.loaded = {
             start: 0,
             end: 0,
@@ -181,8 +228,12 @@ class webGLHandler {
     }
 
     /**
-     * Sets spectrogram textures, the one asigning stft values to (time,frequency) coordinates and
-     * the other assigns color to those values.
+     * Initialize drawing.
+     *
+     * Sets colormap image into texture and initializes all uniforms.
+     * @param {Image} colorImage - Image containing colormap info.
+     * @async
+     * @private
      */
     init(colorImage) {
         this.stftHandler.waitUntilReady().then(() => {
@@ -192,23 +243,33 @@ class webGLHandler {
         });
     }
 
+    /**
+     * Initializes buffers, textures and uniforms of the spectrogram program.
+     * @param {Image} colorImage - Image containing colormap info.
+     * @private
+     */
     initSpectrogramProgram(colorImage) {
         this.gl.useProgram(this.spectrogram.program);
 
-        this.setMinFilter(0);
-        this.setMaxFilter(1);
+        this.setInfFilter(0);
+        this.setSupFilter(1);
 
         this.setColorData(colorImage);
         this.setSpectrogramCoords();
     }
 
+    /**
+     * Initializes buffers and uniforms of the background program.
+     * @private
+     */
     initBackgroundProgram() {
         this.gl.useProgram(this.background.program);
         this.setBackgroundPositions();
     }
 
     /**
-    * Adjust webGl viewport
+    * Adjust webGl viewport to canvas dimensions.
+    * @private
     */
     adjustCanvasViewport() {
         this.gl.viewport(
@@ -220,9 +281,24 @@ class webGLHandler {
     }
 
     /**
-     * Draws part of spectrogram matching matrix transformation results.
-     * @param {Object} transformationMatrix - Matrix transformation corresponding to
-     * translations and scales in the [Time, Frequencies] space.
+     * Draw the spectrogram and background.
+     *
+     * A background will be drawn for the whole duration of the file, but
+     * the only the portion of the spectrogram contained in the requested interval
+     * will be drawn.
+     *
+     * Warning: This method might be called while the STFT data is incomplete
+     * and might not be able to draw the full requested temporal range. It will
+     * draw all current data contained within the requested interval. This method
+     * returns the interval that *was* drawn so the user can handle partial draws.
+     *
+     * @param {number} initialTime - Time of first spectrogram column that
+     * should be drawn (in seconds).
+     * @param {number} finalTime - Time of last spectrogram column that should
+     * be drawn (in seconds).
+     * @param {Float32Array} transformationMatrix - Matrix transformation corresponding to
+     * translations and scalings in the [Time, Frequencies] space.
+     * @public
      */
     draw(initialTime, finalTime, transformationMatrix) {
         this.drawBackground(transformationMatrix);
@@ -230,12 +306,24 @@ class webGLHandler {
         return this.loaded;
     }
 
+    /**
+     * Draw the spectrogram portion contained in the requested interval.
+     *
+     *
+     * @param {number} initialTime - Time of first spectrogram column that
+     * should be drawn (in seconds).
+     * @param {number} finalTime - Time of last spectrogram column that should
+     * be drawn (in seconds).
+     * @param {Float32Array} transformationMatrix - Matrix transformation corresponding to
+     * translations and scales in the [Time, Frequencies] space.
+     * @private
+     */
     drawSpectrogram(initialTime, finalTime, transformationMatrix) {
         this.useSpectrogramProgram();
 
         if (this.shouldUpdateSpectrogram(initialTime, finalTime)) {
+            // Only update spectrogram buffer if needed.
             this.updateSpectrogram(initialTime, finalTime);
-            this.borrame = true;
         }
 
         if (this.loaded.start === this.loaded.end) {
@@ -248,17 +336,21 @@ class webGLHandler {
     }
 
     /**
-     * Draws gray background.
-     * @param {number} endTime - Largest time loaded on specProgram texture.
-     * @param {number} maxFreq - Maximum frequency loaded on specProgram texture.
-     * @param {Object} transformationMatrix - Matrix uniform loaded in specProgram.
+     * Draw gray background.
+     * @param {Float32Array} transformationMatrix - Matrix uniform loaded in specProgram.
+     * @private
      */
     drawBackground(transformationMatrix) {
         this.useBackgroundProgram();
+
         this.setBackgroundMatrix(transformationMatrix);
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
+    /**
+     * Change current GL Program to the spectrogram program.
+     * @private
+     */
     useSpectrogramProgram() {
         this.gl.useProgram(this.spectrogram.program);
 
@@ -266,11 +358,24 @@ class webGLHandler {
         this.bindSpectorgramTextures();
     }
 
+    /**
+     * Change current GL Program to the background program.
+     * @private
+     */
     useBackgroundProgram() {
         this.gl.useProgram(this.background.program);
         this.bindBackgroundBuffers();
     }
 
+    /**
+     * Check if the interval has been previously loaded into the spectrogram texture.
+     * @param {number} initialTime
+     * @param {number} finalTime
+     * @return {boolean} - Returns true if the spectrogram fraction
+     * contained in the interval [intialTime, finalTime] has been previously loaded
+     * into the webgl spectrogram texture.
+     * @private
+     */
     shouldUpdateSpectrogram(initialTime, finalTime) {
         const startTime = Math.max(Math.min(initialTime, this.stftHandler.duration), 0);
         const endTime = Math.max(Math.min(finalTime, this.stftHandler.duration), 0);
@@ -286,26 +391,42 @@ class webGLHandler {
         return false;
     }
 
+    /**
+     * Update spectrogram texture data to contain the requested interval.
+     *
+     * This method will request the spectrogram data to the STFTHandler
+     * and set any results into the webgl spectrogram buffer. Since computation
+     * of the spectrogram might not have finished the results might be partial.
+     *
+     * @param {number} initialTime
+     * @param {number} finalTime
+     * @private
+     */
     updateSpectrogram(initialTime, finalTime) {
-        const startTime = initialTime - TIME_BUFFER;
-        const endTime = finalTime + TIME_BUFFER;
+        const range = finalTime - initialTime;
+        const startTime = initialTime - range / 2;
+        const endTime = finalTime + range / 2;
 
         const data = this.stftHandler.read({ startTime, endTime });
 
+        // Store the bounds of the requested spectrogram data for future
+        // reference.
+        this.loaded.start = data.startTime;
+        this.loaded.end = data.endTime;
+
         if (data.start - data.end === 0) {
+            // Do not try to set any data if empty.
             return;
         }
 
-        const width = data.end - data.start;
-        const { bufferColumnHeight, maxFreq } = this.stftHandler;
-
-        this.setSpectrogramPositions(data.startTime, data.endTime, maxFreq);
-        this.setSpectrogramData(data.data, width, bufferColumnHeight);
-
-        this.loaded.start = data.startTime;
-        this.loaded.end = data.endTime;
+        this.setSpectrogramPositions(data.startTime, data.endTime);
+        this.setSpectrogramData(data.data);
     }
 
+    /**
+     * Bind spectrogram programm buffers and attributes.
+     * @private
+     */
     bindSpectrogramBuffers() {
         const coordsLocation = this.spectrogram.locations.specCoords;
         const coordsBuffer = this.spectrogram.buffers.specCoords;
@@ -316,12 +437,20 @@ class webGLHandler {
         bindBuffer(this.gl, posLocation, posBuffer);
     }
 
+    /**
+     * Bind background programm buffers and attributes.
+     * @private
+     */
     bindBackgroundBuffers() {
         const location = this.background.locations.positions;
         const buffer = this.background.buffers.vertices;
         bindBuffer(this.gl, location, buffer);
     }
 
+    /**
+     * Set background positions to cover the whole file.
+     * @private
+     */
     setBackgroundPositions() {
         const { duration, maxFreq } = this.stftHandler;
         const location = this.background.locations.positions;
@@ -338,19 +467,26 @@ class webGLHandler {
         setBufferData(this.gl, location, buffer, positions, this.gl.STATIC_DRAW);
     }
 
+    /**
+     * Set transformation matrix to adequately display the background.
+     * @param {Float32Array} matrix - Transformation matrix.
+     * @private
+     */
     setBackgroundMatrix(matrix) {
         const location = this.background.locations.matrix;
         this.gl.uniformMatrix3fv(location, false, matrix);
     }
 
     /**
-    * Positions the texture in order to appear on canvas.
-    * Complete frequencies range is always loaded on texture.
-    * @param {number} startTime - time corresponding to initial time in texture.
-    * @param {number} endTime - time corresponding to final time in texture.
-    * @param {number} maxFreq - Highest frequency in stft computations.
+    * Set spectrogram position in canvas.
+    * @param {number} startTime - time at which to start placement of the
+    * spectrogram texture.
+    * @param {number} endTime - time at which to end placement of the
+    * spectrogram texture.
+    * @private
     */
-    setSpectrogramPositions(startTime, endTime, maxFreq) {
+    setSpectrogramPositions(startTime, endTime) {
+        const { maxFreq } = this.stftHandler;
         const location = this.spectrogram.locations.specPos;
         const buffer = this.spectrogram.buffers.specPos;
         const positions = new Float32Array([
@@ -366,14 +502,14 @@ class webGLHandler {
     }
 
     /**
-    * Fills the texture containing the results of the stft. These texture will
-    * be used to obtain a color from the colorMap for each time and frequency pair.
-    * @param {array} data - Contains stft data to load on texture.
-    * @param {int} width - The number of points in the base of the texture.
-    * @param {int} height - The number of points in the height of the texture.
+    * Set data into the webgl spectrogram texture.
+    * @param {array} data - The stft data to set on texture.
+    * @private
     */
-    setSpectrogramData(data, width, height) {
+    setSpectrogramData(data) {
         const { gl } = this;
+        const height = this.stftHandler.bufferColumnHeight;
+        const width = Math.floor(data.length / height);
         const texture = this.spectrogram.textures.spectrogram;
 
         gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -388,44 +524,52 @@ class webGLHandler {
             gl.FLOAT,
             data,
         );
+
+        this.bindSpectorgramTextures();
     }
 
+    /**
+     * Set transformation matrix to adequately display the spectrogram.
+     * @param {Float32Array} matrix - Transformation matrix.
+     * @private
+     */
     setSpectrogramMatrix(matrix) {
         const location = this.spectrogram.locations.matrix;
         this.gl.uniformMatrix3fv(location, false, matrix);
     }
 
     /**
-    * Turns one column from colorTexture the colorMap.
-    * The range [0,1] is translated into a range of colors depending on this column.
-    * @param {number} newColumn - Column number.
+    * Set colormap.
+    *
+    * Colormaps are numbered.
+    * @param {number} colormap - Colormap number.
+    * @public
     */
-    setColor(newColumn) {
-        this.gl.uniform1f(this.spectrogram.locations.colormap, newColumn);
+    setColor(colormap) {
+        this.gl.uniform1f(this.spectrogram.locations.colormap, colormap);
     }
 
     /**
-    * Set inferior filter value for colorMap.
-    * @param {number} newValue - Inferior value used by colorMap.
+    * Set inferior filter value for colormap.
+    * @param {number} value - Inferior value used by colorMap.
+    * @public
     */
-    setMinFilter(newValue) {
-        this.minFilter = newValue;
-        this.gl.uniform1f(this.spectrogram.locations.filterInf, newValue);
+    setInfFilter(value) {
+        this.gl.uniform1f(this.spectrogram.locations.filterInf, value);
     }
 
     /**
-    * Set superior filter value for colorMap.
-    * @param {number} newValue - Superior value used by colorMap.
+    * Set superior filter value for colormap.
+    * @param {number} value - Superior value used by colormap.
+    * @public
     */
-    setMaxFilter(newValue) {
-        this.maxFilter = newValue;
-        this.gl.uniform1f(this.spectrogram.locations.filterSup, newValue);
+    setSupFilter(value) {
+        this.gl.uniform1f(this.spectrogram.locations.filterSup, value);
     }
 
     /**
-     * Sets texture abstact coordinates defining shape and orientation to its respective location.
-     * @param {Object} gl - webGL context.
-     * @param {int} textureCoordinatesLocations - Abstract texture coordinates location.
+     * Sets spectrogram texture abstact coordinates defining shape and orientation.
+     * @private
      */
     setSpectrogramCoords() {
         const location = this.spectrogram.locations.specCoords;
@@ -442,6 +586,10 @@ class webGLHandler {
         setBufferData(this.gl, location, buffer, vertices, this.gl.STATIC_DRAW);
     }
 
+    /**
+     * Bind spectrogram program textures to the corresponding texture unit.
+     * @private
+     */
     bindSpectorgramTextures() {
         const { gl } = this;
 
@@ -455,10 +603,9 @@ class webGLHandler {
     }
 
     /**
-     * Sets bmp image to extract color maps as texture.
-     * @param {Object} gl - webGL context.
-     * @param {Object} colorImage - bmp image used to define the colorMaps.
-     * @param {Object} colorTexture - webGL texture created to contain colorImage.
+     * Sets colormap image to texture.
+     * @param {Image} colorImage - bmp image used to define the colorMaps.
+     * @private
      */
     setColorData(colorImage) {
         const { gl } = this;
@@ -476,4 +623,4 @@ class webGLHandler {
     }
 }
 
-export default webGLHandler;
+export default WebGLHandler;
