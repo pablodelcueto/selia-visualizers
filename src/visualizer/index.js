@@ -501,13 +501,14 @@ class Visualizer extends VisualizerBase {
     * block on data used on coefficents computations.
     */ 
     modifyHopLength(newWindowHop) {
+        const realValue = Math.min(newWindowHop, this.config.stft.window_size);
         const conf = {
             stft: {
-                hop_length: newWindowHop,
+                hop_length: realValue,
             },
             startTime: this.leftBorderTime(),
         };
-        this.config.stft.hop_length = newWindowHop;
+        this.config.stft.hop_length = realValue;
         this.STFTRetriever.setConfig(conf);
         this.artist.forcingDraw = true;
     }

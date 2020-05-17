@@ -183,7 +183,7 @@ function SwitchButtons(props) {
                     type="checkbox"
                     id="informationWindowSwitch"
                     className="custom-control-input"
-                    onChange={() => { props.infoSwitchButton() }}
+                    onChange={() => { props.infoSwitchButton()}}
                 />
                 <label className="custom-control-label" htmlFor="informationWindowSwitch">
                     Information window.
@@ -251,9 +251,7 @@ function STFTmenus(props) {
         <div>
             <select
                 style={menuStyle}
-                onChange={(event) => {
-                    props.handleWindowFunctionChange(event.target.value);
-                }}
+                onChange={(event) => { props.handleWindowFunctionChange(event.target.value); }}
             >
                 <optgroup label="Window Type">
                     <option value="hann">Hann</option>
@@ -264,9 +262,7 @@ function STFTmenus(props) {
 
             <select
                 style={menuStyle}
-                onChange={(event) => {
-                    props.handleWindowSizeChange(event.target.value);
-                }}
+                onChange={(event) => { props.handleWindowSizeChange(event.target.value); }}
             >
                 <optgroup label="Window Size">
                     <option value="512">512</option>
@@ -277,9 +273,8 @@ function STFTmenus(props) {
 
             <select
                 style={menuStyle}
-                onChange={(event) => {
-                    props.handleWindowHopChange(event.target.value);
-                }}
+                onChange={(event) => { props.handleWindowHopChange(event.target.value); }}
+                value={props.window_hop}
             >
                 <optgroup label="Hop Length">
                     <option value="256">256</option>
@@ -424,7 +419,6 @@ class Toolbox extends React.Component {
     * @constructor 
     * @param {module:index.toolBoxProps} props - React properties.
     * @property {Object} state - ToolBox information state.
-    * @property {number} state.window_size - STFT window size.
     * @property {number} state.lim_inf - Inferior filter color slider values.
     * @property {number} state.lim_sup - Superior filter color slider values.
     * @property {number} state.duration - Audio file duration.
@@ -438,7 +432,8 @@ class Toolbox extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            window_size: props.config.stft.window_size,
+            window_size: this.props.config.stft.window_size,
+            window_hop: this.props.config.stft.window_hop,
             lim_inf: 0,
             lim_sup: 1,
             duration: 1,
@@ -479,8 +474,9 @@ class Toolbox extends React.Component {
     }
 
     handleWindowSizeChange(value) {
-        this.setState({ window_size: value });
-        this.props.modifyWindowSize(value);
+        const realValue = Math.max(value, this.state.window_hop);
+        this.setState({ window_size: realValue });
+        this.props.modifyWindowSize(realValue);
     }
 
     handleWindowFunctionChange(type) {
@@ -488,8 +484,9 @@ class Toolbox extends React.Component {
     }
 
     handleWindowHopChange(newHopLength) {
-        const hopLength = Math.min(this.state.window_size, newHopLength);
-        this.props.modifyHopLength(hopLength);
+        const realValue = Math.min(this.state.window_size, newHopLength);
+        this.setState({ window_hop: realValue });
+        this.props.modifyHopLength(realValue);
     }
 
     handleColorMapChange(color) {
@@ -605,28 +602,33 @@ class Toolbox extends React.Component {
                             onMouseUp={(event) => this.unclickingDiv(event)} />
                         <InfoWindow 
                             time={this.state.cursorInfo.time}
-                            frequency={this.state.cursorInfo.frequency} />
+                            frequency={this.state.cursorInfo.frequency}
+                        />
                     </div>,
                     this.props.canvasContainer,
                 )}
                 
                 <div>
-                    <SwitchButtons 
-                        zoomSwitchButton={() => this.props.switchButton()} 
-                        infoSwitchButton={() => this.showHideInfoWindow()} />
+                    <SwitchButtons
+                        zoomSwitchButton={() => this.props.switchButton()}
+                        infoSwitchButton={() => this.showHideInfoWindow()}
+                    />
                 </div>
 
                 <div>
-                    <ActionButtons 
+                    <ActionButtons
                         home={() => this.props.home()}
-                        revertAction={() => this.props.revertAction()} />
+                        revertAction={() => this.props.revertAction()} 
+                    />
                 </div>
 
                 <div>
                     <STFTmenus
                         handleWindowFunctionChange={(value) => this.handleWindowFunctionChange(value)}
                         handleWindowSizeChange={(value) => this.handleWindowSizeChange(value)}
-                        handleWindowHopChange={(value) => this.handleWindowHopChange(value)} />
+                        handleWindowHopChange={(value) => this.handleWindowHopChange(value)}
+                        window_hop={this.state.window_hop}
+                    />
                 </div>
 
                 <div>
