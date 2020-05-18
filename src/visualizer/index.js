@@ -9,8 +9,9 @@ import Tools from './Tools';
 /** STFT configurations */
 const INIT_CONFIG = {
     stft: {
-        window_size: 1024,
-        hop_length: 1024 * 0.25, window_function: 'hann',
+        window_size: 516,
+        hop_length: 256,
+        window_function: 'hann',
     },
     startTime: 0.0,
 };
@@ -153,8 +154,8 @@ class Visualizer extends VisualizerBase {
                 modifyHopLength={(newLength) => this.modifyHopLength(newLength)}
                 modifyWindowSize={(newWindowSize) => this.modifyWindowSize(newWindowSize)}
                 modifyColorMap={(newColor) => this.modifyColorMap(newColor)}
-                modifyMinFilter={(newValue) => this.modifyMinFilter(newValue)}
-                modifyMaxFilter={(newValue) => this.modifyMaxFilter(newValue)}
+                modifyInfFilter={(newValue) => this.modifyInfFilter(newValue)}
+                modifySupFilter={(newValue) => this.modifySupFilter(newValue)}
                 moveToCenter={(newTime) => this.translatePointToCenter(this.createPoint(newTime, 0))}
                 reproduceAndPause={(time) => this.reproduceAndPause(time)} 
                 stopReproduction={() => this.stopReproduction()} 
@@ -476,7 +477,7 @@ class Visualizer extends VisualizerBase {
         };
         this.config.stft.window_function = newWindowFunction;
         this.STFTRetriever.setConfig(conf);
-        this.artist.forcingDraw = true;
+        this.artist.reset();
     }
 
     /**
@@ -484,15 +485,16 @@ class Visualizer extends VisualizerBase {
     * in the stftHandler
     */
     modifyWindowSize(newWindowSize) {
+        const realValue = Math.max(newWindowSize, this.config.stft.hop_length);
         const conf = {
             stft: {
-                window_size: parseInt(newWindowSize, 10),
+                window_size: parseInt(realValue, 10),
             },
             startTime: this.leftBorderTime(),
         };   
-        this.config.stft.window_size = newWindowSize;
+        this.config.stft.window_size = realValue;
         this.STFTRetriever.setConfig(conf);
-        this.artist.forcingDraw = true;
+        this.artist.reset();
     }
 
     /**
@@ -509,7 +511,7 @@ class Visualizer extends VisualizerBase {
         };
         this.config.stft.hop_length = realValue;
         this.STFTRetriever.setConfig(conf);
-        this.artist.forcingDraw = true;
+        this.artist.reset();
     }
 
     /**
@@ -522,14 +524,14 @@ class Visualizer extends VisualizerBase {
     }
 
     // Modifies min lim of the color map.
-    modifyMinFilter(newValue) {
-        this.artist.setColorMapMinFilter(newValue);
+    modifyInfFilter(newValue) {
+        this.artist.setColorMapInfFilter(newValue); 
         this.artist.forcingDraw=true;
     }
 
     // Modifies max lim of the color map.
-    modifyMaxFilter(newValue) {
-        this.artist.setColorMapMaxFilter(newValue);
+    modifySupFilter(newValue) {
+        this.artist.setColorMapSupFilter(newValue);
         this.artist.forcingDraw=true;
     }
 

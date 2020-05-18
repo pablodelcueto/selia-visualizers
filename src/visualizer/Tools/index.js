@@ -1,7 +1,7 @@
 /**
 * module for tool box. 
 * @module Tools/index
-* @see module:Tools.index.js
+* @see module:Tools/index.js
 */
 
 // This file should be used to code tge component related to the tools needed in visualizator
@@ -97,13 +97,13 @@ function InfoWindow(props) {
 function SliderDiv(props) {
     return (
         <div
-            id = "sliderDiv"
+            id="sliderDiv"
             style={{
                 left: props.initialPixel,
                 position: 'absolute',
                 width: props.pixelLength,
                 height: '20px',
-                zIndex: '2', 
+                zIndex: '2',
                 backgroundColor: 'rgba(0,0,0,0.3)',
             }} />
     )
@@ -251,6 +251,7 @@ function STFTmenus(props) {
         <div>
             <select
                 style={menuStyle}
+                value={props.window_function}
                 onChange={(event) => { props.handleWindowFunctionChange(event.target.value); }}
             >
                 <optgroup label="Window Type">
@@ -262,6 +263,7 @@ function STFTmenus(props) {
 
             <select
                 style={menuStyle}
+                value={props.window_size}
                 onChange={(event) => { props.handleWindowSizeChange(event.target.value); }}
             >
                 <optgroup label="Window Size">
@@ -273,8 +275,8 @@ function STFTmenus(props) {
 
             <select
                 style={menuStyle}
+                value={props.hop_length}
                 onChange={(event) => { props.handleWindowHopChange(event.target.value); }}
-                value={props.window_hop}
             >
                 <optgroup label="Hop Length">
                     <option value="256">256</option>
@@ -405,6 +407,25 @@ function Reproductor(props) {
         )
 }
 //--------------------------------------------------------
+/** 
+ * @typedef module:Tools/index.state
+ * @type {Object}
+ * @property {Object} stftConf - STFT computations configurations.
+ * @property {number} stftConf.window_function - STFT window type computations.
+ * @property {number} stftConf.window_size - STFT window size computations.
+ * @property {number} stftConf.hop_length - STFT window hop length computations.
+ * @property {Object} colorConf - Color settings.
+ * @property {number} colorConf.lim_inf - Inferior filter color slider values.
+ * @property {number} colorConf.lim_sup - Superior filter color slider values.
+ * @property {Object} timeSettings - Canvas borders times and audio duration.
+ * @property {number} timeSettings.duration - Audio file duration.
+ * @property {number} timeSettings.initialTime - Left time on visualization.
+ * @property {number} timeSettings.finalTime - Rigth time on visulaization.
+ * @property {Object} cursorInfo - Information of positiones cursor.
+ * @property {number} cursorInfo.time - Time value in cursor point .
+ * @property {number} cursorInfo.frequency - Frequency value in cursor point.
+*/
+
 /**
 * This class link all menus, slider, and buttons in toolBox with corresponding 
 * methods in visualizer required once a modification has been done.
@@ -418,95 +439,183 @@ class Toolbox extends React.Component {
     * Creates a toolBox.
     * @constructor 
     * @param {module:index.toolBoxProps} props - React properties.
-    * @property {Object} state - ToolBox information state.
-    * @property {number} state.lim_inf - Inferior filter color slider values.
-    * @property {number} state.lim_sup - Superior filter color slider values.
-    * @property {number} state.duration - Audio file duration.
-    * @property {number} state.initialTime - Left time on visualization.
-    * @property {number} state.finalTime - Rigth time on visulaization.
-    * @property {boolean} state.dragging - Indicates if representing slider should move.
-    * @property {Object} state.cursorInfo - Information of positiones cursor.
-    * @property {number} state.cursorInfo.time - Time value in cursor point .
-    * @property {number} state.cursorInfo.frequency - Frequency value in cursor point.
+    * @property {module:Tools/index.state} state - React component state.
+    * @public
     */ 
     constructor(props) {
         super(props);
         this.state = {
-            window_size: this.props.config.stft.window_size,
-            window_hop: this.props.config.stft.window_hop,
-            lim_inf: 0,
-            lim_sup: 1,
-            duration: 1,
-            initialTime: 0,
-            finalTime: 0,
+            stftConf: {
+                window_function: this.props.config.stft.window_function,
+                window_size: this.props.config.stft.window_size,
+                hop_length: this.props.config.stft.hop_length,   
+            },
+            colorConf: {
+                lim_inf: 0,
+                lim_sup: 1,
+            },
+            timeSettings: {
+                duration: 1,
+                initialTime: 0,
+                finalTime: 0,
+            },
             dragging: false,
             cursorInfo: { time: 0, frequency: 0 },
         };
 
         this.props.audioFile.waitUntilReady().then(() => {
-            this.setState({ duration: this.props.audioFile.mediaInfo.durationTime });
-        })
+            this.setState((prevState) => ({
+                timeSettings: {
+                    ...prevState.timeSettings,
+                    duration: this.props.audioFile.mediaInfo.durationTime,
+                },
+            }));
+        });
     }
 
-
+    /**
+    * Initialize the toolBox.
+    * @private
+    */
     componentDidMount() {
         this.addEventsToCanvas();
     }
 
+    /**
+    * Used to set initTime and finalTime in state.timeSettings.
+    * @param {number} initTime - initialTime for state.timeSettings.
+    * @param {number} finalTine - finalTime for state.timeSettings.
+    * @private
+    */
     setSliderTimes(initTime, finalTime) {
-        const [duration] = [this.state.duration];
+        const [duration] = [this.state.timesSettings.duration];
         this.setState(
             () => ({
-                initialTime: Math.max(0, initTime),
-                finalTime: Math.min(duration, finalTime),
+                timeSettings: {
+                    initialTime: Math.max(0, initTime),
+                    finalTime: Math.min(duration, finalTime),
+                },
             }),
         );
     }
 
+    /**
+    * Completes some events of SliderBlockDiv by adding functionality in props.canvas.
+    * @private
+    */
     addEventsToCanvas() {
         this.uncheckZoomTag = this.uncheckZoomTag.bind(this);
         this.props.canvas.addEventListener('mouseup', () => {
             this.uncheckZoomTag();
-            this.unclickingDiv();
+                this.unclickingDiv();
         });
         this.props.canvas.addEventListener('mousemove', (e) => {
             this.draggingOutDiv(e)});
     }
 
-    handleWindowSizeChange(value) {
-        const realValue = Math.max(value, this.state.window_hop);
-        this.setState({ window_size: realValue });
+    /**
+    * Set window size in state.stftConf.
+    * Modifies window size in state and calls for props.modifiyWindowSize.
+    * @param {number} windowSize - New window size value.
+    * @public
+    */
+    handleWindowSizeChange(windowSize) {
+        const realValue = Math.max(windowSize, this.state.stftConf.hop_length);
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                window_size: realValue,
+            },
+        }));
         this.props.modifyWindowSize(realValue);
     }
 
+    /**
+    * Set window type in state.stftConf.
+    * Modifies window function in menu and calls for props window function modification.
+    * @param {string} type - New window type name.
+    * @public
+    */
     handleWindowFunctionChange(type) {
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                window_function: type,
+            },
+        }));
         this.props.modifyWindowFunction(type);
     }
-
+ 
+    /**
+    * Set hop length in state.stftConf.
+    * Modifies window hop length in menu and calls for props hop length modification.
+    * @param {number} newHopLength - New hop length value.
+    * @public
+    */
     handleWindowHopChange(newHopLength) {
-        const realValue = Math.min(this.state.window_size, newHopLength);
-        this.setState({ window_hop: realValue });
+        const realValue = Math.min(this.state.stftConf.window_size, newHopLength);
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                hop_length: realValue,
+            },
+        }));
         this.props.modifyHopLength(realValue);
     }
 
+    /**
+    * Set colorMap value in state.colorConf.
+    * Modifies colorMap value in colorMenu and calls for modification in visualizer class.
+    * @param {number} color - New colorMap related number.
+    * @public
+    */
     handleColorMapChange(color) {
         this.props.modifyColorMap(parseFloat(color));
     }
 
+    /**
+    * Set inferior filter in state.colorConf .
+    * @param {number} value - New inferior limit value for colorMap.
+    * @public
+    */
     handleMinFilterChange(value) {
-        this.setState({ lim_inf: value });
-        this.props.modifyMinFilter(value);
+        this.setState((prevState) => ({
+            colorConf: {
+                ...prevState.colorConf,
+                lim_inf: value,
+            },
+        }));
+        this.props.modifyInfFilter(value);
     }
 
+    /**
+    * Set superior filter for color map.
+    * @param {number} value - New superior limit value for colorMap.
+    * @public
+    */
     handleMaxFilterChange(value) {
-        this.setState({ lim_sup: value });
-        this.props.modifyMaxFilter(value);
+        this.setState((prevState) => ({
+            colorConf: {
+                ...prevState.colorConf,
+                lim_sup: value,
+            },
+        }));
+        this.props.modifySupFilter(value);
     }
 
+    /**
+    * Spectrogram translation following sliding block.
+    * @param {number} - Time where spectrogram view should be centered.
+    * @private
+    */
     handleTranslation(newTime) {
         this.props.moveToCenter(newTime);
     }
 
+    /**
+    * Play and Pause audio.
+    * @public
+    */
     reproduce() {
         this.props.reproduceAndPause();
     }
@@ -521,7 +630,7 @@ class Toolbox extends React.Component {
     }
 
     setCursorInfo(time, frequency) {
-        this.setState({cursorInfo:{ time:time, frequency:frequency}});
+        this.setState({ cursorInfo: { time: time, frequency: frequency } });
     }
 
     uncheckZoomTag() {
@@ -535,7 +644,7 @@ class Toolbox extends React.Component {
 
 
     unitaryIntervalToTime(x) {
-        return x * this.state.duration;
+        return x * this.state.timeSettings.duration;
     }
 
 
@@ -564,22 +673,27 @@ class Toolbox extends React.Component {
         this.setState({ dragging: false });
     }
 
-    moveSliderFromCanvas() {     
+    moveSliderFromCanvas() {    
         const times = this.props.canvasTimes();
-        this.setState({
-            initialTime: times.leftTime,
-            finalTime: times.rigthTime,
-        });
+        this.setState((prevState) => ({
+            timeSettings: {
+                ...prevState.timeSettings,
+                initialTime: times.leftTime,
+                finalTime: times.rigthTime,
+            },
+        }));
     }
 
     computeInitialPixel() {
-        const initialPixel = (this.state.initialTime / this.state.duration);
+        const initialTime = this.state.timeSettings.initialTime;
+        const initialPixel = (initialTime / this.state.timeSettings.duration);
         return initialPixel * this.props.canvas.width;
     }
 
     computePixelLength() {
-        const pixelLength = this.props.canvas.width
-            * (Math.abs(this.state.finalTime - this.state.initialTime) / this.state.duration);
+        let range = this.state.timeSettings.finalTime - this.state.timeSettings.initialTime;
+        range = Math.abs(range);
+        const pixelLength = this.props.canvas.width * (range / this.state.timeSettings.duration);
         return pixelLength;
     }
 
@@ -624,10 +738,14 @@ class Toolbox extends React.Component {
 
                 <div>
                     <STFTmenus
-                        handleWindowFunctionChange={(value) => this.handleWindowFunctionChange(value)}
+                        handleWindowFunctionChange={
+                            (value) => this.handleWindowFunctionChange(value)
+                        }
                         handleWindowSizeChange={(value) => this.handleWindowSizeChange(value)}
                         handleWindowHopChange={(value) => this.handleWindowHopChange(value)}
-                        window_hop={this.state.window_hop}
+                        window_function={this.state.stftConf.window_function}
+                        window_size={this.state.stftConf.window_size}
+                        hop_length={this.state.stftConf.hop_length}
                     />
                 </div>
 
@@ -639,9 +757,9 @@ class Toolbox extends React.Component {
                 <div>
                     <ColorFilters
                         handleMinFilterChange={(value) => this.handleMinFilterChange(value)}
-                        lim_inf={this.state.lim_inf}
+                        lim_inf={this.state.colorConf.lim_inf}
                         handleMaxFilterChange={(value) => this.handleMaxFilterChange(value)}
-                        lim_sup={this.state.lim_sup} />
+                        lim_sup={this.state.colorConf.lim_sup} />
                 </div>
                 <div>   
                     <Reproductor reproduce={() => this.reproduce()} />

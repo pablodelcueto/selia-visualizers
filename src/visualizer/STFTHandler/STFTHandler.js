@@ -271,6 +271,7 @@ class STFTHandler {
         }
 
         if ('hop_length' in config.stft) {
+            console.log('hereiam2')
             this.config.stft.hop_length = config.stft.hop_length;
         }
 

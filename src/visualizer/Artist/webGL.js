@@ -215,6 +215,7 @@ class WebGLHandler {
         this.spectrogram = createSpectrogramProgram(this.gl);
         this.background = createBackgroundProgram(this.gl);
 
+
         // Keep track of first and last spectrogram columns loaded into webgl buffer.
         this.loaded = {
             start: 0,
@@ -389,6 +390,14 @@ class WebGLHandler {
         }
 
         return false;
+    }
+
+    /**
+     * Resents all loaded data when stft configurations changed.
+     * @private
+     */
+    resetSpectrogramTexture() {
+        this.loaded.end = this.loaded.start;
     }
 
     /**

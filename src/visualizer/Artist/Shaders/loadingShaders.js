@@ -3,7 +3,6 @@ const VERTEX_LOADING_SHADER = `
   uniform mat3 u_matrix;
   void main() {
     gl_Position = vec4(u_matrix*vec3(al_position.xy,1.0),1.0);
-    // gl_Position = al_position;
   }
   `;
 

@@ -163,6 +163,10 @@ class Artist {
         return drawBounds;
     }
 
+    reset() {
+        this.glHandler.resetSpectrogramTexture();
+    }
+
     /**
     * Draw a rectangle to indicate the portion on which to zoom.
     * @param {int} xCoord - Pixel coordinate x for left superior corner of rectangle.
