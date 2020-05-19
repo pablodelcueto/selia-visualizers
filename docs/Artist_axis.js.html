@@ -1,0 +1,437 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Artist/axis.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">My React components</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                <div class="dropdown is-hoverable is-right">
+                    <a class="dropdown-trigger link">
+                        Tutorials
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-content">
+                        
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-Artist_artist.html">Artist/artist</a></li><li><a href="module-Artist_axis.html">Artist/axis</a></li><li><a href="module-Artist_webGL.html">Artist/webGL</a></li><li><a href="module-Audio_audioFile.html">Audio/audioFile</a></li><li><a href="module-Audio_headerReader.html">Audio/headerReader</a></li><li><a href="module-Audio_reproductor.html">Audio/reproductor</a></li><li><a href="module-STFTHandler_STFTHandler.html">STFTHandler/STFTHandler</a></li><li><a href="module-Tools_index.html">Tools/index</a></li></ul><h3>Classes</h3><ul><li><a href="module-Artist_artist-Artist.html">Artist</a></li><li><a href="module-Artist_axis-Axis.html">Axis</a></li><li><a href="module-Artist_webGL-WebGLHandler.html">WebGLHandler</a></li><li><a href="module-Audio_audioFile-AudioFile.html">AudioFile</a></li><li><a href="module-Audio_reproductor-Reproductor.html">Reproductor</a></li><li><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></li><li><a href="Visualizer.html">Visualizer</a></li></ul><h3>Components</h3><ul><li><a href="module-Tools_index-ActionButtons.html">ActionButtons</a></li><li><a href="module-Tools_index-CanvasSliderDiv.html">CanvasSliderDiv</a></li><li><a href="module-Tools_index-ColorFilters.html">ColorFilters</a></li><li><a href="module-Tools_index-ColorMenu.html">ColorMenu</a></li><li><a href="module-Tools_index-InfoWindow.html">InfoWindow</a></li><li><a href="module-Tools_index-Reproductor.html">Reproductor</a></li><li><a href="module-Tools_index-SliderDiv.html">SliderDiv</a></li><li><a href="module-Tools_index-STFTmenus.html">STFTmenus</a></li><li><a href="module-Tools_index-SwitchButtons.html">SwitchButtons</a></li><li><a href="module-Tools_index-Toolbox.html">Toolbox</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INIT_CONFIG">INIT_CONFIG</a></li><li><a href="global.html#INITIAL_SECONDS_PER_WINDOW">INITIAL_SECONDS_PER_WINDOW</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>Artist/axis.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/** 
+* Axis module.
+*
+* @module Artist/axis
+* @see module: Artist/axis.js
+*/
+
+/**
+* A relativePosition Object containng a time and its canvas pixel coordinates.
+* @typedef module:Artist/axis.relativePosition
+* @type {Object}
+* @property {number} time - Time value.
+* @property {number} position - Relative x-position in canvas corresponding to time.
+*/
+
+/** Number of mark lines on vertical axis. */
+const FREQUENCY_LINES = 50;
+/** Maximum pixels between two consecutive marks in horizontal axis. */
+const MAX_PIXELS_MARK_STEP = 400;
+/** Minimum pixels between two consecutive marks in horizontal axis. */
+const MIN_PIXELS_MARK_STEP = MAX_PIXELS_MARK_STEP / 10;
+
+/**
+* Rounds a value to nearest number with only ceros after precision number of digits.
+* @param {int} precision - Number of digits after point.
+* @param {number} value - Value to round.
+* @param {return} Value precision rounded.
+*/
+function roundValue(precision, value) {
+    return Math.round(value * 10 ** precision) / 10 ** precision.toString();
+}
+
+/**
+* Class used to sketch the axis lines and values.
+* @class
+* @property {boolean} isZooming - Control variable to avoid clearing context.
+* @property {number} audioLentgh - Time audio duration.
+* @property {number} precision - Digits precision indicator.
+*/
+class Axis {
+    /**
+    * Creates an axisHandler Object
+    * @constructor
+    * @param {class} visualizer - Class with time-canvas translator.
+    * @param {Object} canvas - The 2d-context canvas.
+    */
+    constructor(visualizer, canvas, context) {
+        this.visualizer = visualizer;
+        this.canvas = canvas;
+        this.ctx = context;
+        this.isZooming = false;
+        this.audioLength = 1;
+        this.precision = 0;
+        this.init();
+    }
+
+    /**
+    * Sketch central vertical line and axis visibility rectangles.
+    */
+    init() {
+        this.drawMarkLine();
+        this.drawAxisRectangles();
+    }
+
+    /**
+    * Draws shady white rectangles to improve scales visibility.
+    */
+    drawAxisRectangles() {
+        this.ctx.fillStyle = 'rgba(255, 255, 255, .6)';
+        this.ctx.fillRect(0, 0, 80, this.canvas.height);
+        this.ctx.fillRect(0, this.canvas.height - 30, this.canvas.width, 30);
+        this.ctx.fillStyle = '#000000';
+    }
+
+    /**
+    *Draws time axis base line.
+    */
+    drawBaseLine() {
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 0.6;
+        this.ctx.moveTo(0, this.canvas.height - 30);
+        this.ctx.lineTo(this.canvas.width, this.canvas.height - 30);
+        this.ctx.stroke();
+    }
+
+    /**
+    * Draws the red middle line corresponding to execution time.
+    */
+    drawMarkLine() {
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = 'rgba(0, 0, 0, 1)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.moveTo(this.canvas.width / 2, 0);
+        this.ctx.lineTo(this.canvas.width / 2, this.canvas.height);
+        this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+    /** 
+    * Draws axis.
+    * @param {number} initialTime - Requested initial time.
+    * @param {number} finalTime - Requested final time.
+    * @param {number} initialFrequency - Requested initial frequency. 
+    * @param {number} finalFrequency - Requested final frequency.
+    * @param {number} zoomFactor - Visualizer matrix transformation time factor.
+    */
+    drawAxis(initialTime, finalTime, zoomFactor, initialFrequency, finalFrequency) {
+        this.computeTimePrecision(zoomFactor);
+        this.adjustHorizontalAxis(initialTime, finalTime);
+        this.adjustVerticalAxis(initialFrequency / 1000, finalFrequency / 1000); // To express in kH.
+    }
+
+    /** Clears sketched data.
+    * @param {boolean} zooming - Boolean used to avoid clear zooming rectangles.
+    */
+    clear(zooming) {
+        if (!zooming) {
+            this.ctx.save();
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.restore();
+        }
+    }
+
+    /**
+     * Ajust the temporal axis in the requested range.
+     *
+     * Computes left time and position nearest to requested times and uses those values to compute
+     * initialPixelTraslation, pixelStep, timeStep, and number of ticks.
+     * Calls tickHorizontalScale to sketch the horizontal axis with corresponding values.
+     * @param {Number} initialTime - Requested initial time.
+     * @param {Number} finalTime - Requested final time.
+    */
+    adjustHorizontalAxis(initialTime, finalTime) {
+        const leftValues = this.leftTimeAndPositionWithPrecision(initialTime);
+        const rightValues = this.leftTimeAndPositionWithPrecision(finalTime);
+        // Number of pixels between outside precise times.
+        const width = rightValues.relativePosition - leftValues.relativePosition;
+        // const width = this.visualizer.canvas.width;
+        // Total time between outside precise times.
+        const duration = (rightValues.precisionTime - leftValues.precisionTime);
+        // Number of marks fitting on horizontal axis according to duration and precision
+        // considering every time with precision digit gets a mark.
+        const numSteps = duration * 10 ** this.precision;
+        const timeStep = 1 / (10 ** this.precision);
+        const pixelStep = width / numSteps;
+
+
+        this.tickHorizontalScale(
+            leftValues.precisionTime,
+            timeStep,
+            Math.floor(leftValues.relativePosition),
+            pixelStep,
+            numSteps,
+            this.precision,
+        );
+    }
+
+    /**
+     * Draws all the ticks and time values for some of them.
+     *
+     * @param {number} initialTime - First time to appear in the horizontal Axis.
+     * @param {number} timeStep - Time between one time mark and the next one.
+     * @param {int} initialPixelTraslation - Number of pixels to the left of
+     * canvas where initialTime should be positioned.
+     * @param {int} pixelStep - Number of pixels between one time mark and the next one.
+     * @param {int} numberOfTicks - Number of marks in x-Axis inside Canvas.
+     * @param {int} precision - Number of decimals precision in time values.
+    */
+    tickHorizontalScale(initialTime, timeStep, initPixelTranslation, pixelStep, numberOfTicks, precision) {
+        let timeValue = initialTime;
+        const preciseTimeStep = roundValue(precision, timeStep);
+        const tagOffset = (precision &lt; 1 ? 1 : 5);
+        this.clear(this.isZooming);
+        this.drawAxisRectangles();
+        this.drawBaseLine();
+        this.drawMarkLine();
+        this.ctx.beginPath();
+        this.ctx.lineWidth = 0.4;
+        for (let i = 0; i &lt; numberOfTicks + 1; i++) {
+            if (timeValue >= 0 &amp;&amp; timeValue &lt;= this.audioLength) {
+                // Used to let some numbers in bigger size.
+                if (Math.round(timeValue * 10 ** precision) % 10 === 0 ) {
+                    this.ctx.font = '24px serif';
+                }
+                this.ctx.fillText(
+                    roundValue(precision, timeValue),
+                    // timeValue,
+                    initPixelTranslation + i * pixelStep + 3, this.canvas.height - 5,
+                );
+                this.ctx.moveTo(initPixelTranslation + i * pixelStep, this.canvas.height - 30);
+                this.ctx.lineTo(initPixelTranslation + i * pixelStep, this.canvas.height - 5);
+                // this.ctx.font = (20 - precision * 3).toString() + 'px serif';
+                this.ctx.font = '17px serif';
+            }
+            timeValue = timeValue + preciseTimeStep;
+        }
+        this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+     /**
+     * Adjust frequency values in the requested range.
+     *
+     * Computes number of pixels each mark should skip to fill
+     * linearly the vertical Axis and the frequency step for each skip.
+     * Calls tickVerticalScale to sketch values.
+     * @param {number} initialFrequency - Frequency value of the inferior border in sketch.
+     * @param {number} finalFrequency - Frequency value of the superior border in sketch.
+    */
+    adjustVerticalAxis(initialFrequency, finalFrequency) {
+        const frequencyStep = (finalFrequency - initialFrequency) / FREQUENCY_LINES;
+        const pixelStep = this.visualizer.canvas.height / FREQUENCY_LINES;
+        this.tickVerticalScale(
+            initialFrequency,
+            finalFrequency,
+            FREQUENCY_LINES,
+            frequencyStep,
+            pixelStep,
+        );
+    }
+
+    /**
+    * Draws all the ticks and frequency values for some of them.
+    * @param {number} initialFrequency - Frequency initializing bottom of canvas.
+    * @param {number} finalFrequency - Frequency for canvas top.
+    * @param {int} numOfTicks - Number of marks or ticks in vertical scale.
+    * @param {number} frequencyStep - Frequency difference between consecutive marks
+    * in vertical scale.
+    * @param {int} pixelStep - Number of pixels between consecutive marks in vertical scale.
+    */
+    tickVerticalScale(initialFrequency, finalFrequency, numOfTicks, frequencyStep, pixelStep) {
+        let frequencyValue = initialFrequency;
+        this.ctx.beginPath();
+        this.ctx.lineWigdth = 0.4;
+        this.ctx.font = '15px serif';
+        for (let i = 0; i &lt; numOfTicks + 1; i++) {
+            const pixel = this.canvas.height - i * pixelStep;
+            if (pixel &lt; this.canvas.height - 30) {
+                if (i % 5 === 0) {
+                    this.ctx.fillText(
+                        frequencyValue.toFixed(2) + " kHz",
+                        20,
+                        this.canvas.height - i * pixelStep -5,
+                    );
+                    this.ctx.moveTo(0, this.canvas.height - i * pixelStep);
+                    this.ctx.lineTo(25, this.canvas.height - i * pixelStep);
+                } else {
+                    this.ctx.moveTo(0, this.canvas.height - i * pixelStep);
+                    // this.ctx.lineTo(10+(numOfTicks-i)**2*.01, this.canvas.height - i * pixelStep);
+                    this.ctx.lineTo(
+                        50 * ((numOfTicks/2 - i) * 0.02) ** 2 + 5,
+                        this.canvas.height - i * pixelStep
+                    );
+                }
+            }
+            frequencyValue = frequencyValue + frequencyStep;
+        }
+        this.ctx.stroke();
+        this.ctx.closePath();
+    }
+
+    /**
+     * Round time (to the left) to the given precision and return its corresponding canvas position.
+     *
+     * Nearest left time considering digits precision to a given time and its
+     * relative position in canvas.
+     * @param {int} precision - Defines how many digits after decimal point will be considered in
+     * time values.
+     * @param {number} time - Time without considering digits precision.
+     * @return {module:Artist/axis.relativePosition} Left precision time and
+     * its relative position in canvas.
+    */
+    leftTimeAndPositionWithPrecision(time) {
+        const leftPreciseTime = Math.floor(time * (10 ** this.precision)) / (10 ** this.precision);
+        const timePosition = this.visualizer.pointToCanvas(
+            this.visualizer.createPoint(leftPreciseTime, 0),
+        );
+        const relativeLeftValues = {
+            relativePosition: timePosition.x * this.visualizer.canvas.width,
+            precisionTime: leftPreciseTime,
+        };
+        return relativeLeftValues;
+    }
+
+    /**
+    * This method evaluates the distance between consecutive time marks and modifies
+    * precision property so consecutive lines don't get too apart nor too close.
+    * In case zoomOut makes consecutive marks to be too apart,
+    * precision increases so more marks are sketched.
+    * In case zoomIn makes consecutive marks to be too close,
+    * precision decreaces so less marks are sketched.
+    * @param {number} zoomFactor - Visualizer transformation time scale zoom factor.
+    */
+    computeTimePrecision(zoomFactor) {
+        if ((this.visualizer.canvas.width / (10 ** this.precision)) * zoomFactor
+            &lt; MIN_PIXELS_MARK_STEP) {
+            this.precision = this.precision - 1;
+        } else if ((this.visualizer.canvas.width / (10 ** this.precision)) * zoomFactor
+                    > MAX_PIXELS_MARK_STEP) {
+            this.precision = this.precision + 1;
+        }
+    }
+}
+
+export default Axis;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

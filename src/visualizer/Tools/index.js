@@ -5,9 +5,9 @@
 */
 
 // This file should be used to code tge component related to the tools needed in visualizator
-import React from 'react';
+import React, { component } from 'react';
 import ReactDOM from 'react-dom';
-
+import PropTypes from 'prop-types';
 
 const menuStyle = {
     align: 'left',
@@ -49,21 +49,14 @@ const infoWindowStyle = {
 };
 
 /**
-* Creates cursor information window.
 * @component
-* @param {Object} props - React properties.
-* @param {number} props.time - Cursor position time.
-* @param {number} props.frequency - Cursor position frequency.
-* @return {Object} React element.
 * @example
+* const props = {time: 0, frequency:10}
 * return (
-*     <InfoWindow 
-*        time="0 sec"
-*        frequency="57 hKz"
-*     />
-*)
+*     <InfoWindow props={props} />   
+* )
 */
-function InfoWindow(props) {
+const InfoWindow = (props) => {
     return (
         <div
             id = "infoWindow"
@@ -73,18 +66,13 @@ function InfoWindow(props) {
             </p>
             <p style={{ color: '#ffffff' }}>
                 {props.frequency}
-            </p>    
+            </p>  
         </div>
     )
 }
 
-
 /**
 * Creates canvas representing block.
-* @param {Object} props - React properties.
-* @param {number} props.initialPixel - Block left border pixel.
-* @param {number} props.pixelLength - Block length in pixels.
-* @return {Object} React element.
 * @component
 * @example 
 * return (
@@ -111,16 +99,8 @@ function SliderDiv(props) {
 
 
 /**
+* @component
 * Creates a fast time translations slider.
-* @component
-* @param {Object} props - React properties.
-* @param {Method} props.onMouseMove - Event Listener.
-* @param {Method} props.onMouseUp - Event Listener.
-* @param {Method} props.onMouseDown - Event Listener.
-* @param {number} props.initialPixel - Slider left border pixel.
-* @param {number} props.pixelLength - Slider pixels length.
-* @return {Object} React Element.
-* @component
 * @example
 * return (
 *     <CanvasSliderDiv
@@ -148,12 +128,8 @@ function CanvasSliderDiv(props) {
 }
 
 /**
-* Creates information window and zooming tool activator/deactivators.
-* @param {Object} props - React properties.
-* @param {Method} props.switchButton - Activates zooming tool.
-* @param {Method} props.showHideInfoWindow - Show or hide information window.
-* @return {Object} React element.
 * @component
+* Creates information window and zooming tool activator/deactivators.
 * @example 
 * return (
 *    <SwitchButtons
@@ -194,12 +170,6 @@ function SwitchButtons(props) {
 }
 
 /**
-* Creates action buttons.
-* Used to return to a previous time and frequency states.
-* @param {Object} props - React properties.
-* @param {Method} props.revertAction - Reset last zooming tool transformation.
-* @param {Method} props.home - Resets all previous transformations.
-* @return {Object} React element.
 * @component
 * @example
 * return ( 
@@ -228,15 +198,6 @@ function ActionButtons(props) {
 }
 
 /**
-* Creates menus to modify STFT configurations.
-*
-* Values to modify are: window type, window size, and window hop.
-* @component
-* @param {Object} props - React properties.
-* @param {Method} props.handleWindowFunctionChange - Sets STFT computations windowing type.
-* @param {Method} props.handleWindowSizeChange - Sets STFT computations window size.
-* @param {Method} props.handleWindowHopChange - Sets STFT computations window hop.
-* @return {Object} React element.
 * @component
 * @example
 * return(
@@ -291,8 +252,6 @@ function STFTmenus(props) {
 /**
 * @component
 * Creates color map selector.
-* @param {Method} props.handleColorMapChange - Sets a color map.
-* @return {Object} React element.
 * @example
 * return (
 *     <ColorMenu
@@ -301,11 +260,12 @@ function STFTmenus(props) {
 * )
 */
 function ColorMenu(props) {
+    const handleColorMapChange = props;
     return (
         <div>
             <select
                 style={menuStyle}
-                onChange={(event) => {props.handleColorMapChange(event.target.value)}}       
+                onChange={(event) => {handleColorMapChange(event.target.value)}}       
             >
                 <optgroup label="Color map">
                     <option value="0">Grass</option>
@@ -326,13 +286,9 @@ function ColorMenu(props) {
 }
 
 /**
+* @component
 * Creates color filter sliders.
 * Used to limit color map minimum and maximum values.
-* @component
-* @param {Object} props - React properties.
-* @param {Method} props.handleMinFilterChange - Sets inferior filter for the color map.
-* @param {Method} props.handleMaxFilterChange - Sets superior filter for the color map.
-* @return {Object} React element.
 * @example
 * return (
 *     <ColorFilters
@@ -342,6 +298,7 @@ function ColorMenu(props) {
 * )
 */
 function ColorFilters(props) {
+    const {handleMinFilterChange, handleMaxFilterChange} = props;
     return (
         <div>
             <div>
@@ -355,7 +312,7 @@ function ColorFilters(props) {
                         min="0"
                         max="1"
                         step="0.1"
-                        onChange={(event) => props.handleMinFilterChange(event.target.value)}
+                        onChange={(event) => handleMinFilterChange(event.target.value)}
                         value={props.lim_inf}
                     />
                 </label>
@@ -371,7 +328,7 @@ function ColorFilters(props) {
                         min="0"
                         max="1"
                         step="0.1"
-                        onChange={(event) => props.handleMaxFilterChange(event.target.value)}
+                        onChange={(event) => handleMaxFilterChange(event.target.value)}
                         value={props.lim_sup}
                     />
                 </label>
@@ -381,10 +338,8 @@ function ColorFilters(props) {
 }    
 
 /**
-* Creates an audio reproduction button.
 * @component
-* @param {Method} props.reproduce - Audio reproduction method.
-* @return {Object} React element.
+* Creates an audio reproduction button.
 * @example
 * return (
 *     <Reproductor
@@ -404,11 +359,13 @@ function Reproductor(props) {
                 Play/Pause
             </button>
         </div>    
-        )
+    )        
 }
+
+
 //--------------------------------------------------------
 /** 
- * @typedef module:Tools/index.state
+ * @typedef module:Tools/index.ToolboxState
  * @type {Object}
  * @property {Object} stftConf - STFT computations configurations.
  * @property {number} stftConf.window_function - STFT window type computations.
@@ -427,6 +384,7 @@ function Reproductor(props) {
 */
 
 /**
+* @component
 * This class link all menus, slider, and buttons in toolBox with corresponding 
 * methods in visualizer required once a modification has been done.
 * Ther's two types of tools, some of them exist inside the canvas and some of them outside.
@@ -438,7 +396,6 @@ class Toolbox extends React.Component {
     /**
     * Creates a toolBox.
     * @constructor 
-    * @param {module:index.toolBoxProps} props - React properties.
     * @property {module:Tools/index.state} state - React component state.
     * @public
     */ 
@@ -515,7 +472,7 @@ class Toolbox extends React.Component {
 
     /**
     * Set window size in state.stftConf.
-    * Modifies window size in state and calls for props.modifiyWindowSize.
+    * Modifies window size in state and calls for window size modification in props.
     * @param {number} windowSize - New window size value.
     * @public
     */
@@ -532,7 +489,7 @@ class Toolbox extends React.Component {
 
     /**
     * Set window type in state.stftConf.
-    * Modifies window function in menu and calls for props window function modification.
+    * Modifies window function in menu and calls for window function modification in props.
     * @param {string} type - New window type name.
     * @public
     */
@@ -548,7 +505,7 @@ class Toolbox extends React.Component {
  
     /**
     * Set hop length in state.stftConf.
-    * Modifies window hop length in menu and calls for props hop length modification.
+    * Modifies window hop length in menu and calls hop length modification in props.
     * @param {number} newHopLength - New hop length value.
     * @public
     */
@@ -564,9 +521,8 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Set colorMap value in state.colorConf.
-    * Modifies colorMap value in colorMenu and calls for modification in visualizer class.
-    * @param {number} color - New colorMap related number.
+    * Triggers a modification of colorMap with props.modifyColorMap;
+    * @param {number} color - New colorMap number.
     * @public
     */
     handleColorMapChange(color) {
@@ -574,8 +530,9 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Set inferior filter in state.colorConf .
-    * @param {number} value - New inferior limit value for colorMap.
+    * Set lim_inf in state.colorConf.
+    * Triggers props.modifyInfFilter method.
+    * @param {number} value - Value to set as inferior limin filter in colorMap.
     * @public
     */
     handleMinFilterChange(value) {
@@ -589,8 +546,9 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Set superior filter for color map.
-    * @param {number} value - New superior limit value for colorMap.
+    * Set lim_sup value in state.colorConf.
+    * Triggers props.modifySupFilter method.
+    * @param {number} value - Value to set as superior limit filter in colorMap.
     * @public
     */
     handleMaxFilterChange(value) {
@@ -604,7 +562,7 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Spectrogram translation following sliding block.
+    * Sets newTime at center of canvas triggering props.moveToCenter method.
     * @param {number} - Time where spectrogram view should be centered.
     * @private
     */
@@ -613,8 +571,8 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Play and Pause audio.
-    * @public
+    * Trigger reproducer props.
+    * @private
     */
     reproduce() {
         this.props.reproduceAndPause();
@@ -673,7 +631,7 @@ class Toolbox extends React.Component {
         this.setState({ dragging: false });
     }
 
-    moveSliderFromCanvas() {    
+    moveSliderFromCanvas() {
         const times = this.props.canvasTimes();
         this.setState((prevState) => ({
             timeSettings: {
@@ -708,20 +666,21 @@ class Toolbox extends React.Component {
             <div className="btn-group-vertical">
                 {ReactDOM.createPortal(
                     <div>
-                        <CanvasSliderDiv 
+                        <CanvasSliderDiv
                             initialPixel={this.computeInitialPixel()}
                             pixelLength={this.computePixelLength()}
                             onMouseDown={(event) => this.clickingDiv(event)}
                             onMouseMove={(event) => this.dragDivSlider(event)}
-                            onMouseUp={(event) => this.unclickingDiv(event)} />
-                        <InfoWindow 
+                            onMouseUp={(event) => this.unclickingDiv(event)}
+                        />
+                        <InfoWindow
                             time={this.state.cursorInfo.time}
                             frequency={this.state.cursorInfo.frequency}
                         />
                     </div>,
                     this.props.canvasContainer,
                 )}
-                
+               
                 <div>
                     <SwitchButtons
                         zoomSwitchButton={() => this.props.switchButton()}
@@ -732,7 +691,7 @@ class Toolbox extends React.Component {
                 <div>
                     <ActionButtons
                         home={() => this.props.home()}
-                        revertAction={() => this.props.revertAction()} 
+                        revertAction={() => this.props.revertAction()}
                     />
                 </div>
 
@@ -751,7 +710,8 @@ class Toolbox extends React.Component {
 
                 <div>
                     <ColorMenu
-                        handleColorMapChange={(value) => this.handleColorMapChange(value)}/>
+                        handleColorMapChange={(value) => this.handleColorMapChange(value)}
+                    />
                 </div>
 
                 <div>
@@ -759,10 +719,13 @@ class Toolbox extends React.Component {
                         handleMinFilterChange={(value) => this.handleMinFilterChange(value)}
                         lim_inf={this.state.colorConf.lim_inf}
                         handleMaxFilterChange={(value) => this.handleMaxFilterChange(value)}
-                        lim_sup={this.state.colorConf.lim_sup} />
+                        lim_sup={this.state.colorConf.lim_sup}
+                    />
                 </div>
-                <div>   
-                    <Reproductor reproduce={() => this.reproduce()} />
+                <div>
+                    <Reproductor
+                        reproduce={() => this.reproduce()}
+                    />
                 </div>
             </div>
         );
@@ -770,3 +733,15 @@ class Toolbox extends React.Component {
 }
 
 export default Toolbox;
+// export { Reproductor, Toolbox };
+
+Reproductor.propTypes = {
+    reproduce: PropTypes.func.isRequired,
+};
+
+Toolbox.propTypes = {
+    /**
+    * AudioFile
+    */
+    audioFile: PropTypes.number.isRequired,
+};

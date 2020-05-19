@@ -1,0 +1,870 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Tools/index.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">My React components</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                <div class="dropdown is-hoverable is-right">
+                    <a class="dropdown-trigger link">
+                        Tutorials
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-content">
+                        
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-Artist_artist.html">Artist/artist</a></li><li><a href="module-Artist_axis.html">Artist/axis</a></li><li><a href="module-Artist_webGL.html">Artist/webGL</a></li><li><a href="module-Audio_audioFile.html">Audio/audioFile</a></li><li><a href="module-Audio_headerReader.html">Audio/headerReader</a></li><li><a href="module-Audio_reproductor.html">Audio/reproductor</a></li><li><a href="module-STFTHandler_STFTHandler.html">STFTHandler/STFTHandler</a></li><li><a href="module-Tools_index.html">Tools/index</a></li></ul><h3>Classes</h3><ul><li><a href="module-Artist_artist-Artist.html">Artist</a></li><li><a href="module-Artist_axis-Axis.html">Axis</a></li><li><a href="module-Artist_webGL-WebGLHandler.html">WebGLHandler</a></li><li><a href="module-Audio_audioFile-AudioFile.html">AudioFile</a></li><li><a href="module-Audio_reproductor-Reproductor.html">Reproductor</a></li><li><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></li><li><a href="Visualizer.html">Visualizer</a></li></ul><h3>Components</h3><ul><li><a href="module-Tools_index-ActionButtons.html">ActionButtons</a></li><li><a href="module-Tools_index-CanvasSliderDiv.html">CanvasSliderDiv</a></li><li><a href="module-Tools_index-ColorFilters.html">ColorFilters</a></li><li><a href="module-Tools_index-ColorMenu.html">ColorMenu</a></li><li><a href="module-Tools_index-InfoWindow.html">InfoWindow</a></li><li><a href="module-Tools_index-Reproductor.html">Reproductor</a></li><li><a href="module-Tools_index-SliderDiv.html">SliderDiv</a></li><li><a href="module-Tools_index-STFTmenus.html">STFTmenus</a></li><li><a href="module-Tools_index-SwitchButtons.html">SwitchButtons</a></li><li><a href="module-Tools_index-Toolbox.html">Toolbox</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INIT_CONFIG">INIT_CONFIG</a></li><li><a href="global.html#INITIAL_SECONDS_PER_WINDOW">INITIAL_SECONDS_PER_WINDOW</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>Tools/index.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+* module for tool box. 
+* @module Tools/index
+* @see module:Tools/index.js
+*/
+
+// This file should be used to code tge component related to the tools needed in visualizator
+import React from 'react';
+import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
+
+const menuStyle = {
+    align: 'left',
+    width: '90%',
+    margin: '10px',
+};
+
+const buttonStyle = {
+    align: 'left',
+    width: '50%',
+    margin: '10px',
+};
+
+const sliderStyle = {
+    align: 'left',
+    width: '90%',
+    margin: '10px',
+};
+
+const canvasDivStyle = {
+    top: '15px',
+    width: '100%',
+    position: 'absolute',
+    zIndex: '2',
+    height: '20px',
+    backgroundColor: 'rgba(256,256,256,0.3)',
+    fontcolor: 'white',
+};
+
+const infoWindowStyle = {
+    top: '40px',
+    left: '80%',
+    width: '10%',
+    height: '20%',
+    position: 'absolute',
+    zIndex: '2',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'none',
+};
+
+/**
+* @component
+* @example
+* const props = {time: 0, frequency:10}
+* return (
+*     &lt;InfoWindow props={props} />   
+* )
+*/
+const InfoWindow = (props) => {
+    return (
+        &lt;div
+            id = "infoWindow"
+            style={infoWindowStyle}>
+            &lt;p style={{ color: '#ffffff' }}>
+                {props.time}
+            &lt;/p>
+            &lt;p style={{ color: '#ffffff' }}>
+                {props.frequency}
+            &lt;/p>  
+        &lt;/div>
+    )
+}
+
+/**
+* Creates canvas representing block.
+* @component
+* @example 
+* return (
+*    &lt;SliderDiv 
+*       initialPixel="230"
+*       pixelLength="60"
+*    />
+* )
+*/
+function SliderDiv(props) {
+    return (
+        &lt;div
+            id="sliderDiv"
+            style={{
+                left: props.initialPixel,
+                position: 'absolute',
+                width: props.pixelLength,
+                height: '20px',
+                zIndex: '2',
+                backgroundColor: 'rgba(0,0,0,0.3)',
+            }} />
+    )
+}
+
+
+/**
+* @component
+* Creates a fast time translations slider.
+* @example
+* return (
+*     &lt;CanvasSliderDiv
+*        onMouseMove={() => onMouseMoveExampleMethod()}
+*        onMouseUp={() => onMouseUpExampleMethod()}
+*        onMouseDown={() => onMouseDownExampleMethod()}
+*        initialPixel="50"
+*        pixelLength="30"
+*    />
+* )
+*/
+function CanvasSliderDiv(props) {
+    return (
+        &lt;div
+            style={canvasDivStyle}
+            onMouseMove={props.onMouseMove}
+            onMouseUp={props.onMouseUp}
+            onMouseDown={props.onMouseDown}>
+            &lt;SliderDiv
+                initialPixel={props.initialPixel}
+                pixelLength={props.pixelLength}
+                 />
+        &lt;/div>
+    );
+}
+
+/**
+* @component
+* Creates information window and zooming tool activator/deactivators.
+* @example 
+* return (
+*    &lt;SwitchButtons
+*        switchButton={() => swithButtonExampleMethod()}
+*        showHideInfoWindow={() => hideExampleMethod()}
+*        />
+* )    
+*/
+function SwitchButtons(props) {
+    return (
+        &lt;div>
+            &lt;div className="custom-control custom-switch">
+                &lt;input
+                    style={sliderStyle}
+                    type="checkbox"
+                    id="customSwitch1"
+                    className="custom-control-input"
+                    onChange={() => { props.switchButton(); }}
+                />
+                &lt;label className="custom-control-label" htmlFor="customSwitch1">
+                    Zoom Tool.
+                &lt;/label>
+            &lt;/div>
+            &lt;div className="custom-control custom-switch">
+                &lt;input
+                    style={menuStyle}
+                    type="checkbox"
+                    id="informationWindowSwitch"
+                    className="custom-control-input"
+                    onChange={() => { props.infoSwitchButton()}}
+                />
+                &lt;label className="custom-control-label" htmlFor="informationWindowSwitch">
+                    Information window.
+                &lt;/label>
+            &lt;/div>
+        &lt;/div>
+    );
+}
+
+/**
+* @component
+* @example
+* return ( 
+*        &lt;ActionButtons 
+*            home = {() => homeExampleMethod()}
+*            revertAction = {() => revertActionExampleMethod()} />
+* )
+*/
+function ActionButtons(props) {
+    return (
+        &lt;div>
+            &lt;button
+                style={buttonStyle}
+                onClick={() => props.revertAction()} >
+                Visualizacion previa
+            &lt;/button>
+
+            &lt;button
+                style={buttonStyle}
+                onClick={() => props.home()}
+            >
+                Vista Initial
+            &lt;/button>   
+        &lt;/div>
+    );
+}
+
+/**
+* @component
+* @example
+* return(
+*    &lt;STFTmenus 
+*       handleWindowFunctionChange={() => modifyFunctionExampleMethod()}
+*       handleWindowSizeChange={() => modifySizeExampleMethod()}
+*       handleWindowHopChange={() => modifyHopExampleMethod()} />
+* )
+*/
+function STFTmenus(props) {
+    return (
+        &lt;div>
+            &lt;select
+                style={menuStyle}
+                value={props.window_function}
+                onChange={(event) => { props.handleWindowFunctionChange(event.target.value); }}
+            >
+                &lt;optgroup label="Window Type">
+                    &lt;option value="hann">Hann&lt;/option>
+                    &lt;option value="hamming"> Hamming &lt;/option>
+                    &lt;option value="float32"> Linear &lt;/option>
+                &lt;/optgroup>
+            &lt;/select>
+
+            &lt;select
+                style={menuStyle}
+                value={props.window_size}
+                onChange={(event) => { props.handleWindowSizeChange(event.target.value); }}
+            >
+                &lt;optgroup label="Window Size">
+                    &lt;option value="512">512&lt;/option>
+                    &lt;option value="1024">1024&lt;/option>
+                    &lt;option value="2048">2048&lt;/option>
+                &lt;/optgroup>
+            &lt;/select>
+
+            &lt;select
+                style={menuStyle}
+                value={props.hop_length}
+                onChange={(event) => { props.handleWindowHopChange(event.target.value); }}
+            >
+                &lt;optgroup label="Hop Length">
+                    &lt;option value="256">256&lt;/option>
+                    &lt;option value="512">512&lt;/option>
+                    &lt;option value="1024">1024&lt;/option>
+                &lt;/optgroup>
+            &lt;/select>
+        &lt;/div>
+    );
+}
+
+/**
+* @component
+* Creates color map selector.
+* @example
+* return (
+*     &lt;ColorMenu
+*        handleColorMapChange={() => colorMapSelector()} 
+*     />
+* )
+*/
+function ColorMenu(props) {
+    const handleColorMapChange = props;
+    return (
+        &lt;div>
+            &lt;select
+                style={menuStyle}
+                onChange={(event) => {handleColorMapChange(event.target.value)}}       
+            >
+                &lt;optgroup label="Color map">
+                    &lt;option value="0">Grass&lt;/option>
+                    &lt;option value="0.1"> Phanton Grass&lt;/option>
+                    &lt;option value="0.2"> Purple Haze &lt;/option>
+                    &lt;option value="0.3"> Grays &lt;/option>
+                    &lt;option value="0.4"> Fish tank &lt;/option>
+                    &lt;option value="0.6"> Pink Floyd&lt;/option>
+                    &lt;option value="0.7"> Dark Sunset&lt;/option>
+                    &lt;option value="0.8"> Grapes &lt;/option>
+                    &lt;option value="0.9"> Kind of Blue  &lt;/option>
+                    &lt;option value="1.0"> Magma &lt;/option>
+                &lt;/optgroup>
+            &lt;/select>
+
+        &lt;/div>
+    );
+}
+
+/**
+* @component
+* Creates color filter sliders.
+* Used to limit color map minimum and maximum values.
+* @example
+* return (
+*     &lt;ColorFilters
+*        handleMinFilterChange={() => minFilterSelector()}
+*        handleMaxFilterChange={() => maxFilterSelector()}
+*     />
+* )
+*/
+function ColorFilters(props) {
+    const {handleMinFilterChange, handleMaxFilterChange} = props;
+    return (
+        &lt;div>
+            &lt;div>
+                &lt;label style={sliderStyle}>
+                    Filtro inferior:
+                    &lt;input
+                        id="minFilter"
+                        name="minFilter"
+                        style={menuStyle}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        onChange={(event) => handleMinFilterChange(event.target.value)}
+                        value={props.lim_inf}
+                    />
+                &lt;/label>
+            &lt;/div>
+            &lt;div>
+                &lt;label style={sliderStyle}>
+                    Filtro superior:
+                    &lt;input
+                        id="maxFilter"
+                        name="maxFilter"
+                        style={menuStyle}
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        onChange={(event) => handleMaxFilterChange(event.target.value)}
+                        value={props.lim_sup}
+                    />
+                &lt;/label>
+            &lt;/div>
+        &lt;/div>
+    )
+}    
+
+/**
+* @component
+* Creates an audio reproduction button.
+* @example
+* return (
+*     &lt;Reproductor
+*        reproduce={()=>reproduceExampleMethod()}
+*     />
+* )
+*/
+function Reproductor(props) {
+    return (
+        &lt;div>
+            &lt;button
+                style={{margin:'10px'}}
+                type="button"
+                className="play"
+                onClick={() => props.reproduce()}
+            >
+                Play/Pause
+            &lt;/button>
+        &lt;/div>    
+        )
+}
+//--------------------------------------------------------
+/** 
+ * @typedef module:Tools/index.ToolboxState
+ * @type {Object}
+ * @property {Object} stftConf - STFT computations configurations.
+ * @property {number} stftConf.window_function - STFT window type computations.
+ * @property {number} stftConf.window_size - STFT window size computations.
+ * @property {number} stftConf.hop_length - STFT window hop length computations.
+ * @property {Object} colorConf - Color settings.
+ * @property {number} colorConf.lim_inf - Inferior filter color slider values.
+ * @property {number} colorConf.lim_sup - Superior filter color slider values.
+ * @property {Object} timeSettings - Canvas borders times and audio duration.
+ * @property {number} timeSettings.duration - Audio file duration.
+ * @property {number} timeSettings.initialTime - Left time on visualization.
+ * @property {number} timeSettings.finalTime - Rigth time on visulaization.
+ * @property {Object} cursorInfo - Information of positiones cursor.
+ * @property {number} cursorInfo.time - Time value in cursor point .
+ * @property {number} cursorInfo.frequency - Frequency value in cursor point.
+*/
+
+/**
+* @component
+* This class link all menus, slider, and buttons in toolBox with corresponding 
+* methods in visualizer required once a modification has been done.
+* Ther's two types of tools, some of them exist inside the canvas and some of them outside.
+* The ones inside canvas are CanvasSliderDiv &amp; InformationWindow which are specially handled with
+* a React Portal method.
+*/
+class Toolbox extends React.Component {
+    /**
+    * Creates a toolBox.
+    * @constructor 
+    * @property {module:Tools/index.state} state - React component state.
+    * @public
+    */ 
+    constructor(props) {
+        super(props);
+        this.state = {
+            stftConf: {
+                window_function: this.props.config.stft.window_function,
+                window_size: this.props.config.stft.window_size,
+                hop_length: this.props.config.stft.hop_length,   
+            },
+            colorConf: {
+                lim_inf: 0,
+                lim_sup: 1,
+            },
+            timeSettings: {
+                duration: 1,
+                initialTime: 0,
+                finalTime: 0,
+            },
+            dragging: false,
+            cursorInfo: { time: 0, frequency: 0 },
+        };
+
+        this.props.audioFile.waitUntilReady().then(() => {
+            this.setState((prevState) => ({
+                timeSettings: {
+                    ...prevState.timeSettings,
+                    duration: this.props.audioFile.mediaInfo.durationTime,
+                },
+            }));
+        });
+    }
+
+    /**
+    * Initialize the toolBox.
+    * @private
+    */
+    componentDidMount() {
+        this.addEventsToCanvas();
+    }
+
+    /**
+    * Used to set initTime and finalTime in state.timeSettings.
+    * @param {number} initTime - initialTime for state.timeSettings.
+    * @param {number} finalTine - finalTime for state.timeSettings.
+    * @private
+    */
+    setSliderTimes(initTime, finalTime) {
+        const [duration] = [this.state.timesSettings.duration];
+        this.setState(
+            () => ({
+                timeSettings: {
+                    initialTime: Math.max(0, initTime),
+                    finalTime: Math.min(duration, finalTime),
+                },
+            }),
+        );
+    }
+
+    /**
+    * Completes some events of SliderBlockDiv by adding functionality in props.canvas.
+    * @private
+    */
+    addEventsToCanvas() {
+        this.uncheckZoomTag = this.uncheckZoomTag.bind(this);
+        this.props.canvas.addEventListener('mouseup', () => {
+            this.uncheckZoomTag();
+                this.unclickingDiv();
+        });
+        this.props.canvas.addEventListener('mousemove', (e) => {
+            this.draggingOutDiv(e)});
+    }
+
+    /**
+    * Set window size in state.stftConf.
+    * Modifies window size in state and calls for window size modification in props.
+    * @param {number} windowSize - New window size value.
+    * @public
+    */
+    handleWindowSizeChange(windowSize) {
+        const realValue = Math.max(windowSize, this.state.stftConf.hop_length);
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                window_size: realValue,
+            },
+        }));
+        this.props.modifyWindowSize(realValue);
+    }
+
+    /**
+    * Set window type in state.stftConf.
+    * Modifies window function in menu and calls for window function modification in props.
+    * @param {string} type - New window type name.
+    * @public
+    */
+    handleWindowFunctionChange(type) {
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                window_function: type,
+            },
+        }));
+        this.props.modifyWindowFunction(type);
+    }
+ 
+    /**
+    * Set hop length in state.stftConf.
+    * Modifies window hop length in menu and calls hop length modification in props.
+    * @param {number} newHopLength - New hop length value.
+    * @public
+    */
+    handleWindowHopChange(newHopLength) {
+        const realValue = Math.min(this.state.stftConf.window_size, newHopLength);
+        this.setState((prevState) => ({
+            stftConf: {
+                ...prevState.stftConf,
+                hop_length: realValue,
+            },
+        }));
+        this.props.modifyHopLength(realValue);
+    }
+
+    /**
+    * Triggers a modification of colorMap with props.modifyColorMap;
+    * @param {number} color - New colorMap number.
+    * @public
+    */
+    handleColorMapChange(color) {
+        this.props.modifyColorMap(parseFloat(color));
+    }
+
+    /**
+    * Set lim_inf in state.colorConf.
+    * Triggers props.modifyInfFilter method.
+    * @param {number} value - Value to set as inferior limin filter in colorMap.
+    * @public
+    */
+    handleMinFilterChange(value) {
+        this.setState((prevState) => ({
+            colorConf: {
+                ...prevState.colorConf,
+                lim_inf: value,
+            },
+        }));
+        this.props.modifyInfFilter(value);
+    }
+
+    /**
+    * Set lim_sup value in state.colorConf.
+    * Triggers props.modifySupFilter method.
+    * @param {number} value - Value to set as superior limit filter in colorMap.
+    * @public
+    */
+    handleMaxFilterChange(value) {
+        this.setState((prevState) => ({
+            colorConf: {
+                ...prevState.colorConf,
+                lim_sup: value,
+            },
+        }));
+        this.props.modifySupFilter(value);
+    }
+
+    /**
+    * Sets newTime at center of canvas triggering props.moveToCenter method.
+    * @param {number} - Time where spectrogram view should be centered.
+    * @private
+    */
+    handleTranslation(newTime) {
+        this.props.moveToCenter(newTime);
+    }
+
+    /**
+    * Trigger reproducer props.
+    * @private
+    */
+    reproduce() {
+        this.props.reproduceAndPause();
+    }
+
+    showHideInfoWindow() {
+        let infoWindow = document.getElementById('infoWindow');
+        if (infoWindow.style.display === 'none'){
+            document.getElementById('infoWindow').style.display='block'
+        } else {
+            infoWindow.style.display='none';
+        }
+    }
+
+    setCursorInfo(time, frequency) {
+        this.setState({ cursorInfo: { time: time, frequency: frequency } });
+    }
+
+    uncheckZoomTag() {
+        // this.setState({dragging: false });
+        const checkBox = document.getElementById('customSwitch1');
+        if (checkBox.checked === true) {
+            this.props.switchButton()
+        }
+        checkBox.checked = false;
+    }
+
+
+    unitaryIntervalToTime(x) {
+        return x * this.state.timeSettings.duration;
+    }
+
+
+    clickingDiv(event) {
+        const times = this.props.canvasTimes();
+        const centralTime = this.unitaryIntervalToTime(this.props.canvasCoords(event));
+        this.props.moveToCenter(centralTime);
+        const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
+        const timeLength = rigthTime - leftTime;
+        this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
+        this.setState({ dragging: true });
+    }
+
+    dragDivSlider(event) {
+        const times = this.props.canvasTimes();
+        if (this.state.dragging) {
+            const centralTime = this.unitaryIntervalToTime(this.props.canvasCoords(event));
+            this.props.moveToCenter(centralTime);
+            const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
+            const timeLength = rigthTime - leftTime;
+            this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
+        }
+    }
+
+    unclickingDiv() {
+        this.setState({ dragging: false });
+    }
+
+    moveSliderFromCanvas() {
+        const times = this.props.canvasTimes();
+        this.setState((prevState) => ({
+            timeSettings: {
+                ...prevState.timeSettings,
+                initialTime: times.leftTime,
+                finalTime: times.rigthTime,
+            },
+        }));
+    }
+
+    computeInitialPixel() {
+        const initialTime = this.state.timeSettings.initialTime;
+        const initialPixel = (initialTime / this.state.timeSettings.duration);
+        return initialPixel * this.props.canvas.width;
+    }
+
+    computePixelLength() {
+        let range = this.state.timeSettings.finalTime - this.state.timeSettings.initialTime;
+        range = Math.abs(range);
+        const pixelLength = this.props.canvas.width * (range / this.state.timeSettings.duration);
+        return pixelLength;
+    }
+
+    draggingOutDiv(event) {
+        if (this.state.dragging) {
+            this.dragDivSlider(event);
+        }
+    }
+
+    render() {
+        return (
+            &lt;div className="btn-group-vertical">
+                {ReactDOM.createPortal(
+                    &lt;div>
+                        &lt;CanvasSliderDiv
+                            initialPixel={this.computeInitialPixel()}
+                            pixelLength={this.computePixelLength()}
+                            onMouseDown={(event) => this.clickingDiv(event)}
+                            onMouseMove={(event) => this.dragDivSlider(event)}
+                            onMouseUp={(event) => this.unclickingDiv(event)}
+                        />
+                        &lt;InfoWindow
+                            time={this.state.cursorInfo.time}
+                            frequency={this.state.cursorInfo.frequency}
+                        />
+                    &lt;/div>,
+                    this.props.canvasContainer,
+                )}
+               
+                &lt;div>
+                    &lt;SwitchButtons
+                        zoomSwitchButton={() => this.props.switchButton()}
+                        infoSwitchButton={() => this.showHideInfoWindow()}
+                    />
+                &lt;/div>
+
+                &lt;div>
+                    &lt;ActionButtons
+                        home={() => this.props.home()}
+                        revertAction={() => this.props.revertAction()}
+                    />
+                &lt;/div>
+
+                &lt;div>
+                    &lt;STFTmenus
+                        handleWindowFunctionChange={
+                            (value) => this.handleWindowFunctionChange(value)
+                        }
+                        handleWindowSizeChange={(value) => this.handleWindowSizeChange(value)}
+                        handleWindowHopChange={(value) => this.handleWindowHopChange(value)}
+                        window_function={this.state.stftConf.window_function}
+                        window_size={this.state.stftConf.window_size}
+                        hop_length={this.state.stftConf.hop_length}
+                    />
+                &lt;/div>
+
+                &lt;div>
+                    &lt;ColorMenu
+                        handleColorMapChange={(value) => this.handleColorMapChange(value)}
+                    />
+                &lt;/div>
+
+                &lt;div>
+                    &lt;ColorFilters
+                        handleMinFilterChange={(value) => this.handleMinFilterChange(value)}
+                        lim_inf={this.state.colorConf.lim_inf}
+                        handleMaxFilterChange={(value) => this.handleMaxFilterChange(value)}
+                        lim_sup={this.state.colorConf.lim_sup}
+                    />
+                &lt;/div>
+                &lt;div>
+                    &lt;Reproductor
+                        reproduce={() => this.reproduce()}
+                    />
+                &lt;/div>
+            &lt;/div>
+        );
+    }
+}
+
+export default Toolbox;
+
+
+Toolbox.propTypes = {
+    /**
+    * AudioFile
+    */
+    audioFile: PropTypes.number.isRequired,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

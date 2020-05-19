@@ -1,0 +1,294 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Audio/headerReader.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">My React components</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                <div class="dropdown is-hoverable is-right">
+                    <a class="dropdown-trigger link">
+                        Tutorials
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-content">
+                        
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-Artist_artist.html">Artist/artist</a></li><li><a href="module-Artist_axis.html">Artist/axis</a></li><li><a href="module-Artist_webGL.html">Artist/webGL</a></li><li><a href="module-Audio_audioFile.html">Audio/audioFile</a></li><li><a href="module-Audio_headerReader.html">Audio/headerReader</a></li><li><a href="module-Audio_reproductor.html">Audio/reproductor</a></li><li><a href="module-STFTHandler_STFTHandler.html">STFTHandler/STFTHandler</a></li><li><a href="module-Tools_index.html">Tools/index</a></li></ul><h3>Classes</h3><ul><li><a href="module-Artist_artist-Artist.html">Artist</a></li><li><a href="module-Artist_axis-Axis.html">Axis</a></li><li><a href="module-Artist_webGL-WebGLHandler.html">WebGLHandler</a></li><li><a href="module-Audio_audioFile-AudioFile.html">AudioFile</a></li><li><a href="module-Audio_reproductor-Reproductor.html">Reproductor</a></li><li><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></li><li><a href="Visualizer.html">Visualizer</a></li></ul><h3>Components</h3><ul><li><a href="module-Tools_index-ActionButtons.html">ActionButtons</a></li><li><a href="module-Tools_index-CanvasSliderDiv.html">CanvasSliderDiv</a></li><li><a href="module-Tools_index-ColorFilters.html">ColorFilters</a></li><li><a href="module-Tools_index-ColorMenu.html">ColorMenu</a></li><li><a href="module-Tools_index-InfoWindow.html">InfoWindow</a></li><li><a href="module-Tools_index-Reproductor.html">Reproductor</a></li><li><a href="module-Tools_index-SliderDiv.html">SliderDiv</a></li><li><a href="module-Tools_index-STFTmenus.html">STFTmenus</a></li><li><a href="module-Tools_index-SwitchButtons.html">SwitchButtons</a></li><li><a href="module-Tools_index-Toolbox.html">Toolbox</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INIT_CONFIG">INIT_CONFIG</a></li><li><a href="global.html#INITIAL_SECONDS_PER_WINDOW">INITIAL_SECONDS_PER_WINDOW</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>Audio/headerReader.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+* WAV File header reader module.
+*
+* @module Audio/headerReader
+* @see module:Audio/headerReader.js
+*/
+
+
+// WAVE format codes.
+const WAVE_FORMAT_PCM = 0x0001;
+const WAVE_FORMAT_IEEE_FLOAT = 0x0003;
+const WAVE_FORMAT_ALAW = 0x0006;
+const WAVE_FORMAT_MULAW = 0x0007;
+const WAVE_FORMAT_EXTENSIBLE = 0xFFFE;
+const WAVE_FORMAT_MAP = {
+    [WAVE_FORMAT_PCM]: 'PCM',
+    [WAVE_FORMAT_IEEE_FLOAT]: 'IEEE float',
+    [WAVE_FORMAT_ALAW]: '8-bit ITU-T G.711 A-law',
+    [WAVE_FORMAT_MULAW]: '8-bit ITU-T G.711 µ-law',
+    [WAVE_FORMAT_EXTENSIBLE]: 'subformat',
+};
+
+/**
+* @typedef module:Audio/headerReader.chunk
+* @type {Object}
+* @property {number} index - Chunk initial index in file.
+* @property {string} id - Chunk identifier.
+* @property {number} size - Chunk size.
+* @property {Object} chunk - Chunk data.
+*/
+
+/**
+* Read information in a file header chunk.
+* @param {Object} array - Array containing data to read.
+* @param {int} index - Initial Index in array to read.
+* @return {module:Audio/headerReader.chunk}
+*/
+function readChunk(array, index) {
+    // id fmt subchunk describes sound's data format
+    // id data subchunk contains the size of the data and the sound.
+    const id = String.fromCharCode.apply(this, array.slice(index, index + 4));
+    const size = new Uint32Array(array.slice(index + 4, index + 8).buffer)[0];
+    const chunk = array.slice(index + 8, index + 8 + size);
+    return {
+        index: index + 20, // 8 of id and size plus 12 of RIFF header
+        id,
+        size,
+        chunk,
+    };
+}
+
+/**
+* Get chunks in file header.
+* @param {Object} array - Array containing RIFF format WAVE file.
+* @return {Object} - With chunks contained in WAV header.
+*/
+function getChunks(array) {
+    const chunks = {};
+
+    let index = 0;
+    while (index &lt; 10000) { // constant to avoid method to repeat inside audio data.
+        const chunkInfo = readChunk(array, index);
+        chunks[chunkInfo.id] = chunkInfo;
+        if (chunkInfo.id === 'data') break;
+        index += 8 + chunkInfo.size;
+    }
+    return chunks;
+}
+
+
+/**
+* Format info in header.
+* @typedef module:Audio/headerReader.formatInfo
+* @type {Object}
+* @property {number} fmtTagCode - WAV format code.
+* @property {number} fmtTag - WAV format name.
+* @property {string} nChannels - Number of channels.
+* @property {number} nSamplesPerSec - Samples per second.
+* @property {number} mAvgBytesPerSec - Average bytes per second.
+* @property {number} nBlockAlign - Bytes number for one sample including all channels.
+* @property {number} wBitsPerSample - Bits per sample.
+*/
+
+/**
+* get data from fmt chunk.
+* @param {Object} array -  WAV array (with RIFF format data).
+* @return {module:Audio/headerReader.formatInfo}
+*/
+function readFormatInformation(array, size) {
+    const formatInfo = {};
+
+    formatInfo.fmtTagCode = new Uint16Array(array.slice(0, 2).buffer)[0];
+    formatInfo.fmtTag = WAVE_FORMAT_MAP[formatInfo.fmtTagCode];
+    formatInfo.nChannels = new Uint16Array(array.slice(2, 4).buffer)[0];
+    formatInfo.nSamplesPerSec = new Uint32Array(array.slice(4, 8).buffer)[0];
+    formatInfo.nAvgBytesPerSec = new Uint32Array(array.slice(8, 12).buffer)[0];
+    formatInfo.nBlockAlign = new Uint16Array(array.slice(12, 14).buffer)[0];
+    formatInfo.wBitsPerSample = new Uint16Array(array.slice(14, 16).buffer)[0];
+
+    if (size === 16) return formatInfo;
+
+    formatInfo.cbSize = new Uint16Array(array.slice(16, 18).buffer)[0];
+    if (size === 18) return formatInfo;
+
+    // in case WAV fmt has extra info
+    formatInfo.wValidBitsPerSample = new Uint16Array(array.slice(18, 20).buffer)[0];
+    formatInfo.dwChannelMask = new Uint32Array(array.slice(20, 24).buffer)[0];
+    formatInfo.SubFormat = new Uint32Array(array.slice(20, 24).buffer)[0];
+    return formatInfo;
+}
+
+/**
+* Get data from fact chunk (it might not exist).
+* @param {Object} array - WAV array (with RIFF format data).
+* @return {Object}  Fact chunk info
+*/
+function readFactInformation(array) {
+    const factInfo = {};
+    factInfo.dwSampleLength = new Uint32Array(array.slice(0, 4).buffer)[0];
+    return factInfo;
+}
+
+/**
+* @typedef module:Audio/headerReader.headerInfo
+* @type {Object}
+* @property {string} chunkId - "RIFF".
+* @property {number} chunkSize - Bytes file size.
+* @property {string} wavId - "WAVE".
+* @property {module:Audio/headerReader.formatInfo} fmt - Format information.
+* @property {Object} fact - Fact information if available.
+* @property {number} dataSize - Data size in bytes.
+* @property {number} dataStart - Data initial byte.
+*/
+
+/**
+* Get file header data.
+* @param {Object} array -  WAV array (with RIFF format data).
+* @return {module:Audio/headerReader.headerInfo}
+*/
+function headerReader(array) {
+    const headerInfo = {};
+    headerInfo.chunkId = String.fromCharCode.apply(this, array.slice(0, 4));
+    headerInfo.chunkSize = new Uint32Array(array.slice(4, 8).buffer)[0];
+    headerInfo.wavId = String.fromCharCode.apply(this, array.slice(8, 12));
+
+    const chunks = getChunks(array.slice(12));
+    const formatInfo = readFormatInformation(chunks['fmt '].chunk, chunks['fmt '].size);
+    formatInfo.size = chunks['fmt '].size;
+    headerInfo.fmt = formatInfo;
+
+    if ('fact' in chunks) {
+        const factInfo = readFactInformation(chunks.fact.chunk);
+        factInfo.size = chunks.fact.size;
+        headerInfo.fact = factInfo;
+    }
+
+    headerInfo.dataSize = chunks.data.size;
+    headerInfo.dataStart = chunks.data.index;
+
+    return headerInfo;
+}
+
+
+export default headerReader;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

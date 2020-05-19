@@ -1,0 +1,7430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> STFTHandler/STFTHandler</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">My React components</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                <div class="dropdown is-hoverable is-right">
+                    <a class="dropdown-trigger link">
+                        Tutorials
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-content">
+                        
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-Artist_artist.html">Artist/artist</a></li><li><a href="module-Artist_axis.html">Artist/axis</a></li><li><a href="module-Artist_webGL.html">Artist/webGL</a></li><li><a href="module-Audio_audioFile.html">Audio/audioFile</a></li><li><a href="module-Audio_headerReader.html">Audio/headerReader</a></li><li><a href="module-Audio_reproductor.html">Audio/reproductor</a></li><li><a href="module-STFTHandler_STFTHandler.html">STFTHandler/STFTHandler</a></li><li><a href="module-Tools_index.html">Tools/index</a></li></ul><h3>Classes</h3><ul><li><a href="module-Artist_artist-Artist.html">Artist</a></li><li><a href="module-Artist_axis-Axis.html">Axis</a></li><li><a href="module-Artist_webGL-WebGLHandler.html">WebGLHandler</a></li><li><a href="module-Audio_audioFile-AudioFile.html">AudioFile</a></li><li><a href="module-Audio_reproductor-Reproductor.html">Reproductor</a></li><li><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></li><li><a href="Visualizer.html">Visualizer</a></li></ul><h3>Components</h3><ul><li><a href="module-Tools_index-ActionButtons.html">ActionButtons</a></li><li><a href="module-Tools_index-CanvasSliderDiv.html">CanvasSliderDiv</a></li><li><a href="module-Tools_index-ColorFilters.html">ColorFilters</a></li><li><a href="module-Tools_index-ColorMenu.html">ColorMenu</a></li><li><a href="module-Tools_index-InfoWindow.html">InfoWindow</a></li><li><a href="module-Tools_index-Reproductor.html">Reproductor</a></li><li><a href="module-Tools_index-SliderDiv.html">SliderDiv</a></li><li><a href="module-Tools_index-STFTmenus.html">STFTmenus</a></li><li><a href="module-Tools_index-SwitchButtons.html">SwitchButtons</a></li><li><a href="module-Tools_index-Toolbox.html">Toolbox</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INIT_CONFIG">INIT_CONFIG</a></li><li><a href="global.html#INITIAL_SECONDS_PER_WINDOW">INITIAL_SECONDS_PER_WINDOW</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Module</p>
+                    <h1>STFTHandler/STFTHandler</h1>
+                </header>
+                
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description"><p>STFTHandler module.</p></div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>module:STFTHandler/STFTHandler.js</li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line1">line 1</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>module:STFTHandler/STFTHandler.js</li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line1">line 1</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+    
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></dt>
+            <dd></dd>
+        
+            <dt><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Members</h1>
+            <div class="members">
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_HEADER_DELAY">
+    <a class="href-link" href="#~CHECK_HEADER_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_HEADER_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between file header checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line30">line 30</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_HEADER_DELAY">
+    <a class="href-link" href="#~CHECK_HEADER_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_HEADER_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between file header checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line30">line 30</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_READABILITY_DELAY">
+    <a class="href-link" href="#~CHECK_READABILITY_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_READABILITY_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between consecutive WAV values reads</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line36">line 36</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_READABILITY_DELAY">
+    <a class="href-link" href="#~CHECK_READABILITY_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_READABILITY_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between consecutive WAV values reads</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line36">line 36</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_STFT_DELAY">
+    <a class="href-link" href="#~CHECK_STFT_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_STFT_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between stft handler checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line33">line 33</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_STFT_DELAY">
+    <a class="href-link" href="#~CHECK_STFT_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_STFT_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between stft handler checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line33">line 33</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMN_SEPARATION_SHIFT_OCURRANCE">
+    <a class="href-link" href="#~COLUMN_SEPARATION_SHIFT_OCURRANCE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMN_SEPARATION_SHIFT_OCURRANCE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number to create limits movement whitout shifting</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line57">line 57</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMN_SEPARATION_SHIFT_OCURRANCE">
+    <a class="href-link" href="#~COLUMN_SEPARATION_SHIFT_OCURRANCE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMN_SEPARATION_SHIFT_OCURRANCE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number to create limits movement whitout shifting</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line57">line 57</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMNS_PER_STFT_COMPUTATION">
+    <a class="href-link" href="#~COLUMNS_PER_STFT_COMPUTATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMNS_PER_STFT_COMPUTATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Columns number used on each STFT computation.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMNS_PER_STFT_COMPUTATION">
+    <a class="href-link" href="#~COLUMNS_PER_STFT_COMPUTATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMNS_PER_STFT_COMPUTATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Columns number used on each STFT computation.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~EXTRA_HOPS_SHIFT">
+    <a class="href-link" href="#~EXTRA_HOPS_SHIFT">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        EXTRA_HOPS_SHIFT
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number of STFT computations added when shift occurs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line54">line 54</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~EXTRA_HOPS_SHIFT">
+    <a class="href-link" href="#~EXTRA_HOPS_SHIFT">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        EXTRA_HOPS_SHIFT
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number of STFT computations added when shift occurs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line54">line 54</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_NORMAL_SHIFT_SEPARATION">
+    <a class="href-link" href="#~MAX_NORMAL_SHIFT_SEPARATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_NORMAL_SHIFT_SEPARATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of columns shifted while traying to save data.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line51">line 51</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_NORMAL_SHIFT_SEPARATION">
+    <a class="href-link" href="#~MAX_NORMAL_SHIFT_SEPARATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_NORMAL_SHIFT_SEPARATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of columns shifted while traying to save data.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line51">line 51</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_AUDIO_READ">
+    <a class="href-link" href="#~MAX_TRIES_AUDIO_READ">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_AUDIO_READ
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries checking if WAV is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line39">line 39</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_AUDIO_READ">
+    <a class="href-link" href="#~MAX_TRIES_AUDIO_READ">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_AUDIO_READ
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries checking if WAV is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line39">line 39</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_GET_AUDIO_DATA">
+    <a class="href-link" href="#~MAX_TRIES_GET_AUDIO_DATA">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_GET_AUDIO_DATA
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries reading WAV data</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line42">line 42</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_GET_AUDIO_DATA">
+    <a class="href-link" href="#~MAX_TRIES_GET_AUDIO_DATA">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_GET_AUDIO_DATA
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries reading WAV data</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line42">line 42</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_STFT_READY">
+    <a class="href-link" href="#~MAX_TRIES_STFT_READY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_STFT_READY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries for checking if STFT handler is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line45">line 45</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_STFT_READY">
+    <a class="href-link" href="#~MAX_TRIES_STFT_READY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_STFT_READY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries for checking if STFT handler is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line45">line 45</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~SHIFT_COLUMN_HOP">
+    <a class="href-link" href="#~SHIFT_COLUMN_HOP">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        SHIFT_COLUMN_HOP
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT buffer shift behaviour.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line48">line 48</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~SHIFT_COLUMN_HOP">
+    <a class="href-link" href="#~SHIFT_COLUMN_HOP">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        SHIFT_COLUMN_HOP
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT buffer shift behaviour.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line48">line 48</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~STFT_BUFFER_MAX_SIZE">
+    <a class="href-link" href="#~STFT_BUFFER_MAX_SIZE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        STFT_BUFFER_MAX_SIZE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT values Buffer max size</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line24">line 24</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~STFT_BUFFER_MAX_SIZE">
+    <a class="href-link" href="#~STFT_BUFFER_MAX_SIZE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        STFT_BUFFER_MAX_SIZE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT values Buffer max size</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line24">line 24</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Methods</h1>
+            <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~ceilRound">
+        <a class="href-link" href="#~ceilRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                ceilRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {Number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets smallest multiple of COLUMNS_PER_STFT_COMPUTATION larger than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line76">line 76</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">Number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~ceilRound">
+        <a class="href-link" href="#~ceilRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                ceilRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {Number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets smallest multiple of COLUMNS_PER_STFT_COMPUTATION larger than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line76">line 76</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">Number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~floorRound">
+        <a class="href-link" href="#~floorRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                floorRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets largest multiple of COLUMNS_PER_STFT_COMPUTATION smaller than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line65">line 65</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~floorRound">
+        <a class="href-link" href="#~floorRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                floorRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets largest multiple of COLUMNS_PER_STFT_COMPUTATION smaller than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line65">line 65</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~getTensorWindowFunction">
+        <a class="href-link" href="#~getTensorWindowFunction">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                getTensorWindowFunction<span class="signature">(windowFunction, size)</span><span class="type-signature"> &rarr; {tf.Tensor}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Get windowing function for the short time fourier transform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>windowFunction</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">string</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Type of windowing function: hann, hamming or none</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>size</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">int</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Size of window.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line88">line 88</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><ul>
+<li>The window function as a tensorflow tensor.</li>
+</ul></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">tf.Tensor</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~getTensorWindowFunction">
+        <a class="href-link" href="#~getTensorWindowFunction">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                getTensorWindowFunction<span class="signature">(windowFunction, size)</span><span class="type-signature"> &rarr; {tf.Tensor}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Get windowing function for the short time fourier transform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>windowFunction</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">string</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Type of windowing function: hann, hamming or none</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>size</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">int</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Size of window.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line88">line 88</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><ul>
+<li>The window function as a tensorflow tensor.</li>
+</ul></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">tf.Tensor</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Type Definitions</h1>
+            <div class="members">
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<span class="param-type">Object</span>
+
+
+    </span>
+
+<h4 class="name" id=".STFTData">
+    <a class="href-link" href="#.STFTData">#</a>
+    
+    <span class="code-name">
+        STFTData
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A STFTData object stores the information returned by the STFTHandler when requested.</p>
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>start</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the first spectrogram column
+included in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>end</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the last spectrogram column included
+in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>data</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>An array holding the spectrogram data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>computed</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Information on the currently computed columns.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>first</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Lowest computed column number.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>last</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Highest computed column number.</p></td>
+</tr>
+
+  
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line9">line 9</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<span class="param-type">Object</span>
+
+
+    </span>
+
+<h4 class="name" id=".STFTData">
+    <a class="href-link" href="#.STFTData">#</a>
+    
+    <span class="code-name">
+        STFTData
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A STFTData object stores the information returned by the STFTHandler when requested.</p>
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>start</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the first spectrogram column
+included in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>end</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the last spectrogram column included
+in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>data</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>An array holding the spectrogram data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>computed</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Information on the currently computed columns.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>first</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Lowest computed column number.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>last</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Highest computed column number.</p></td>
+</tr>
+
+  
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line9">line 9</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+
+
+
+<section>
+
+<header>
+    
+        
+            
+        
+            
+        
+    
+</header>
+
+<article>
+    <div class="container-overview">
+    
+        
+            <div class="description"><p>STFTHandler module.</p></div>
+        
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>module:STFTHandler/STFTHandler.js</li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line1">line 1</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li>module:STFTHandler/STFTHandler.js</li>
+        </ul>
+    </dd>
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line1">line 1</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+    
+    </div>
+    
+    
+
+    
+
+    
+        <h3 class="subsection-title">Classes</h3>
+
+        <dl>
+            <dt><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></dt>
+            <dd></dd>
+        
+            <dt><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></dt>
+            <dd></dd>
+        </dl>
+    
+
+    
+
+    
+
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Members</h1>
+            <div class="members">
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_HEADER_DELAY">
+    <a class="href-link" href="#~CHECK_HEADER_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_HEADER_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between file header checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line30">line 30</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_HEADER_DELAY">
+    <a class="href-link" href="#~CHECK_HEADER_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_HEADER_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between file header checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line30">line 30</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_READABILITY_DELAY">
+    <a class="href-link" href="#~CHECK_READABILITY_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_READABILITY_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between consecutive WAV values reads</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line36">line 36</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_READABILITY_DELAY">
+    <a class="href-link" href="#~CHECK_READABILITY_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_READABILITY_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between consecutive WAV values reads</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line36">line 36</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_STFT_DELAY">
+    <a class="href-link" href="#~CHECK_STFT_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_STFT_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between stft handler checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line33">line 33</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~CHECK_STFT_DELAY">
+    <a class="href-link" href="#~CHECK_STFT_DELAY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        CHECK_STFT_DELAY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Time in miliseconds between stft handler checks</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line33">line 33</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMN_SEPARATION_SHIFT_OCURRANCE">
+    <a class="href-link" href="#~COLUMN_SEPARATION_SHIFT_OCURRANCE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMN_SEPARATION_SHIFT_OCURRANCE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number to create limits movement whitout shifting</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line57">line 57</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMN_SEPARATION_SHIFT_OCURRANCE">
+    <a class="href-link" href="#~COLUMN_SEPARATION_SHIFT_OCURRANCE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMN_SEPARATION_SHIFT_OCURRANCE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number to create limits movement whitout shifting</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line57">line 57</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMNS_PER_STFT_COMPUTATION">
+    <a class="href-link" href="#~COLUMNS_PER_STFT_COMPUTATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMNS_PER_STFT_COMPUTATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Columns number used on each STFT computation.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~COLUMNS_PER_STFT_COMPUTATION">
+    <a class="href-link" href="#~COLUMNS_PER_STFT_COMPUTATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        COLUMNS_PER_STFT_COMPUTATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Columns number used on each STFT computation.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line27">line 27</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~EXTRA_HOPS_SHIFT">
+    <a class="href-link" href="#~EXTRA_HOPS_SHIFT">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        EXTRA_HOPS_SHIFT
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number of STFT computations added when shift occurs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line54">line 54</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~EXTRA_HOPS_SHIFT">
+    <a class="href-link" href="#~EXTRA_HOPS_SHIFT">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        EXTRA_HOPS_SHIFT
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Number of STFT computations added when shift occurs</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line54">line 54</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_NORMAL_SHIFT_SEPARATION">
+    <a class="href-link" href="#~MAX_NORMAL_SHIFT_SEPARATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_NORMAL_SHIFT_SEPARATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of columns shifted while traying to save data.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line51">line 51</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_NORMAL_SHIFT_SEPARATION">
+    <a class="href-link" href="#~MAX_NORMAL_SHIFT_SEPARATION">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_NORMAL_SHIFT_SEPARATION
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of columns shifted while traying to save data.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line51">line 51</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_AUDIO_READ">
+    <a class="href-link" href="#~MAX_TRIES_AUDIO_READ">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_AUDIO_READ
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries checking if WAV is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line39">line 39</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_AUDIO_READ">
+    <a class="href-link" href="#~MAX_TRIES_AUDIO_READ">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_AUDIO_READ
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries checking if WAV is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line39">line 39</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_GET_AUDIO_DATA">
+    <a class="href-link" href="#~MAX_TRIES_GET_AUDIO_DATA">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_GET_AUDIO_DATA
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries reading WAV data</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line42">line 42</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_GET_AUDIO_DATA">
+    <a class="href-link" href="#~MAX_TRIES_GET_AUDIO_DATA">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_GET_AUDIO_DATA
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries reading WAV data</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line42">line 42</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_STFT_READY">
+    <a class="href-link" href="#~MAX_TRIES_STFT_READY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_STFT_READY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries for checking if STFT handler is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line45">line 45</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~MAX_TRIES_STFT_READY">
+    <a class="href-link" href="#~MAX_TRIES_STFT_READY">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        MAX_TRIES_STFT_READY
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>Max number of consecutive tries for checking if STFT handler is ready</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line45">line 45</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~SHIFT_COLUMN_HOP">
+    <a class="href-link" href="#~SHIFT_COLUMN_HOP">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        SHIFT_COLUMN_HOP
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT buffer shift behaviour.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line48">line 48</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~SHIFT_COLUMN_HOP">
+    <a class="href-link" href="#~SHIFT_COLUMN_HOP">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        SHIFT_COLUMN_HOP
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT buffer shift behaviour.</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line48">line 48</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~STFT_BUFFER_MAX_SIZE">
+    <a class="href-link" href="#~STFT_BUFFER_MAX_SIZE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        STFT_BUFFER_MAX_SIZE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT values Buffer max size</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line24">line 24</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+<h4 class="name" id="~STFT_BUFFER_MAX_SIZE">
+    <a class="href-link" href="#~STFT_BUFFER_MAX_SIZE">#</a>
+    
+        
+            <span class='tag'>inner</span>
+        
+            <span class='tag'>constant</span>
+        
+    
+    <span class="code-name">
+        STFT_BUFFER_MAX_SIZE
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>STFT values Buffer max size</p>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line24">line 24</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Methods</h1>
+            <div class="members">
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~ceilRound">
+        <a class="href-link" href="#~ceilRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                ceilRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {Number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets smallest multiple of COLUMNS_PER_STFT_COMPUTATION larger than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line76">line 76</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">Number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~ceilRound">
+        <a class="href-link" href="#~ceilRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                ceilRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {Number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets smallest multiple of COLUMNS_PER_STFT_COMPUTATION larger than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">Number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line76">line 76</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">Number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~floorRound">
+        <a class="href-link" href="#~floorRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                floorRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets largest multiple of COLUMNS_PER_STFT_COMPUTATION smaller than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line65">line 65</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~floorRound">
+        <a class="href-link" href="#~floorRound">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                floorRound<span class="signature">(value)</span><span class="type-signature"> &rarr; {number}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Gets largest multiple of COLUMNS_PER_STFT_COMPUTATION smaller than value.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>value</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">number</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Float number.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line65">line 65</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">number</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~getTensorWindowFunction">
+        <a class="href-link" href="#~getTensorWindowFunction">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                getTensorWindowFunction<span class="signature">(windowFunction, size)</span><span class="type-signature"> &rarr; {tf.Tensor}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Get windowing function for the short time fourier transform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>windowFunction</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">string</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Type of windowing function: hann, hamming or none</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>size</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">int</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Size of window.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line88">line 88</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><ul>
+<li>The window function as a tensorflow tensor.</li>
+</ul></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">tf.Tensor</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+                <div class="member">
+
+
+    
+    <h4 class="name" id="~getTensorWindowFunction">
+        <a class="href-link" href="#~getTensorWindowFunction">#</a>
+        
+            
+                <span class='tag'>inner</span>
+            
+        
+        <span class="code-name">
+            
+                getTensorWindowFunction<span class="signature">(windowFunction, size)</span><span class="type-signature"> &rarr; {tf.Tensor}</span>
+            
+        </span>
+    </h4>
+    
+
+    
+    
+    <div class="description">
+        <p>Get windowing function for the short time fourier transform.</p>
+    </div>
+    
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+<div class="table-container">
+    <table class="params table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>windowFunction</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">string</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Type of windowing function: hann, hamming or none</p></td>
+</tr>
+
+
+        
+
+            
+<tr class="deep-level-0">
+  
+      <td class="name"><code>size</code></td>
+  
+
+  <td class="type">
+  
+      
+<span class="param-type">int</span>
+
+
+  
+  </td>
+
+  
+
+  
+
+  <td class="description last"><p>Size of window.</p></td>
+</tr>
+
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line88">line 88</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div class='columns method-parameter'>
+        <div class="column is-2"><label>Returns:</label></div>
+        <div class="column is-10">
+            
+                    
+
+<div class="columns">
+    
+    <div class='param-desc column is-7'><ul>
+<li>The window function as a tensorflow tensor.</li>
+</ul></div>
+    
+    
+    <div class='column is-5 has-text-left'>
+        <label>Type: </label>
+        
+<span class="param-type">tf.Tensor</span>
+
+
+    </div>
+    
+</div>
+
+                
+        </div>
+    </div>
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+        <div class='vertical-section'>
+            <h1>Type Definitions</h1>
+            <div class="members">
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<span class="param-type">Object</span>
+
+
+    </span>
+
+<h4 class="name" id=".STFTData">
+    <a class="href-link" href="#.STFTData">#</a>
+    
+    <span class="code-name">
+        STFTData
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A STFTData object stores the information returned by the STFTHandler when requested.</p>
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>start</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the first spectrogram column
+included in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>end</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the last spectrogram column included
+in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>data</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>An array holding the spectrogram data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>computed</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Information on the currently computed columns.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>first</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Lowest computed column number.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>last</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Highest computed column number.</p></td>
+</tr>
+
+  
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line9">line 9</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+                <div class="member">
+
+    <span class="method-parameter is-pulled-right">
+        <label>Type:</label>
+        
+<span class="param-type">Object</span>
+
+
+    </span>
+
+<h4 class="name" id=".STFTData">
+    <a class="href-link" href="#.STFTData">#</a>
+    
+    <span class="code-name">
+        STFTData
+    </span>
+    
+</h4>
+
+
+
+
+<div class="description">
+    <p>A STFTData object stores the information returned by the STFTHandler when requested.</p>
+</div>
+
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+<div class="table-container">
+    <table class="props table">
+        <thead>
+        <tr>
+            
+            <th>Name</th>
+            
+
+            <th>Type</th>
+
+            
+
+            
+
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>start</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the first spectrogram column
+included in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>end</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">int</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>The number of the last spectrogram column included
+in the returned data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>data</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>An array holding the spectrogram data.</p></td>
+</tr>
+
+        
+            
+<tr class="deep-level-0">
+    
+        <td class="name"><code>computed</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Information on the currently computed columns.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>first</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Lowest computed column number.</p></td>
+</tr>
+
+  
+      
+<tr class="deep-level-1">
+    
+        <td class="name"><code>last</code></td>
+    
+
+    <td class="type">
+    
+        
+<span class="param-type">Object</span>
+
+
+    
+    </td>
+
+    
+
+    
+
+    <td class="description last"><p>Highest computed column number.</p></td>
+</tr>
+
+  
+
+        
+        </tbody>
+    </table>
+</div>
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    
+
+    
+
+    
+
+    
+        <p class="tag-source">
+            <a href="STFTHandler_STFTHandler.js.html" class="button">View Source</a>
+            <span>
+                <a href="STFTHandler_STFTHandler.js.html">STFTHandler/STFTHandler.js</a>, <a href="STFTHandler_STFTHandler.js.html#line9">line 9</a>
+            </span>
+        </p>
+    
+</dl>
+
+
+
+
+
+</div>
+            
+            </div>
+        </div>
+    
+
+    
+</article>
+
+</section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

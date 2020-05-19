@@ -1,0 +1,338 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title> Artist/artist.js</title>
+
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="./build/entry.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,700|Inconsolata,700" rel="stylesheet">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css" integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
+  <link type="text/css" rel="stylesheet" href="https://jmblog.github.io/color-themes-for-google-code-prettify/themes/tomorrow-night.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/app.min.css">
+  <link type="text/css" rel="stylesheet" href="styles/iframe.css">
+  <link type="text/css" rel="stylesheet" href="">
+  <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+  
+</head>
+
+
+
+<body class="layout small-header">
+    <div id="stickyNavbarOverlay"></div>
+    
+
+<div class="top-nav">
+    <div class="inner">
+        <a id="hamburger" role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </a>
+        <div class="logo">
+            
+             
+                <a href="index.html">
+                    <h1 class="navbar-item">My React components</h1>
+                </a>
+            
+        </div>
+        <div class="menu">
+            
+            <div class="navigation">
+                <a
+                    href="index.html"
+                    class="link"
+                >
+                    API Documentation
+                </a>
+                <div class="dropdown is-hoverable is-right">
+                    <a class="dropdown-trigger link">
+                        Tutorials
+                        <i class="fas fa-chevron-down fa-xs"></i>
+                    </a>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-content">
+                        
+                        </div>
+                    </div>
+                </div>
+                
+                
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="main">
+        <div
+            class="sidebar "
+            id="sidebarNav"
+        >
+            
+            <nav>
+                
+                    <h2><a href="index.html">Documentation</a></h2><div class="category"><h3>Modules</h3><ul><li><a href="module-Artist_artist.html">Artist/artist</a></li><li><a href="module-Artist_axis.html">Artist/axis</a></li><li><a href="module-Artist_webGL.html">Artist/webGL</a></li><li><a href="module-Audio_audioFile.html">Audio/audioFile</a></li><li><a href="module-Audio_headerReader.html">Audio/headerReader</a></li><li><a href="module-Audio_reproductor.html">Audio/reproductor</a></li><li><a href="module-STFTHandler_STFTHandler.html">STFTHandler/STFTHandler</a></li><li><a href="module-Tools_index.html">Tools/index</a></li></ul><h3>Classes</h3><ul><li><a href="module-Artist_artist-Artist.html">Artist</a></li><li><a href="module-Artist_axis-Axis.html">Axis</a></li><li><a href="module-Artist_webGL-WebGLHandler.html">WebGLHandler</a></li><li><a href="module-Audio_audioFile-AudioFile.html">AudioFile</a></li><li><a href="module-Audio_reproductor-Reproductor.html">Reproductor</a></li><li><a href="module-STFTHandler_STFTHandler-STFTHandler.html">STFTHandler</a></li><li><a href="Visualizer.html">Visualizer</a></li></ul><h3>Components</h3><ul><li><a href="module-Tools_index-ActionButtons.html">ActionButtons</a></li><li><a href="module-Tools_index-CanvasSliderDiv.html">CanvasSliderDiv</a></li><li><a href="module-Tools_index-ColorFilters.html">ColorFilters</a></li><li><a href="module-Tools_index-ColorMenu.html">ColorMenu</a></li><li><a href="module-Tools_index-InfoWindow.html">InfoWindow</a></li><li><a href="module-Tools_index-Reproductor.html">Reproductor</a></li><li><a href="module-Tools_index-SliderDiv.html">SliderDiv</a></li><li><a href="module-Tools_index-STFTmenus.html">STFTmenus</a></li><li><a href="module-Tools_index-SwitchButtons.html">SwitchButtons</a></li><li><a href="module-Tools_index-Toolbox.html">Toolbox</a></li></ul><h3>Global</h3><ul><li><a href="global.html#INIT_CONFIG">INIT_CONFIG</a></li><li><a href="global.html#INITIAL_SECONDS_PER_WINDOW">INITIAL_SECONDS_PER_WINDOW</a></li></ul></div>
+                
+            </nav>
+        </div>
+        <div class="core" id="main-content-wrapper">
+            <div class="content">
+                <header class="page-title">
+                    <p>Source</p>
+                    <h1>Artist/artist.js</h1>
+                </header>
+                
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+* Main drawing Module.
+* @module Artist/artist
+* @see module: Artist/axis
+* @see module: Artist/webGL
+*/
+
+/**
+ * @import { module:Artist/webGL~WebGLHandler } from "./webGL"
+ * @import { module:Artist/axis~AxisDrawer } from "./axis"
+ */
+import WebGLhandler from './webGL';
+import AxisDrawer from './axis';
+
+
+/**
+ * Class that handles drawing of the spectrogram. This is done by coordinating
+ * a WebGLHandler and an AxisDrawer. The first one used to sketch via a webGL conext
+ * on the visualizer canvas, and the latter sketches the horizontal and vertical axis
+ * using 2d context on a new canvas positioned on top of the visualizer canvas.
+ *
+ * When artist is commanded to draw, it first requests data from the STFTHandler so
+ * that the WebGLHandler can fill the webGL texture used to sketch the spectrogram.
+ * It also sketchs a gray background covering areas where spectogram could be draw when
+ * data loading is complete.
+ *
+ * @property {module:Artist/webGL~WebGLHandler} glHandler - Class managing webGL drawing.
+ * @property {module:Artist/axis~AxisHandler} axisHandler - Class managing the drawing of
+ * time and frequency axis.
+ * @property {HTMLCanvasElement} canvas - Alternative Canvas to use 2d context.
+ * @property {CanvasRenderingContext2D} ctx - 2d context created for axis drawing.
+ * @property {Object} rect - 2d context rectangle used to bound zooming area.
+ * @property {number} rect.x - Lower left corner x coordinate.
+ * @property {number} rect.y - Lower left corner y coordinate.
+ * @property {number} rect.baseLenght - Rectangle base length.
+ * @property {number} rect.heightLength - Rectangle height length.
+*/
+class Artist {
+    /**
+    * Creates and Artist Object.
+    * @constructor
+    * @param {class} visualizer - Visualizer object asking for changes in sketch.
+    * @param {class} stftHandler - Class retrieving STFTData to the artist.
+    */
+    constructor(visualizer, stftHandler) {
+        this.stftHandler = stftHandler;
+        this.visualizer = visualizer;
+
+        // Data used to draw zoom rectangles.
+        this.rect = {
+            x: 0,
+            y: 0,
+            baseLength: 0,
+            heightLength: 0,
+        };
+
+        // Create a new canvas for axis drawing
+        this.canvas = document.createElement('canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.visualizer.canvasContainer.appendChild(this.canvas);
+
+        this.styleAxisCanvas();
+        this.resizeAxisCanvas();
+
+        // Class used to fill proper data in a GL program in order to sketch parts of the
+        // spectrogram in a webGL context.
+        this.glHandler = new WebGLhandler(visualizer.canvas, stftHandler);
+
+        // Class used to sketch axis using a second canvas with a 2d context.
+        this.axisHandler = new AxisDrawer(visualizer, this.canvas, this.ctx);
+    }
+
+    /**
+     * Add style to axis canvas.
+     * @private
+     */
+    styleAxisCanvas() {
+        const originalStyle = this.visualizer.canvas.style;
+        this.canvas.setAttribute(
+            'style',
+            `${originalStyle.cssText} z-index:1; pointer-events:none`,
+        );
+    }
+
+    /**
+    * Resize the new axis canvas to the same size as visualizer canvas.
+    * @private
+    */
+    resizeAxisCanvas() {
+        const desiredWidth = this.visualizer.canvas.width;
+        const desiredHeight = this.visualizer.canvas.height;
+
+        if (this.canvas.width !== desiredWidth || this.canvas.height !== desiredHeight) {
+            this.canvas.width = desiredWidth;
+            this.canvas.height = desiredHeight;
+        }
+    }
+
+    /**
+     * Calls glHandler setColor to change the color map.
+     * @param {number} newColor - number to pick a line color in the
+     * glHandler image loaded to select different color maps.
+     * @public
+     */
+    setColor(newValue) {
+        this.glHandler.setColor(newValue);
+    }
+
+    /**
+     * Set colormap superior filter.
+     * @param {number} newValue - Colormap inferior limit value.
+     * @public
+     */
+    setColorMapInfFilter(newValue) {
+        this.glHandler.setInfFilter(newValue);
+    }
+
+    /**
+     * Set colormap superior filter.
+     * @param {number} newValue - Colormap superior limit value.
+     * @public
+     */
+    setColorMapSupFilter(newValue) {
+        this.glHandler.setSupFilter(newValue);
+    }
+
+    /**
+     * Update canvas size
+     * @private
+     */
+    adjustSize() {
+        this.glHandler.adjustCanvasViewport();
+        this.resizeAxisCanvas();
+    }
+
+    /**
+     * Draw the spectrogram and axis.
+     *
+     * Warning: This method might be called while the spectrogram data is incomplete
+     * and might not be able to draw the full requested temporal range. It will
+     * draw all current data contained within the requested interval. This method
+     * returns the interval that *was* drawn so the user can handle partial draws.
+     *
+     * @param {number} initialTime - Time requested in Canvas left border.
+     * @param {number} finalTime - Time requested in Canvas right border.
+     * @param {number} initialFrequency - Frequency requested in Canvas bottom border.
+     * @param {number} finalFrequency - Frequency requested in Canvas top border.
+     * @param {Float32Array} matrix - Float32Array containing the matrix used as global
+     * transformation.
+     * @return {{end: number, start: number}} - The temporal limits of the drawn
+     * spectrogram.
+     * @public
+     */
+    draw(initialTime, finalTime, initialFrequency, finalFrequency, matrix) {
+        this.axisHandler.drawAxis(
+            initialTime,
+            finalTime,
+            matrix[0],
+            initialFrequency,
+            finalFrequency,
+        );
+        const drawBounds = this.glHandler.draw(initialTime, finalTime, matrix);
+        return drawBounds;
+    }
+
+    reset() {
+        this.glHandler.resetSpectrogramTexture();
+    }
+
+    /**
+    * Draw a rectangle to indicate the portion on which to zoom.
+    * @param {int} xCoord - Pixel coordinate x for left superior corner of rectangle.
+    * @param {int} yCoord - Pixel coordinate y for left superior corner of rectangle.
+    * @param {int} base - Rectangle base length in pixels.
+    * @param {int} height - Rectangle height length in pixels.
+    * @public
+    */
+    drawZoomRectangle(xCoord, yCoord, base, height) {
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = 'rgba(256,256,256,0.5)';
+        this.axisHandler.isZooming = true;
+        this.ctx.clearRect(
+            this.rect.x - 1,
+            this.rect.y - 1,
+            this.rect.baseLength + 2,
+            this.rect.heightLength + 2,
+        );
+        this.rect = {
+            x: xCoord,
+            y: yCoord,
+            baseLength: base,
+            heightLength: height,
+        };
+        this.ctx.strokeRect(this.rect.x, this.rect.y, this.rect.baseLength, this.rect.heightLength);
+    }
+
+    /**
+     * Used to deactivate the varible in axisHandler isZooming, required to avoid
+     * clearing while drawing zooming rectangle.
+     * @public
+     */
+    quitZoomingBox() {
+        this.axisHandler.isZooming = false;
+    }
+}
+
+
+export default Artist;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+            </div>
+            
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.4</a></p>
+                    <p class="sidebar-created-by">
+                        <a href="https://github.com/SoftwareBrothers/better-docs" target="_blank">BetterDocs theme</a> provided with <i class="fas fa-heart"></i> by 
+                        <a href="http://softwarebrothers.co" target="_blank">SoftwareBrothers - JavaScript Development Agency</a>
+                    </p>
+                </div>
+            </footer>
+            
+        </div>
+        <div id="side-nav" class="side-nav">
+        </div>
+    </div>
+<script src="scripts/app.min.js"></script>
+<script>PR.prettyPrint();</script>
+<script src="scripts/linenumber.js"> </script>
+
+</body>
+</html>

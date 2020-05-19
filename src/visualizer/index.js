@@ -1,3 +1,8 @@
+/**
+* @module visualizer
+* @see  visualizer
+*/
+
 import React from 'react';
 import VisualizerBase from '../VisualizerBase';
 import Artist from './Artist/artist';
@@ -20,6 +25,18 @@ const INIT_CONFIG = {
 const INITIAL_SECONDS_PER_WINDOW = 10;
 
 /**
+* @property {Object} config - Visualization cnfigurations.
+* @property {Class} audioFile - Audio data reader class.
+* @property {Class} audioReproductor - Audio reproductor class.
+* @property {Class} STFTRetriever - STFT computation results deliver.
+* @property {Node} canvasContainer - Document node containing canvas.
+* @property {Class} artist - Spectrogram sketches artist.
+* @property {SVGmatrix} - SVGtransformationMatrix - Matrix to translate or scale image.
+* @property {ActionVariable} zoomSwitchPosition - Indicates zooming Tool state.
+* @property {Object} draggingState - Variables needed for dragging spectogram.
+* @property {Point} draggingState.last - Initial dragging point.
+* @property {boolen} draggingState.dragging - Indicates if dragging is been 
+*
 * @class 
 */
 
@@ -29,6 +46,9 @@ class Visualizer extends VisualizerBase {
     // description = "long story";
     // configuration_schema = "longer story";
 
+    /**
+    * Initialize Visualizer instance.
+    */
     init() {
         this.config = INIT_CONFIG;
         // Class dealing with raw audio file. 
