@@ -225,8 +225,13 @@ class Visualizer extends VisualizerBase {
         const movementMethods = {
             sliderCoords: (event) => this.audioLength * this.getMouseEventPosition(event).x,
             moveToCenter: (time) => this.translatePointToCenter(this.createPoint(time, 0)),
+            zoomOnRectangle: (event) => this.zoomOnRectangle(event),
         };
-
+        const toogleZoomButton = () => {
+            if (this.zoomSwitchPosition = false) {
+                this.zoomSwitchPosition = true;
+            }
+        }
         // Creates a React reference to apply some toolbox methods from visualizer class.
         this.toolBoxRef = React.createRef();
         this.toolBox = (
@@ -238,7 +243,7 @@ class Visualizer extends VisualizerBase {
                 canvas={this.canvas}
                 canvasTimes={() => this.timesInCanvas()}
                 //-----------Methods-------------------------
-                switchButton={() => this.zoomSwitchPosition = !this.zoomSwitchPosition}
+                switchButton={() => this.zoomSwitchPosition =! this.zoomSwitchPosition}
                 actionButtons={actionButtons}
                 setSTFT={stftConfMethods}
                 setColorMap={colorMethods}
@@ -459,17 +464,22 @@ class Visualizer extends VisualizerBase {
     mouseUp(event) {
         if (this.dragging === true) {
             this.dragging = false;
-
-            if (this.zoomSwitchPosition === true) {
-                const last = this.pointToCanvas(this.dragStart);
-                this.secondaryTransformation = this.SVGtransformationMatrix;
-                const secondPoint = this.getMouseEventPosition(event);
-                this.zoomOnRectangle(last, secondPoint);
-            }
         }
+        this.zoomSwitchPosition = false;
+
+        // if (this.zoomSwitchPosition === true) {
+        // console.log('zoom position', this.zoomSwitchPosition);
+        // const last = this.pointToCanvas(this.dragStart);
+        // this.secondaryTransformation = this.SVGtransformationMatrix;
+        // const secondPoint = this.getMouseEventPosition(event);
+        // this.zoomOnRectangle(last, secondPoint);
+        // }
     }
 
-    zoomOnRectangle(firstPoint, secondPoint) {
+    zoomOnRectangle(event) {
+        this.secondaryTransformation = this.SVGtransformationMatrix;
+        const firstPoint = this.pointToCanvas(this.dragStart);
+        const secondPoint = this.getMouseEventPosition(event)
         const canvasMeasures = this.computeCanvasMeasures();
         const rectangle = this.computeRectangleTimeFreqValues(firstPoint, secondPoint);
 

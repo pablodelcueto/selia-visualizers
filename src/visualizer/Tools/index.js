@@ -307,7 +307,8 @@ class Toolbox extends React.Component {
         // this.setState({dragging: false });
         const checkBox = document.getElementById('customSwitch1');
         if (checkBox.checked === true) {
-            this.props.switchButton()
+            this.props.movement.zoomOnRectangle(event);
+            // this.props.switchButton();
         }
         checkBox.checked = false;
     }
