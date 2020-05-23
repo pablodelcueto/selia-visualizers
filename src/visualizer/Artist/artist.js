@@ -57,7 +57,7 @@ class Artist {
         // Create a new canvas for axis drawing
         this.canvas = document.createElement('canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.visualizer.canvasContainer.appendChild(this.canvas);
+        this.visualizer.canvas.parentNode.appendChild(this.canvas);
 
         this.styleAxisCanvas();
         this.resizeAxisCanvas();
@@ -159,8 +159,17 @@ class Artist {
             initialFrequency,
             finalFrequency,
         );
-        const drawBounds = this.glHandler.draw(initialTime, finalTime, matrix);
-        return drawBounds;
+        const gottenTimes = this.glHandler.draw(initialTime, finalTime, matrix);
+        const drawBounds = {
+            start: Math.max(gottenTimes.start, initialTime),
+            end: Math.min(gottenTimes.end, finalTime),
+        };
+        return {
+            times: drawBounds,
+            frequencies: {
+                start: initialFrequency, end: finalFrequency,
+            },
+        };
     }
 
     reset() {

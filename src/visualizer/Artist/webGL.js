@@ -10,6 +10,7 @@ import {
 } from './Shaders/loadingShaders';
 import colormapImage from './colormaps.png';
 
+
 /**
 * Create GL program with the given shaders.
 * @param {WebGLRenderingContext} gl - webGL context.
@@ -215,12 +216,13 @@ class WebGLHandler {
         this.spectrogram = createSpectrogramProgram(this.gl);
         this.background = createBackgroundProgram(this.gl);
 
-
         // Keep track of first and last spectrogram columns loaded into webgl buffer.
         this.loaded = {
             start: 0,
             end: 0,
         };
+
+        this.ready = false;
 
         // Image used to extract the colorMaps.
         const colorImage = new Image(100, 100);
@@ -241,6 +243,7 @@ class WebGLHandler {
             this.adjustCanvasViewport();
             this.initSpectrogramProgram(colorImage);
             this.initBackgroundProgram();
+            this.ready = true;
         });
     }
 
@@ -302,6 +305,11 @@ class WebGLHandler {
      * @public
      */
     draw(initialTime, finalTime, transformationMatrix) {
+        if (!this.ready) {
+            // Do not draw until stft metadata is ready
+            return this.loaded;
+        }
+
         this.drawBackground(transformationMatrix);
         this.drawSpectrogram(initialTime, finalTime, transformationMatrix);
         return this.loaded;
@@ -343,8 +351,8 @@ class WebGLHandler {
      */
     drawBackground(transformationMatrix) {
         this.useBackgroundProgram();
-
         this.setBackgroundMatrix(transformationMatrix);
+
         this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
     }
 
@@ -354,7 +362,6 @@ class WebGLHandler {
      */
     useSpectrogramProgram() {
         this.gl.useProgram(this.spectrogram.program);
-
         this.bindSpectrogramBuffers();
         this.bindSpectorgramTextures();
     }
@@ -415,7 +422,6 @@ class WebGLHandler {
         const range = finalTime - initialTime;
         const startTime = initialTime - range / 2;
         const endTime = finalTime + range / 2;
-
         const data = this.stftHandler.read({ startTime, endTime });
 
         // Store the bounds of the requested spectrogram data for future
@@ -423,13 +429,23 @@ class WebGLHandler {
         this.loaded.start = data.startTime;
         this.loaded.end = data.endTime;
 
+
         if (data.start - data.end === 0) {
             // Do not try to set any data if empty.
+            // this.setEmptySpectrogram();
             return;
         }
 
         this.setSpectrogramPositions(data.startTime, data.endTime);
         this.setSpectrogramData(data.data);
+    }
+
+    setEmptySpectrogram() {
+        const columnSize = this.stftHandler.bufferColumnHeight;
+        const emptyColumn = new Float32Array(4 * columnSize);
+
+        this.setSpectrogramPositions(0, 1);
+        this.setSpectrogramData(emptyColumn);
     }
 
     /**
@@ -453,6 +469,7 @@ class WebGLHandler {
     bindBackgroundBuffers() {
         const location = this.background.locations.positions;
         const buffer = this.background.buffers.vertices;
+
         bindBuffer(this.gl, location, buffer);
     }
 
@@ -609,6 +626,8 @@ class WebGLHandler {
         gl.uniform1i(this.spectrogram.locations.colorTex, 1);
         gl.activeTexture(gl.TEXTURE1);
         gl.bindTexture(gl.TEXTURE_2D, this.spectrogram.textures.color);
+
+
     }
 
     /**
@@ -618,7 +637,6 @@ class WebGLHandler {
      */
     setColorData(colorImage) {
         const { gl } = this;
-
         gl.bindTexture(gl.TEXTURE_2D, this.spectrogram.textures.color);
 
         gl.texImage2D(

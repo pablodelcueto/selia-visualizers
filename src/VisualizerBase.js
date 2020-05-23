@@ -5,13 +5,13 @@ class VisualizerBase {
     this.active = config.active || true;
     this.activator = config.activator || (() => null);
 
-    this.events = this.getEvents();
+    // this.events = this.getEvents();
     this.svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
 
     this.adjustSize();
     this.init();
 
-    this.bindEvents();
+    // this.bindEvents();
   }
 
   getEvents() {
@@ -92,9 +92,9 @@ class VisualizerBase {
     return this.createPoint(x, y);
   }
 
-  bindEvents() {
-    for (let eventType in this.events) {
-      let listeners = this.events[eventType];
+  bindEvents(events) {
+    for (let eventType in events) {
+      let listeners = events[eventType];
 
       if (!(Array.isArray(listeners))){
         listeners = [listeners];

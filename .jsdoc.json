@@ -5,24 +5,3 @@
       "template": "node_modules/better-docs"
     }
 }
-
-// {
-//   "tags": {
-//       "allowUnknownTags": true
-//   },
-//   "plugins": [
-//       "plugins/markdown",
-//       "better-docs/component"
-//   ],
-//   "sourceType": "module",
-//   "opts": {
-//       "encoding": "utf8",
-//       "recurse": true, 
-//       "template": "./node_modules/better-docs"
-//   },
-//   "templates": {
-//       "better-docs": {
-//           "name": "My React components"
-//       }
-//   }
-// }
