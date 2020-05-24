@@ -76,9 +76,18 @@ class Artist {
      */
     styleAxisCanvas() {
         const originalStyle = this.visualizer.canvas.style;
+        const style = {
+            'z-index': 1,
+            'pointer-events': 'none',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+        };
+
+        const cssText = Object.entries(style).map((entry) => `${entry[0]} : ${entry[1]}`).join('; ');
         this.canvas.setAttribute(
             'style',
-            `${originalStyle.cssText} z-index:1; pointer-events:none`,
+            `${originalStyle.cssText} ${cssText}`,
         );
     }
 

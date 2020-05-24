@@ -8,18 +8,19 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
+import Slider, { Range } from 'rc-slider';
+import 'rc-slider/assets/index.css';
+
 
 const menuStyle = {
     align: 'left',
-    width: '90%',
+    // width: '90%',
     margin: '10px',
 };
 
-const buttonStyle = {
-    align: 'left',
-    width: '50%',
-    margin: '10px',
-};
+const buttonClass = 'btn btn-light m-1';
+const activeButtonClass = 'btn btn-primary m-1';
+const selectClass = 'input-group input-group-sm p-1';
 
 const sliderStyle = {
     align: 'left',
@@ -47,7 +48,6 @@ const infoWindowStyle = {
     backgroundColor: 'rgba(0,0,0,0.5)',
     display: 'none',
 };
-
 
 
 //--------------------------------------------------------
@@ -111,20 +111,13 @@ class Toolbox extends React.Component {
             },
             dragging: false,
             cursorInfo: { time: 0, frequency: 0 },
+            zoomActive: false,
+            infoWindowActive: false,
         };
     }
 
     componentDidMount() {
         this.addEventsToCanvas();
-    }
-
-    upgradeAudioLength(duration) {
-        this.setState((prevState) => ({
-            timeSettings: {
-                ...prevState.timeSettings,
-                duration: duration,
-            },
-        }));
     }
 
     /**
@@ -138,7 +131,7 @@ class Toolbox extends React.Component {
             const [duration] = [prevState.timeSettings.duration];
             return {
                 timeSettings: {
-                    duration: duration,
+                    duration,
                     initialTime: Math.max(0, initTime),
                     finalTime: Math.min(duration, finalTime),
                 },
@@ -147,17 +140,31 @@ class Toolbox extends React.Component {
     }
 
     /**
+     * Set state.cursorInfo with values.
+     * @private
+     */
+    setCursorInfo(time, frequency) {
+        this.setState({ cursorInfo: { time, frequency } });
+    }
+
+    /**
     * Completes some events of SliderBlockDiv by adding functionality in props.canvas.
     * @private
     */
     addEventsToCanvas() {
         this.uncheckZoomTag = this.uncheckZoomTag.bind(this);
+
         this.props.canvas.addEventListener('mouseup', () => {
-            this.uncheckZoomTag();
-                this.unclickingDiv();
+            this.props.switchButton();
+            this.setState({
+                dragging: false,
+                zoomActive: false,
+            });
         });
+
         this.props.canvas.addEventListener('mousemove', (e) => {
-            this.draggingOutDiv(e)});
+            this.draggingOutDiv(e);
+        });
     }
 
     /**
@@ -226,36 +233,28 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Set lim_inf in state.colorConf.
-    * Triggers props.modifyInfFilter method.
-    * @param {number} value - Value to set as inferior limin filter in colorMap.
+    * Set color filter limits.
+    * Triggers props.modifyInfFilter and props.modifySupFilter methods.
+    * @param {number[]} value - Values to set as inferior and superior limit filters in colormap.
     * @public
     */
-    handleMinFilterChange(value) {
+    handleFilterChange(value) {
         this.setState((prevState) => {
-            this.props.setColorMap.modifyInfFilter(value);
-            return {
-                colorConf: {
-                    ...prevState.colorConf,
-                    lim_inf: value,
-                },
-            };
-        });
-    }
+            const [newInf, newSup] = value;
 
-    /**
-    * Set lim_sup value in state.colorConf.
-    * Triggers props.modifySupFilter method.
-    * @param {number} value - Value to set as superior limit filter in colorMap.
-    * @public
-    */
-    handleMaxFilterChange(value) {
-        this.setState((prevState) => {
-            this.props.setColorMap.modifySupFilter(value);
+            if (newInf !== prevState.colorConf.lim_inf) {
+                this.props.setColorMap.modifyInfFilter(newInf);
+            }
+
+            if (newSup !== prevState.colorConf.lim_sup) {
+                this.props.setColorMap.modifySupFilter(newSup);
+            }
+
             return {
                 colorConf: {
                     ...prevState.colorConf,
-                    lim_sup: value,
+                    lim_inf: newInf,
+                    lim_sup: newSup,
                 },
             };
         });
@@ -284,19 +283,22 @@ class Toolbox extends React.Component {
     */
     showHideInfoWindow() {
         const infoWindow = document.getElementById('infoWindow');
-        if (infoWindow.style.display === 'none'){
-            document.getElementById('infoWindow').style.display='block'
+        if (infoWindow.style.display === 'none') {
+            document.getElementById('infoWindow').style.display = 'block';
         } else {
-            infoWindow.style.display='none';
+            infoWindow.style.display = 'none';
         }
+
+        this.setState((prevState) => ({ infoWindowActive: !prevState.infoWindowActive }));
     }
 
-    /**
-    * Set state.cursorInfo with values.
-    * @private
-    */
-    setCursorInfo(time, frequency) {
-        this.setState({ cursorInfo: { time: time, frequency: frequency } });
+    upgradeAudioLength(duration) {
+        this.setState((prevState) => ({
+            timeSettings: {
+                ...prevState.timeSettings,
+                duration,
+            },
+        }));
     }
 
     /**
@@ -304,12 +306,7 @@ class Toolbox extends React.Component {
     * @provate
     */
     uncheckZoomTag() {
-        // this.setState({dragging: false });
-        const checkBox = document.getElementById('customSwitch1');
-        if (checkBox.checked === true) {
-            this.props.switchButton()
-        }
-        checkBox.checked = false;
+        this.setState({ zoomActive: false });
     }
 
     /**
@@ -339,25 +336,19 @@ class Toolbox extends React.Component {
         }
     }
 
-    unclickingDiv() {
-        this.setState({ dragging: false });
-    }
-
     moveSliderFromCanvas() {
         const times = this.props.canvasTimes();
-        this.setState((prevState) => {
-            return {
-                timeSettings: {
-                    ...prevState.timeSettings,
-                    initialTime: times.leftTime,
-                    finalTime: times.rigthTime,
-                },
-            };
-        });
+        this.setState((prevState) => ({
+            timeSettings: {
+                ...prevState.timeSettings,
+                initialTime: times.leftTime,
+                finalTime: times.rigthTime,
+            },
+        }));
     }
 
     computeInitialPixel() {
-        const initialTime = this.state.timeSettings.initialTime;
+        const { initialTime } = this.state.timeSettings;
         const initialPixel = (initialTime / this.state.timeSettings.duration);
         return initialPixel * this.props.canvas.width;
     }
@@ -375,7 +366,7 @@ class Toolbox extends React.Component {
         }
     }
 
-    //---------------Building stuff -----------
+    // ---------------Building stuff -----------
 
     buildSliderDiv() {
         return (
@@ -388,8 +379,9 @@ class Toolbox extends React.Component {
                     height: '20px',
                     zIndex: '2',
                     backgroundColor: 'rgba(0,0,0,0.3)',
-                }} />
-        )
+                }}
+            />
+        );
     }
 
     buildCanvasSlider() {
@@ -398,9 +390,9 @@ class Toolbox extends React.Component {
                 style={canvasDivStyle}
                 onMouseMove={(event) => this.dragDivSlider(event)}
                 onMouseUp={(event) => this.unclickingDiv(event)}
-                onMouseDown={(event) => this.clickingDiv(event)} >
+                onMouseDown={(event) => this.clickingDiv(event)}
+            >
                 { this.buildSliderDiv() }
-
             </div>
         );
     }
@@ -408,8 +400,9 @@ class Toolbox extends React.Component {
     buildInfoWindow() {
         return (
             <div
-                id = "infoWindow"
-                style={infoWindowStyle}>
+                id="infoWindow"
+                style={infoWindowStyle}
+            >
                 <p style={{ color: '#ffffff' }}>
                     {this.state.cursorInfo.time}
                 </p>
@@ -417,98 +410,125 @@ class Toolbox extends React.Component {
                     {this.state.cursorInfo.frequency}
                 </p>
             </div>
-        )
-    }
-
-    buildActionButtons() {
-        return (
-            <div>
-                <button
-                    style={buttonStyle}
-                    onClick={() => this.props.actionButtons.revertAction()} >
-                    Visualizacion previa
-                </button>
-
-                <button
-                    style={buttonStyle}
-                    onClick={() => this.props.actionButtons.home()}
-                >
-                    Vista Initial
-                </button>
-            </div>
         );
     }
 
-    buildSwitchButtons() {
+    buildPreviousViewButton() {
         return (
-            <div>
-                <div className="custom-control custom-switch">
-                    <input
-                        style={sliderStyle}
-                        type="checkbox"
-                        id="customSwitch1"
-                        className="custom-control-input"
-                        onChange={() => { this.props.switchButton(); }}
-                    />
-                    <label className="custom-control-label" htmlFor="customSwitch1">
-                        Zoom Tool.
-                    </label>
-                </div>
-                <div className="custom-control custom-switch">
-                    <input
-                        style={menuStyle}
-                        type="checkbox"
-                        id="informationWindowSwitch"
-                        className="custom-control-input"
-                        onChange={() => { this.showHideInfoWindow(); }}
-                    />
-                    <label className="custom-control-label" htmlFor="informationWindowSwitch">
-                        Information window.
-                    </label>
-                </div>
-            </div>
+            <button
+                type="submit"
+                className={buttonClass}
+                onClick={() => this.props.actionButtons.revertAction()}
+            >
+                <i className="fas fa-undo" />
+            </button>
         );
     }
 
-    buildSTFTMenus() {
+    buildHomeViewButton() {
         return (
-            <div>
+            <button
+                type="submit"
+                className={buttonClass}
+                onClick={() => this.props.actionButtons.home()}
+            >
+                <i className="fas fa-home" />
+            </button>
+        );
+    }
+
+    handleZoomButtonClick() {
+        this.setState((prevState) => {
+            this.props.switchButton();
+            return { zoomActive: !prevState.zoomActive };
+        });
+    }
+
+    buildZoomToolButton() {
+        const className = this.state.zoomActive ? activeButtonClass : buttonClass;
+
+        return (
+            <button
+                type="submit"
+                className={className}
+                onClick={() => this.handleZoomButtonClick()}
+            >
+                <i className="fas fa-search-plus" /> <i className="fas fa-expand" />
+            </button>
+        );
+    }
+
+    buildInfoWindowButton() {
+        const className = this.state.infoWindowActive ? activeButtonClass : buttonClass;
+
+        return (
+            <button
+                type="submit"
+                className={className}
+                onClick={() => this.showHideInfoWindow()}
+            >
+                <i className="fas fa-info-circle" />
+            </button>
+        );
+    }
+
+    buildWindowTypeSelect() {
+        return (
+            <div className={selectClass}>
+                <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="windowTypeSelect">Type</label>
+                </div>
                 <select
-                    style={menuStyle}
-                    // value={this.state.stftConf.window_function}
-                    onChange={(event) => {
-                        // this.handleWindowFunctionChange(event.target.value); }}
-                        this.props.setSTFT.modifyWindowFunction(event.target.value); }}
+                    value={this.state.stftConf.window_function}
+                    onChange={(event) => this.props.setSTFT.modifyWindowFunction(event.target.value)}
+                    className="custom-select"
+                    id="windowTypeSelect"
                 >
-                    <optgroup label="Window Type">
-                        <option value="hann">Hann</option>
-                        <option value="hamming"> Hamming </option>
-                        <option value="float32"> Linear </option>
-                    </optgroup>
+                    <option value="hann">Hann</option>
+                    <option value="hamming"> Hamming </option>
+                    <option value="float32"> Linear </option>
                 </select>
+            </div>
+        );
+    }
 
+    buildWindowSizeSelect() {
+        return (
+            <div className={selectClass}>
+                <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="windowSizeSelect">
+                        <i className="fas fa-arrows-alt-h" />
+                    </label>
+                </div>
                 <select
-                    style={menuStyle}
                     value={this.state.stftConf.window_size}
-                    onChange={(event) => { this.handleWindowSizeChange(event.target.value); }}
+                    onChange={(event) => this.handleWindowSizeChange(event.target.value)}
+                    className="custom-select"
+                    id="windowSizeSelect"
                 >
-                    <optgroup label="Window Size">
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                        <option value="2048">2048</option>
-                    </optgroup>
+                    <option value="512">512</option>
+                    <option value="1024">1024</option>
+                    <option value="2048">2048</option>
                 </select>
+            </div>
+        );
+    }
 
+    buildWindowHopSelect() {
+        return (
+            <div className={selectClass}>
+                <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="windowHopSelect">Hop</label>
+                </div>
                 <select
-                    style={menuStyle}
                     value={this.state.stftConf.hop_length}
-                    onChange={(event) => { this.handleWindowHopChange(event.target.value); }}
+                    onChange={(event) => this.handleWindowHopChange(event.target.value)}
+                    className="custom-select"
+                    id="windowHopSelect"
                 >
-                    <optgroup label="Hop Length">
-                        <option value="256">256</option>
-                        <option value="512">512</option>
-                        <option value="1024">1024</option>
-                    </optgroup>
+                    <option value="256">256</option>
+                    <option value="512">512</option>
+                    <option value="1024">1024</option>
                 </select>
             </div>
         );
@@ -516,63 +536,54 @@ class Toolbox extends React.Component {
 
     buildColorMapSelector() {
         return (
-            <div>
+            <div className={selectClass}>
+                <div className="input-group-prepend">
+                    <label className="input-group-text" htmlFor="colormapSelect">
+                        <i className="fas fa-palette" />
+                    </label>
+                </div>
                 <select
-                    style={menuStyle}
-                    onChange={(event) => { this.handleColorMapChange(event.target.value) }}
+                    onChange={(event) => this.handleColorMapChange(event.target.value)}
+                    className="custom-select"
+                    id="colormapSelect"
                 >
-                    <optgroup label="Color map">
-                        <option value="0">Grass</option>
-                        <option value="0.1"> Phanton Grass</option>
-                        <option value="0.2"> Purple Haze </option>
-                        <option value="0.3"> Grays </option>
-                        <option value="0.4"> Fish tank </option>
-                        <option value="0.6"> Pink Floyd</option>
-                        <option value="0.7"> Dark Sunset</option>
-                        <option value="0.8"> Grapes </option>
-                        <option value="0.9"> Kind of Blue  </option>
-                        <option value="1.0"> Magma </option>
-                    </optgroup>
+                    <option value="0">Grass</option>
+                    <option value="0.1"> Phanton Grass</option>
+                    <option value="0.2"> Purple Haze </option>
+                    <option value="0.3"> Grays </option>
+                    <option value="0.4"> Fish tank </option>
+                    <option value="0.6"> Pink Floyd</option>
+                    <option value="0.7"> Dark Sunset</option>
+                    <option value="0.8"> Grapes </option>
+                    <option value="0.9"> Kind of Blue  </option>
+                    <option value="1.0"> Magma </option>
                 </select>
-
             </div>
         );
     }
 
-    buildColorFilterSliders() {
+    buildFilterSlider() {
+        const currentValue = [
+            this.state.colorConf.lim_inf,
+            this.state.colorConf.lim_sup,
+        ];
+
         return (
-            <div>
-                <div>
-                    <label style={sliderStyle}>
-                        Filtro inferior:
-                        <input
-                            id="minFilter"
-                            name="minFilter"
-                            style={menuStyle}
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            onChange={(event) => this.handleMinFilterChange(event.target.value)}
-                            value={this.state.colorConf.lim_inf}
-                        />
-                    </label>
-                </div>
-                <div>
-                    <label style={sliderStyle}>
-                        Filtro superior:
-                        <input
-                            id="maxFilter"
-                            name="maxFilter"
-                            style={menuStyle}
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.1"
-                            onChange={(event) => this.handleMaxFilterChange(event.target.value)}
-                            value={this.state.colorConf.lim_sup}
-                        />
-                    </label>
+            <div className="form-group row mx-1 h-100 my-0" style={{width: '300px'}}>
+                <label className="col-sm-2 col-form-label" htmlFor="filterRange">
+                    Filter:
+                </label>
+                <div className="col-sm-10 h-100">
+                    <Range
+                        id="filterRange"
+                        className="form-control-range h-100 d-flex align-items-center"
+                        step={0.01}
+                        min={0}
+                        max={1}
+                        defaultValue={[0, 1]}
+                        values={currentValue}
+                        onChange={(value) => this.handleFilterChange(value)}
+                    />
                 </div>
             </div>
         );
@@ -580,23 +591,19 @@ class Toolbox extends React.Component {
 
     buildReproductionButton() {
         return (
-            <div>
-                <button
-                    style={{ margin: '10px' }}
-                    type="button"
-                    className="play"
-                    onClick={() => this.props.playAndPause()}
-                >
-                    Play/Pause
-                </button>
-            </div>
+            <button
+                type="button"
+                className={buttonClass}
+                onClick={() => this.props.playAndPause()}
+            >
+                <i className="fas fa-play" /> <i className="fas fa-pause" />
+            </button>
         );
     }
 
     render() {
-
         return (
-            <div className="btn-group-vertical">
+            <div className="col">
                 {ReactDOM.createPortal(
                     <div>
                         {this.buildCanvasSlider()}
@@ -606,27 +613,40 @@ class Toolbox extends React.Component {
                     this.props.canvas.parentNode,
                 )}
 
-                <div>
-                    {this.buildSwitchButtons()}
+                <div className="row d-flex justify-content-start">
+                    <div>
+                        {this.buildZoomToolButton()}
+                    </div>
+                    <div>
+                        {this.buildHomeViewButton()}
+                    </div>
+                    <div>
+                        {this.buildPreviousViewButton()}
+                    </div>
+                    <div>
+                        {this.buildInfoWindowButton()}
+                    </div>
+                    <div>
+                        {this.buildReproductionButton()}
+                    </div>
                 </div>
 
-                <div>
-                    {this.buildActionButtons()}
-                </div>
-
-                <div>
-                    {this.buildSTFTMenus()}
-                </div>
-
-                <div>
-                    {this.buildColorMapSelector()}
-                </div>
-
-                <div>
-                    {this.buildColorFilterSliders()}
-                </div>
-                <div>
-                    {this.buildReproductionButton()}
+                <div className="row d-flex justify-content-start">
+                    <div>
+                        {this.buildWindowTypeSelect()}
+                    </div>
+                    <div>
+                        {this.buildWindowSizeSelect()}
+                    </div>
+                    <div>
+                        {this.buildWindowHopSelect()}
+                    </div>
+                    <div>
+                        {this.buildColorMapSelector()}
+                    </div>
+                    <div>
+                        {this.buildFilterSlider()}
+                    </div>
                 </div>
             </div>
         );
@@ -688,4 +708,3 @@ Toolbox.propTypes = {
     */
     playAndPause: PropTypes.func.isRequired,
 };
-
