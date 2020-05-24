@@ -208,8 +208,8 @@ class Visualizer extends VisualizerBase {
     */
     renderToolbar() {
         const actionButtons = {
-            home: this.resetMatrix,
-            revertAction: this.revertAction,
+            home: () => this.resetMatrix(),
+            revertAction: () => this.revertAction(),
         };
         const stftConfMethods = {
             modifyWindowSize: (newSize) => this.modifyWindowSize(newSize),
@@ -350,7 +350,7 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Expands or contracts SVGtransformationMatrix.
+    * Multiplies SVGtransformationMatrix by scaling matrix.
     * @param {point} p - Indicates scaling factor for each direction.
     * @private
     */
@@ -360,39 +360,39 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Used to make a zoom leaving fixed a Point.
+    * Used to make a zoom with a fixed Point.
     * @param {point} factor - Indicates scaling factor for each direction.
-    * @param {point} fixedPoint - Point to remain fixed while scaling.
+    * @param {point} fixedPoint - Point to fix.
     * @private
     */
     zoomOnPoint(factor, fixedPoint) {
-        const condition1 = (factor.x < 1 && this.SVGtransformationMatrix.a > 1 / 60)
-        || (factor.x > 1 && this.SVGtransformationMatrix.a < 30);
-        const condition2 = (factor.y < 1)
-            && (this.SVGtransformationMatrix.d  < (3 / 2) / this.audioFile.mediaInfo.sampleRate);
+        let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
+        // Condition to avoid too much increase or decrease in time scale.
+        const condition1 = (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / 60)
+        || (factor.x > 1 && this.SVGtransformationMatrix.a > 10);
+        // Condition to avoid too much increase or decrease in frequency space.
+        const condition2 = (factor.y < 1
+            && (this.SVGtransformationMatrix.d  < (3 / 2) / this.audioFile.mediaInfo.sampleRate)
+            || (factor.y>1
+            && this.SVGtransformationMatrix.d > 10 / this.audioFile.mediaInfo.sampleRate));
 
-        if (!condition2) {
-            let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
-            matrix = matrix.scaleNonUniform(factor.x, factor.y);
-            matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
-            this.SVGtransformationMatrix = matrix;
+        if (condition1) {
+            factor.x = 1;
+        }
+        if (condition2) {
+            factor.y = 1;
         }
 
-        // // console.log('zoomY', this.SVGtransformationMatrix.d, 1/12000);
-        // if ((factor.x < 1 && this.SVGtransformationMatrix.a > 1 / 60)
-        // || (factor.x > 1 && this.SVGtransformationMatrix.a < 30)) {
-        //     console.log('Algo1', factor, this.SVGtransformationMatrix.a)
-        // } else if ((factor.y < 1)
-        //     && (this.SVGtransformationMatrix.d > 1 / this.audioFile.mediaInfo.sampleRate)) {
-        //     console.log('Algo2')
-        // } else {
-        // let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
-        // matrix = matrix.scaleNonUniform(factor.x, factor.y);
-        // matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
-        // this.SVGtransformationMatrix = matrix;
-        // }
+        matrix = matrix.scaleNonUniform(factor.x, factor.y);
+        matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
+        this.SVGtransformationMatrix = matrix;
     }
 
+    /**
+    * Multiplies SVGtransformationMatrix by translations matrix to move around the spectrogram.
+    * @param {SVGpoint} p -  SVG point to create translation matrix.
+    * @private
+    */
     translation(p) {
         if (this.canvasToPoint(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate/2 && p.y < 0) {
             p.y = 0;
@@ -407,6 +407,12 @@ class Visualizer extends VisualizerBase {
         this.SVGtransformationMatrix = matrix;
     }
 
+    /**
+    * Translates spectrogram horizontally so the selected point reaches the left border of
+    * canvas.
+    * @param {point} p - SVG point moving to the border.
+    * @private
+    */
     translatePointToLeft(p) {
         const leftPoint = this.canvasToPoint(this.createPoint(0, 0));
         const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y-p.y);
@@ -415,6 +421,12 @@ class Visualizer extends VisualizerBase {
         // timeSelector.value = p.x;
     }
 
+     /**
+    * Translates spectrogram horizontally so the selected point reaches the center of
+    * canvas.
+    * @param {point} p - SVG point moving to the center.
+    * @private
+    */
     translatePointToCenter(p) {
         const centerPoint = this.canvasToPoint(this.createPoint(1 / 2, 0));
         const translationPoint = this.createPoint(centerPoint.x - p.x, 0);
@@ -466,14 +478,6 @@ class Visualizer extends VisualizerBase {
             this.dragging = false;
         }
         this.zoomSwitchPosition = false;
-
-        // if (this.zoomSwitchPosition === true) {
-        // console.log('zoom position', this.zoomSwitchPosition);
-        // const last = this.pointToCanvas(this.dragStart);
-        // this.secondaryTransformation = this.SVGtransformationMatrix;
-        // const secondPoint = this.getMouseEventPosition(event);
-        // this.zoomOnRectangle(last, secondPoint);
-        // }
     }
 
     zoomOnRectangle(event) {
