@@ -4,7 +4,7 @@
 */
 
 import React from 'react';
-import VisualizerBase from '../VisualizerBase';
+import VisualizerBase from '@selia/visualizer';
 import Artist from './Artist/artist';
 import STFTHandler from './STFTHandler/STFTHandler';
 import AudioFile from './Audio/audioFile';
@@ -30,6 +30,8 @@ const INIT_CONFIG = {
 
 /** Seconds per canvas frame at initial state. */
 const INITIAL_SECONDS_PER_WINDOW = 10;
+
+const MAX_SECONDS_IN_CANVAS = 60;
 
 /**
 * @property {Object} config - Visualization STFT and initial loading time configurations.
@@ -68,15 +70,11 @@ class Visualizer extends VisualizerBase {
         // Class dealing with raw audio file.
         this.audioFile = new AudioFile(this.itemInfo.url);
         // Audio Reproduction class
-        this.audioPlayer = null,
+        this.audioPlayer = null;
         // Class computing the Discrete Fourior Transform of the WAV file
         this.STFTRetriever = new STFTHandler(this.audioFile, INIT_CONFIG);
         // Class dealing with webGL and axis responsabilities.
         this.artist = new Artist(this, this.STFTRetriever);
-
-        this.getEvents()
-            .then((events) => this.bindEvents(events))
-            .catch((error) => console.error(error));
 
         // Auxiliar variables:
         this.audioLength = null;
@@ -166,38 +164,20 @@ class Visualizer extends VisualizerBase {
     * Method used to set all mouse events required.
     */
     getEvents() {
-        let counts = 0;
-        return new Promise((resolve, reject) => {
-            const checkForAudioFileClass = () => {
-                if (this.audioFile === undefined) {
-                    if (counts === 1000) {
-                        reject('Undefined audioFile');
-                    } else {
-                        counts += 1;
-                        setTimeout(() => this.getEvents(), 10);
-                    }
-                } else {
-                    this.audioFile.waitUntilReady()
-                        .then(() => {
-                            this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
-                            this.mouseDown = this.mouseDown.bind(this);
-                            this.mouseUp = this.mouseUp.bind(this);
-                            this.onMouseMove = this.onMouseMove.bind(this);
-                            this.mouseScroll = this.mouseScroll.bind(this);
-                            this.doubleClick = this.doubleClick.bind(this);
-                            resolve({
-                                mousedown: this.mouseDown,
-                                mousemove: this.onMouseMove,
-                                mouseup: this.mouseUp,
-                                mousewheel: this.mouseScroll,
-                                wheel: this.mouseScroll,
-                                dblclick: this.doubleClick,
-                            });
-                        });
-                }
-            };
-            checkForAudioFileClass();
-        });
+        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
+        this.mouseDown = this.mouseDown.bind(this);
+        this.mouseUp = this.mouseUp.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.mouseScroll = this.mouseScroll.bind(this);
+        this.doubleClick = this.doubleClick.bind(this);
+        return {
+            mousedown: this.mouseDown,
+            mousemove: this.onMouseMove,
+            mouseup: this.mouseUp,
+            mousewheel: this.mouseScroll,
+            wheel: this.mouseScroll,
+            dblclick: this.doubleClick,
+        };
     }
 
     /**
@@ -368,7 +348,7 @@ class Visualizer extends VisualizerBase {
     zoomOnPoint(factor, fixedPoint) {
         let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
         // Condition to avoid too much increase or decrease in time scale.
-        const condition1 = (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / 60)
+        const condition1 = (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / MAX_SECONDS_IN_CANVAS)
         || (factor.x > 1 && this.SVGtransformationMatrix.a > 10);
         // Condition to avoid too much increase or decrease in frequency space.
         const condition2 = (factor.y < 1
@@ -417,8 +397,6 @@ class Visualizer extends VisualizerBase {
         const leftPoint = this.canvasToPoint(this.createPoint(0, 0));
         const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y-p.y);
         this.translation(translationPoint);
-        // const timeSelector = document.getElementById('timeSelector');
-        // timeSelector.value = p.x;
     }
 
      /**
@@ -433,7 +411,11 @@ class Visualizer extends VisualizerBase {
         this.translation(translationPoint);
     }
 
-
+    /**
+    * Get canvas coordinates of event point.
+    * @param {Event} event - Event ocurring on canvas.
+    * @private
+    */
     getMouseEventPosition(event) {
         const canvasContainer = this.canvas.parentNode;
         let x = event.offsetX || (event.pageX - canvasContainer.offsetLeft);
@@ -444,11 +426,17 @@ class Visualizer extends VisualizerBase {
         return point;
     }
 
+    /**
+    * Translate matrix following cursor movements.
+    * @param {Event} event - Mousedown event.
+    * @private
+    */
     mouseDown(event) {
         const last = this.getMouseEventPosition(event);
         this.dragStart = this.canvasToPoint(last);
         this.dragging = true;
     }
+
 
     onMouseMove(event) {
         if (this.dragging) {

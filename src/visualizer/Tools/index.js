@@ -152,9 +152,9 @@ class Toolbox extends React.Component {
     */
     addEventsToCanvas() {
         this.uncheckZoomTag = this.uncheckZoomTag.bind(this);
-        this.props.canvas.addEventListener('mouseup', () => {
-            this.uncheckZoomTag();
-                this.unclickingDiv();
+        this.props.canvas.addEventListener('mouseup', (event) => {
+            this.uncheckZoomTag(event);
+            this.unclickingDiv();
         });
         this.props.canvas.addEventListener('mousemove', (e) => {
             this.draggingOutDiv(e)});
@@ -303,12 +303,12 @@ class Toolbox extends React.Component {
     * Modifies zoomSwitch value
     * @provate
     */
-    uncheckZoomTag() {
+    uncheckZoomTag(event) {
         // this.setState({dragging: false });
         const checkBox = document.getElementById('customSwitch1');
         if (checkBox.checked === true) {
             this.props.movement.zoomOnRectangle(event);
-            // this.props.switchButton();
+            console.log({'event': event})
         }
         checkBox.checked = false;
     }
