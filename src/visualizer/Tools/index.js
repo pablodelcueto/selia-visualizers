@@ -8,25 +8,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import PropTypes from 'prop-types';
-import Slider, { Range } from 'rc-slider';
+import { Range } from 'rc-slider';
 import 'rc-slider/assets/index.css';
 
-
-const menuStyle = {
-    align: 'left',
-    // width: '90%',
-    margin: '10px',
-};
 
 const buttonClass = 'btn btn-light m-1';
 const activeButtonClass = 'btn btn-primary m-1';
 const selectClass = 'input-group input-group-sm p-1';
 
-const sliderStyle = {
-    align: 'left',
-    width: '90%',
-    margin: '10px',
-};
 
 const canvasDivStyle = {
     top: '15px',
@@ -121,11 +110,28 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Used to set initTime and finalTime in state.timeSettings.
-    * @param {number} initTime - initialTime for state.timeSettings.
-    * @param {number} finalTine - finalTime for state.timeSettings.
-    * @private
-    */
+     * Unset drag and zoom on mouse up.
+     * @private
+     */
+    onMouseUp(event) {
+        this.setState((prevState) => {
+            if (prevState.zoomActive) {
+                this.props.movement.zoomOnRectangle(event);
+            }
+
+            return {
+                zoomActive: false,
+                dragging: false,
+            };
+        });
+    }
+
+    /**
+     * Used to set initTime and finalTime in state.timeSettings.
+     * @param {number} initTime - initialTime for state.timeSettings.
+     * @param {number} finalTine - finalTime for state.timeSettings.
+     * @private
+     */
     setSliderTimes(initTime, finalTime) {
         this.setState((prevState) => {
             const [duration] = [prevState.timeSettings.duration];
@@ -152,18 +158,14 @@ class Toolbox extends React.Component {
     * @private
     */
     addEventsToCanvas() {
-        this.uncheckZoomTag = this.uncheckZoomTag.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
 
-        this.props.canvas.addEventListener('mouseup', () => {
-            this.props.switchButton();
-            this.setState({
-                dragging: false,
-                zoomActive: false,
-            });
+        this.props.canvas.addEventListener('mouseup', (event) => {
+            this.onMouseUp(event);
         });
 
-        this.props.canvas.addEventListener('mousemove', (e) => {
-            this.draggingOutDiv(e);
+        this.props.canvas.addEventListener('mousemove', (event) => {
+            this.draggingOutDiv(event);
         });
     }
 
@@ -302,14 +304,6 @@ class Toolbox extends React.Component {
     }
 
     /**
-    * Modifies zoomSwitch value
-    * @provate
-    */
-    uncheckZoomTag() {
-        this.setState({ zoomActive: false });
-    }
-
-    /**
     * Moves Slider div center to clicked position.
     * Computes time to clicked position  and calls props.moveToCenter in time.
     * @param {Event} - Click on div containing sliderDiv block.
@@ -389,7 +383,7 @@ class Toolbox extends React.Component {
             <div
                 style={canvasDivStyle}
                 onMouseMove={(event) => this.dragDivSlider(event)}
-                onMouseUp={(event) => this.unclickingDiv(event)}
+                onMouseUp={() => this.setState({ dragging: false })}
                 onMouseDown={(event) => this.clickingDiv(event)}
             >
                 { this.buildSliderDiv() }
@@ -569,7 +563,7 @@ class Toolbox extends React.Component {
         ];
 
         return (
-            <div className="form-group row mx-1 h-100 my-0" style={{width: '300px'}}>
+            <div className="form-group row mx-1 h-100 my-0" style={{ width: '300px' }}>
                 <label className="col-sm-2 col-form-label" htmlFor="filterRange">
                     Filter:
                 </label>
