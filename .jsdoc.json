@@ -2,6 +2,7 @@
     "plugins": ["plugins/markdown",
         "node_modules/better-docs/component"],
     "opts": {
-      "template": "node_modules/better-docs"
+      "template": "node_modules/better-docs",
+      "recurse": true
     }
 }

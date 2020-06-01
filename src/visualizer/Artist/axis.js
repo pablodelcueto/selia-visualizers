@@ -1,4 +1,4 @@
-/** 
+/**
 * Axis module.
 *
 * @module Artist/axis
@@ -97,11 +97,11 @@ class Axis {
         this.ctx.closePath();
     }
 
-    /** 
+    /**
     * Draws axis.
     * @param {number} initialTime - Requested initial time.
     * @param {number} finalTime - Requested final time.
-    * @param {number} initialFrequency - Requested initial frequency. 
+    * @param {number} initialFrequency - Requested initial frequency.
     * @param {number} finalFrequency - Requested final frequency.
     * @param {number} zoomFactor - Visualizer matrix transformation time factor.
     */

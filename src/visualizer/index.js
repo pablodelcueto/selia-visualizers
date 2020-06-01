@@ -1,6 +1,5 @@
 /**
-* @module visualizer
-* @see  visualizer
+* @module Visualizer
 */
 
 import React from 'react';
@@ -12,11 +11,11 @@ import audioPlayer from './Audio/reproductor';
 import Tools from './Tools';
 
 /**
-* Short-Time Fourier Transform configurations
+* Short-time Fourier transform (STFT) configurations.
 * @property {Object} stft - Short-Time Fourier Transform window configurations.
 * @property {number} stft.window_size - Window length for stft computations.
 * @property {number} stft.hop_length - Length between two consecutive computation windows.
-* @property {string}  stft.window_type - Type of window used on tensor flow computations.
+* @property {string}  stft.window_type - Type of window used by tensor flow computations.
 * @property {number}  startTime - Initial time for stft computations.
 */
 const INIT_CONFIG = {
@@ -28,11 +27,17 @@ const INIT_CONFIG = {
     startTime: 0.0,
 };
 
-/** Seconds per canvas frame at initial state. */
+/** Seconds per canvas frame at initial state.
+* @private
+*/
 const INITIAL_SECONDS_PER_WINDOW = 10;
 
 const MAX_SECONDS_IN_CANVAS = 60;
 
+function zoomLimit(sampleRate) {
+    const limit = ( MAX_SECONDS_IN_CANVAS * 48000 ) / sampleRate;
+    return limit;
+}
 /**
 * @property {Object} config - Visualization STFT and initial loading time configurations.
 * @property {Class} audioFile - Audio data reader class.
@@ -49,6 +54,7 @@ const MAX_SECONDS_IN_CANVAS = 60;
 * @property {SVGmatrix} SVGtransformationMatrix - Translating or scaling image
 * matrix transformation.
 * @property {boolean} zoomSwitchPosition - True when zooming Tool is activated.
+* @property {number} zoomLimit - Limit given to zoom acording to audio file sample rate.
 * @property {boolean} dragging - True when dragging image.
 * @property {SVGpoint} dragStart - Initial dragging point.
 * @property {SVGmatrix} savedMatrix - SVGtransformationMatrix saved available for image restoration.
@@ -64,6 +70,7 @@ class Visualizer extends VisualizerBase {
     /**
     * Initialize Visualizer instance with required classes and once its posible, add
     * events to canvas required for motion.
+    * @private
     */
     init() {
         this.config = INIT_CONFIG;
@@ -75,7 +82,7 @@ class Visualizer extends VisualizerBase {
         this.STFTRetriever = new STFTHandler(this.audioFile, INIT_CONFIG);
         // Class dealing with webGL and axis responsabilities.
         this.artist = new Artist(this, this.STFTRetriever);
-
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix();
         // Auxiliar variables:
         this.audioLength = null;
         //
@@ -84,13 +91,14 @@ class Visualizer extends VisualizerBase {
         this.zoomSwitchPosition = false;
         this.dragStart = null;
         this.dragging = false;
+        this.active = false;
 
 
         // Creates transformation matrix with INITIAL_SECONDS_PER_WINDOW requirement.
         this.STFTRetriever.waitUntilReady()
             .then(() => {
                 this.artist.maxFrequency = this.audioFile.mediaInfo.sampleRate / 2;
-                this.SVGtransformationMatrix = this.svg.createSVGMatrix()
+                this.SVGtransformationMatrix = this.SVGtransformationMatrix
                     .translate(1 / 2, 0)
                     .scaleNonUniform(
                         1 / INITIAL_SECONDS_PER_WINDOW,
@@ -98,13 +106,20 @@ class Visualizer extends VisualizerBase {
                     );
                 this.savedMatrix = this.SVGtransformationMatrix;
                 this.upgradeAudioLength();
+                this.toolBoxRef.current.addEventsToCanvas();
+                this.zoomLimit = zoomLimit(this.audioFile.mediaInfo.sampleRate);
                 this.startDrawing();
             });
+    }
+
+    activacion() {
+        this.active = true;
     }
 
     /**
     * Adjust size of canvas after toolsBox is render.
     * It adjust webGL viewport with new sizes too.
+    * @private
     */
     adjustSize() {
         VisualizerBase.prototype.adjustSize.call(this);
@@ -119,6 +134,7 @@ class Visualizer extends VisualizerBase {
     * @public
     */
     resetMatrix() {
+        this.activacion();
         const conf = { stft: {}, startTime: 0 };
         this.STFTRetriever.setConfig(conf);
         this.SVGtransformationMatrix = this.savedMatrix;
@@ -155,6 +171,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * @return {Object} Returns an Object with central configuration.
+    * @private
     */
     getConfig() {
         return this.config;
@@ -162,6 +179,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Method used to set all mouse events required.
+    * @private
     */
     getEvents() {
         this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
@@ -187,55 +205,40 @@ class Visualizer extends VisualizerBase {
     * @public.
     */
     renderToolbar() {
-        const actionButtons = {
-            home: () => this.resetMatrix(),
-            revertAction: () => this.revertAction(),
-        };
-        const stftConfMethods = {
-            modifyWindowSize: (newSize) => this.modifyWindowSize(newSize),
-            modifyWindowFunction: (newType) => this.modifyWindowFunction(newType),
-            modifyHopLength: (newHopLength) => this.modifyHopLength(newHopLength),
-        }
-        const colorMethods = {
-            modifyColorMap: (newColor) => this.modifyColorMap(newColor),
-            modifyInfFilter: (newValue) => this.modifyInfFilter(newValue),
-            modifySupFilter: (newValue) => this.modifySupFilter(newValue),
-        };
-
-        const movementMethods = {
-            sliderCoords: (event) => this.audioLength * this.getMouseEventPosition(event).x,
-            moveToCenter: (time) => this.translatePointToCenter(this.createPoint(time, 0)),
-            zoomOnRectangle: (event) => this.zoomOnRectangle(event),
-        };
-        const toogleZoomButton = () => {
-            if (this.zoomSwitchPosition = false) {
-                this.zoomSwitchPosition = true;
-            }
-        }
         // Creates a React reference to apply some toolbox methods from visualizer class.
         this.toolBoxRef = React.createRef();
         this.toolBox = (
             <Tools
                 ref={this.toolBoxRef}
                 id="toolbox"
-                //-----------Data---------------------------
+                // -----------Data---------------------------
+                visualizerActivator={() => this.activacion()}
                 STFTconfig={this.config.stft}
                 canvas={this.canvas}
                 canvasTimes={() => this.timesInCanvas()}
-                //-----------Methods-------------------------
-                switchButton={() => this.zoomSwitchPosition =! this.zoomSwitchPosition}
-                actionButtons={actionButtons}
-                setSTFT={stftConfMethods}
-                setColorMap={colorMethods}
+                // -----------Methods-------------------------
+                switchButton={() => { this.zoomSwitchPosition = !this.zoomSwitchPosition; }}
+                home={() => this.resetMatrix()}
+                revertAction={() => this.revertAction()}
+                // ------------------STFT_configuration_methods-----------
+                modifyWindowFunction={(newType) => this.modifyWindowFunction(newType)}
+                modifyWindowSize={(newSize) => this.modifyWindowSize(newSize)}
+                modifyHopLength={(newLength) => this.modifyHopLength(newLength)}
+                // --------------Color methods-----------------
+                modifyColorMap={(value) => this.modifyColorMap(value)}
+                modifyInfFilter={(value) => this.modifyInfFilter(value)}
+                modifySupFilter={(value) => this.modifySupFilter(value)}
+                // ------------------Zoom_and_displacement_methods-------------
+                moveToCenter={(time) => this.centerTime(time)}
                 playAndPause={() => this.reproduceAndPause()}
-                movement={movementMethods}
-                sliderCoords={(event) => this.audioLength * this.getMouseEventPosition(event).x} />
+                getDenormalizedTime={(event) => this.audioLength * this.getMouseEventPosition(event).x} />
         );
-        return this.toolBox
+        return this.toolBox;
     }
 
     /**
     * Call this function when all settings are ready to start drawing the spectrogram.
+    * @private
     */
     startDrawing() {
         this.draw();
@@ -246,7 +249,7 @@ class Visualizer extends VisualizerBase {
     * Method used to sketch spectrogram.
     * It uses loaded propery to call artist draw method just in case new data has to be
     * sketched.
-    * @public
+    * @private
     */
     draw() {
         const glArray = this.SVGmatrixToArray(this.SVGtransformationMatrix);
@@ -272,6 +275,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transforms a SVG matrix int Float32Array
+    * @private
     */
     SVGmatrixToArray() {
         const matrixArray = new Float32Array([
@@ -290,7 +294,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transforms points from canvas space coordinates into time-frequency coordinates
-    * @public
+    * @private
     */
     canvasToPoint(p) {
         return p.matrixTransform(this.SVGtransformationMatrix.inverse());
@@ -298,7 +302,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transform points in time-frequency coordinates into canvas space coordinates.
-    * @public
+    * @private
     */
     pointToCanvas(p) {
         return p.matrixTransform(this.SVGtransformationMatrix);
@@ -308,7 +312,7 @@ class Visualizer extends VisualizerBase {
     * Return nearest point with time and frequency values coordinates.
     * @param {point} p - Point in time and frequency coordinates.
     * @return  {point}
-    * @public
+    * @private
     */
     validatePoints(p) {
         const maxFrequency = this.stftHandler.maxFreq;
@@ -332,7 +336,7 @@ class Visualizer extends VisualizerBase {
     /**
     * Multiplies SVGtransformationMatrix by scaling matrix.
     * @param {point} p - Indicates scaling factor for each direction.
-    * @private
+    * @public
     */
     scale(p) {
         const matrix = this.SVGtransformationMatrix.scaleNonUniform(p.x, p.y);
@@ -340,10 +344,10 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Used to make a zoom with a fixed Point.
+    * Used to make a time zoom or frequency zoom without moving the given point.
     * @param {point} factor - Indicates scaling factor for each direction.
     * @param {point} fixedPoint - Point to fix.
-    * @private
+    * @public
     */
     zoomOnPoint(factor, fixedPoint) {
         let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
@@ -371,7 +375,7 @@ class Visualizer extends VisualizerBase {
     /**
     * Multiplies SVGtransformationMatrix by translations matrix to move around the spectrogram.
     * @param {SVGpoint} p -  SVG point to create translation matrix.
-    * @private
+    * @public
     */
     translation(p) {
         if (this.canvasToPoint(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate/2 && p.y < 0) {
@@ -399,7 +403,12 @@ class Visualizer extends VisualizerBase {
         this.translation(translationPoint);
     }
 
-     /**
+    centerTime(time) {
+        const point = this.createPoint(time, 0);
+        this.translatePointToCenter(point);
+    }
+
+    /**
     * Translates spectrogram horizontally so the selected point reaches the center of
     * canvas.
     * @param {point} p - SVG point moving to the center.
@@ -413,7 +422,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Get canvas coordinates of event point.
-    * @param {Event} event - Event ocurring on canvas.
+    * @param {Event} event - HTML event.
     * @private
     */
     getMouseEventPosition(event) {
@@ -427,57 +436,79 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Translate matrix following cursor movements.
-    * @param {Event} event - Mousedown event.
+    * Method triggered with mouse click. Translate matrix following cursor movements.
+    * @param {Event} event - HTML event.
     * @private
     */
     mouseDown(event) {
-        const last = this.getMouseEventPosition(event);
-        this.dragStart = this.canvasToPoint(last);
-        this.dragging = true;
-    }
-
-
-    onMouseMove(event) {
-        if (this.dragging) {
-            if (this.zoomSwitchPosition === false) {
-                const last = this.getMouseEventPosition(event);
-                var pt = this.canvasToPoint(last);
-                pt.x -= this.dragStart.x;
-                pt.y -= this.dragStart.y;
-                this.translation(pt);
-                this.dragStart = this.canvasToPoint(last);
-            } else {
-                this.forcingDraw=true;
-                const last = this.pointToCanvas(this.dragStart);
-                const actualPoint = this.getMouseEventPosition(event);
-                const rect = this.computeRectanglePixelsValues(last, actualPoint);
-                this.artist.drawZoomRectangle(rect.x, rect.y, rect.baseLength, rect.heightLength);
-            }
-        } else {
-            // Nothing to be done here.
+        if (this.active) {
+            const last = this.getMouseEventPosition(event);
+            this.dragStart = this.canvasToPoint(last);
+            this.dragging = true;
         }
-        this.moveSliderDiv();
-        this.fillInfoWindow(event);
     }
 
+    /**
+    * Method to use when mouse is moving. Used to drag image or create zoom area.
+    * @param {Event} event - HTML event.
+    * @private
+    */
+    onMouseMove(event) {
+        if (this.active) {
+            if (this.dragging) {
+                if (this.zoomSwitchPosition === false) {
+                    const last = this.getMouseEventPosition(event);
+                    var pt = this.canvasToPoint(last);
+                    pt.x -= this.dragStart.x;
+                    pt.y -= this.dragStart.y;
+                    this.translation(pt);
+                    this.dragStart = this.canvasToPoint(last);
+                } else {
+                    this.forcingDraw = true;
+                    const last = this.pointToCanvas(this.dragStart);
+                    const actualPoint = this.getMouseEventPosition(event);
+                    const rect = this.computeRectanglePixelsValues(last, actualPoint);
+                    this.artist.drawZoomRectangle(rect.x, rect.y, rect.baseLength, rect.heightLength);
+                }
+            } else {
+                // Nothing to be done here.
+            }
+            this.toolBoxRef.current.moveSliderFromCanvas();
+            this.fillInfoWindow(event);
+        }
+    }
+
+    /**
+    * Turn false dragging and zooming auxiliar variables.
+    * @private
+    */
     mouseUp(event) {
-        if (this.dragging === true) {
+        if (this.active) {
+            if (this.zoomSwitchPosition === true) {
+                const firstPoint = this.pointToCanvas(this.dragStart);
+                const secondPoint = this.getMouseEventPosition(event);
+                this.zoomOnRectangle(firstPoint, secondPoint);
+            }
+            this.zoomSwitchPosition = false;
             this.dragging = false;
         }
-        this.zoomSwitchPosition = false;
     }
 
-    zoomOnRectangle(event) {
+    /**
+    * Zooms on rectangle bounded by two points.
+    * @param {point} firstPoint - Rectangle first corner.
+    * @param {point} secondPoint - Rectangle corner opposite to first corner.
+    * @public
+    */
+    zoomOnRectangle(firstPoint, secondPoint) {
         this.secondaryTransformation = this.SVGtransformationMatrix;
-        const firstPoint = this.pointToCanvas(this.dragStart);
-        const secondPoint = this.getMouseEventPosition(event)
+
         const canvasMeasures = this.computeCanvasMeasures();
         const rectangle = this.computeRectangleTimeFreqValues(firstPoint, secondPoint);
 
         const factorPoint = this.createPoint(
             canvasMeasures.canvasTime / rectangle.timeLength,
-            canvasMeasures.canvasFrequency / rectangle.frequencyLength
+            canvasMeasures.canvasFrequency / rectangle.frequencyLength,
         );
 
         this.scale(factorPoint);
@@ -486,10 +517,12 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * @param {point} firstPoint - first Point of the rectangleZoomTool
-    * @param {point} secondPoint - second point of the rectangleZoomTool
     * This method computes the left superior corner, the width, and the height of the rectangle
-    * selected to zoom it.
+    * in pixels.
+    * @param {point} firstPoint - Point inside canvas.
+    * @param {point} secondPoint - Point inside canvas.
+    * @return {Rectangle}
+    * @private
     */
     computeRectanglePixelsValues(firstPoint, secondPoint) {
         const rigthXcoordinate = Math.max(firstPoint.x, secondPoint.x) * this.canvas.width;
@@ -504,10 +537,10 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
+    * This method computes the times and frequencies corresponding to a given rectangle in canvas.
     * @param {point} firstPoint - first Point of the rectangleZoomTool
     * @param {point} secondPoint - second point of the rectangleZoomTool
-    * This method computes the times and frequencies corresponding to a canvas rectangle, values
-    * used to fit the rectangle on the whole canvas.
+    * @private
     */
     computeRectangleTimeFreqValues(firstPoint, secondPoint) {
         const initialPoint = this.canvasToPoint(firstPoint);
@@ -523,46 +556,61 @@ class Visualizer extends VisualizerBase {
         };
     }
 
-
+    /**
+    * Method used for mouse scrolling. Used to zoom on time scales or frequency
+    * when Shiftkey is pressed.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     mouseScroll(event) {
-        let factorPoint;
-        const mousePosition = this.getMouseEventPosition(event);
-        const fixedPoint = this.canvasToPoint(mousePosition);
-        const dir = this.createPoint(event.deltaX, event.deltaY);
-        if (dir.x !== 0) {
-            this.translation(this.createPoint(dir.x / 50.0, 0));
-        } else if (dir.y !== 0) {
-            const factor = (dir.y < 0) ? 1.04 : 0.96;
-            if (!event.shiftKey) {
-                factorPoint = this.createPoint(factor, 1);
-                // this.zoomOnPoint(factorPoint,fixedPoint)
-            } else {
-                factorPoint = this.createPoint(1, factor);
+        if (this.active) {
+            let factorPoint;
+            const mousePosition = this.getMouseEventPosition(event);
+            const fixedPoint = this.canvasToPoint(mousePosition);
+            const dir = this.createPoint(event.deltaX, event.deltaY);
+            if (dir.x !== 0) {
+                this.translation(this.createPoint(dir.x / 50.0, 0));
+            } else if (dir.y !== 0) {
+                const factor = (dir.y < 0) ? 1.04 : 0.96;
+                if (!event.shiftKey) {
+                    factorPoint = this.createPoint(factor, 1);
+                    // this.zoomOnPoint(factorPoint,fixedPoint)
+                } else {
+                    factorPoint = this.createPoint(1, factor);
 
+                }
+                this.zoomOnPoint(factorPoint, fixedPoint);
             }
-            this.zoomOnPoint(factorPoint, fixedPoint);
+            this.toolBoxRef.current.moveSliderFromCanvas();
         }
-        this.moveSliderDiv();
     }
 
-
+    /**
+    * Double click event method. Moves clicked point to center of canvas.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     doubleClick(event) {
-        const point = this.canvasToPoint(this.getMouseEventPosition(event));
-        if (this.isPlaying) {
-            this.reproduceAndPause();
+        if (this.active) {
+            const point = this.canvasToPoint(this.getMouseEventPosition(event));
+            if (this.isPlaying) {
+                this.reproduceAndPause();
+                this.translatePointToCenter(point);
+                this.toolBoxRef.current.moveSliderFromCanvas();
+                this.reproduceAndPause();
+                return
+            }
             this.translatePointToCenter(point);
-            this.moveSliderDiv();
-            this.reproduceAndPause();
-            return
+            this.toolBoxRef.current.moveSliderFromCanvas();
         }
-        this.translatePointToCenter(point);
-        this.moveSliderDiv();
     }
 
-    moveSliderDiv() {
-        this.toolBoxRef.current.moveSliderFromCanvas();
-    }
 
+    /**
+    * Get times matching left border, center and rigth border columns in canvas.
+    * @return {Object}
+    * @private
+    */
     timesInCanvas() {
         return {
             leftTime: this.leftBorderTime(),
@@ -571,20 +619,41 @@ class Visualizer extends VisualizerBase {
         };
     }
 
+    /**
+    * Get time in rigth border of canvas.
+    * @return {number}
+    * @private
+    */
     rigthBorderTime() {
         return Math.min(this.canvasToPoint(this.createPoint(1, 0)).x,
             this.audioFile.mediaInfo.durationTime);
     }
 
+    /**
+    * Get time in left border of canvas.
+    * @return {number}
+    * @private
+    */
     leftBorderTime() {
         return Math.max(0, this.canvasToPoint(this.createPoint(0, 0)).x);
     }
 
+
+    /**
+    * Get time in center of canvas.
+    * @return {number}
+    * @private
+    */
     centralTime() {
         return this.canvasToPoint(this.createPoint(1 / 2, 0)).x;
     }
 
 
+    /**
+    * Set time and frequency values for mouse position to fill information window.
+    * @param {event} event - HTML event
+    * @private
+    */
     fillInfoWindow(event) {
         const value = this.canvasToPoint(this.getMouseEventPosition(event));
         const time = `Tiempo: ${value.x.toFixed(2)} segundos.`;
@@ -592,15 +661,22 @@ class Visualizer extends VisualizerBase {
         this.toolBoxRef.current.setCursorInfo(time, frequency);
     }
 
+    /**
+    * Set SVGMatrix as secondaryTransformation to return to last zooming tool transformation.
+    * @public
+    */
     revertAction() {
+        this.activacion();
         if (this.secondaryTransformation != null) {
             this.SVGtransformationMatrix = this.secondaryTransformation;
         }
     }
 
     /**
+    * Set window_function configuration and redraw.
     * @param {newWindowFunction} string- Name of the function type used to create the
     * window blocks
+    * @public
     */
     modifyWindowFunction(newWindowFunction) {
         const conf = {
@@ -616,8 +692,10 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
+    * Set window_size configuration and redraw.
     * @param {number} newWindowSize -Block size used in each discrete fourier transformation
     * in the stftHandler
+    * @public
     */
     modifyWindowSize(newWindowSize) {
         const realValue = Math.max(newWindowSize, this.config.stft.hop_length);
@@ -634,8 +712,10 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
+    * Set hop_length configuration and redraw.
     * @param {number} newWindowHop - The discrete fourier transformation gap between each
     * block on data used on coefficents computations.
+    * @public
     */
     modifyHopLength(newWindowHop) {
         const realValue = Math.min(newWindowHop, this.config.stft.window_size);
@@ -652,34 +732,43 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * @param {number} newColor - number to pick a line in the image loaded to select
+    * Set color map.
+    * @param {number} newColor - Number to pick a line in the image loaded to select
     * different color maps.
+    * @public
     */
     modifyColorMap(newColor) {
         this.artist.setColor(newColor);
-        this.forcingDraw=true;
+        this.forcingDraw = true;
     }
 
-    // Modifies min lim of the color map.
+    /**
+    * Set color map inferior filter.
+    * @param {number} newValue - Number between 0 and 1 for new inferior filter.
+    * @public
+    */
     modifyInfFilter(newValue) {
         this.artist.setColorMapInfFilter(newValue);
         this.forcingDraw=true;
     }
 
-    // Modifies max lim of the color map.
+    /**
+    Set color map superior filter.
+    * @param {number} newValue - Number between 0 and 1 for new superior filter.
+    * @public
+    */
     modifySupFilter(newValue) {
         this.artist.setColorMapSupFilter(newValue);
         this.forcingDraw=true;
     }
 
     /**
-    * {number} time - Time where reproduction should start
     * This method handles the play/pause button.
-    * If play is pressed in pause mode it starts reproducing where it left before, if its pressed while
-    * reproducing then in pause reproduction and if its pressed without being reproducing or paused, then
-    * it starts reproduction in time value.
+    * Initial reproduction time is time in center of canvas.
+    * @public
     */
     reproduceAndPause() {
+        this.activacion();
         if(this.audioPlayer === null) {
             this.audioPlayer = new audioPlayer(this.audioFile);
         }
@@ -698,16 +787,18 @@ class Visualizer extends VisualizerBase {
 
     /**
     * The time is driven to the center of canvas and keeps advancing forward.
+    * @private
     */
     animatedMotion(time) {
         const newTime = time + this.audioPlayer.getTime() - this.initialAnimationTime;
         this.translatePointToCenter(this.createPoint(newTime, 0));
         this.timeoutId = setTimeout(() => this.animatedMotion(time), 10);
-        this.moveSliderDiv();
+        this.toolBoxRef.current.moveSliderFromCanvas();
     }
 
     /**
     * clears the setTimeout ID of the reproduction.
+    * @private
     */
     stopReproduction() {
         this.isPaused = false;
