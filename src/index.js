@@ -12,7 +12,7 @@ import ReactDOM from 'react-dom';
 import(/* webpackIgnore: true */'/visualizer.js').then(module => {
   var config = {
     canvas: document.getElementById('visualizerCanvas'),
-    active: true,
+    active: false,
     itemInfo: {
       url: 'http://localhost:3000/',
     }

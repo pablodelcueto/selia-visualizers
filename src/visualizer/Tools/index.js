@@ -105,15 +105,13 @@ class Toolbox extends React.Component {
         };
     }
 
-    componentDidMount() {
-
-    }
-
     /**
      * Unset drag and zoom on mouse up.
      * @private
      */
-    onMouseUp(event) {
+    onMouseUp() {
+        if (!this.props.isActive()) return;
+
         this.setState((prevState) => {
             return {
                 zoomActive: false,
@@ -154,15 +152,9 @@ class Toolbox extends React.Component {
     * @private
     */
     addEventsToCanvas() {
-        this.onMouseUp = this.onMouseUp.bind(this);
-
-        this.props.canvas.addEventListener('mouseup', (event) => {
-            this.onMouseUp(event);
-        });
-
-        this.props.canvas.addEventListener('mousemove', (event) => {
-            this.draggingOutDiv(event);
-        });
+        const { canvas } = this.props;
+        canvas.addEventListener('mouseup', () => this.onMouseUp());
+        canvas.addEventListener('mousemove', (event) => this.draggingOutDiv(event));
     }
 
     /**
@@ -291,7 +283,7 @@ class Toolbox extends React.Component {
         this.setState((prevState) => ({ infoWindowActive: !prevState.infoWindowActive }));
     }
 
-    upgradeAudioLength(duration) {
+    updateAudioLength(duration) {
         this.setState((prevState) => ({
             timeSettings: {
                 ...prevState.timeSettings,
@@ -307,6 +299,8 @@ class Toolbox extends React.Component {
     * @private
     */
     clickingDiv(event) {
+        if (!this.props.isActive()) return;
+
         const times = this.props.canvasTimes();
         const centralTime = this.props.getDenormalizedTime(event);
         this.props.moveToCenter(centralTime);
@@ -317,6 +311,8 @@ class Toolbox extends React.Component {
     }
 
     dragDivSlider(event) {
+        if (!this.props.isActive()) return;
+
         const times = this.props.canvasTimes();
         if (this.state.dragging) {
             const centralTime = this.props.getDenormalizedTime(event);
@@ -380,12 +376,17 @@ class Toolbox extends React.Component {
             <div
                 style={canvasDivStyle}
                 onMouseMove={(event) => this.dragDivSlider(event)}
-                onMouseUp={() => this.setState({ dragging: false })}
+                onMouseUp={() => this.onDragUp()}
                 onMouseDown={(event) => this.clickingDiv(event)}
             >
                 { this.buildSliderDiv() }
             </div>
         );
+    }
+
+    onDragUp() {
+        if (!this.props.isActive()) return;
+        this.setState({ dragging: false });
     }
 
     buildInfoWindow() {
@@ -428,12 +429,32 @@ class Toolbox extends React.Component {
         );
     }
 
+    handleMoveButtonClick() {
+        this.props.visualizerActivator();
+        this.setState({ zoomActive: false });
+    }
+
     handleZoomButtonClick() {
         this.props.visualizerActivator();
         this.setState((prevState) => {
             this.props.switchButton();
             return { zoomActive: !prevState.zoomActive };
         });
+    }
+
+    buildMoveButton() {
+        const active = this.props.isActive();
+        const className = active && !this.state.zoomActive ? activeButtonClass : buttonClass;
+
+        return (
+            <button
+                type="submit"
+                className={className}
+                onClick={() => this.handleMoveButtonClick()}
+            >
+                <i className="fas fa-arrows-alt" />
+            </button>
+        );
     }
 
     buildZoomToolButton() {
@@ -606,6 +627,9 @@ class Toolbox extends React.Component {
                 )}
 
                 <div className="row d-flex justify-content-start">
+                    <div>
+                        {this.buildMoveButton()}
+                    </div>
                     <div>
                         {this.buildZoomToolButton()}
                     </div>
