@@ -54,6 +54,7 @@
     "@selia/visualizer": "^1.4.0",
     "@tensorflow/tfjs": "^1.7.4",
     "@tensorflow/tfjs-node": "^1.7.4",
+    "parcel": "^1.12.4",
     "prop-types": "^15.7.2",
     "rc-slider": "^9.2.4",
     "react": "^16.13.1",

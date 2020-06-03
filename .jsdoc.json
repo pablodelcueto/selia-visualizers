@@ -1,7 +1,18 @@
 {
-    "plugins": ["plugins/markdown",
-        "node_modules/better-docs/component"],
+    "plugins": [
+        "plugins/markdown",
+        "node_modules/better-docs/component"
+    ],
     "opts": {
-      "template": "node_modules/better-docs"
-    }
+      "template": "node_modules/better-docs",
+      "verbose": true
+    },
+    "templates": {
+      "search": true,
+      "better-docs": {
+        "title": "SpectrogramVis",
+        "name": "Spectrogram Visualizer",
+        "hideGenerator": true,
+      }
+   }
 }
