@@ -431,7 +431,12 @@ class Toolbox extends React.Component {
 
     handleMoveButtonClick() {
         this.props.visualizerActivator();
-        this.setState({ zoomActive: false });
+        this.setState((prevState) => {
+            if (prevState.zoomActive) {
+                this.props.switchButton();
+            }
+            return { zoomActive: false };
+        });
     }
 
     handleZoomButtonClick() {
