@@ -96,9 +96,6 @@ class Visualizer extends VisualizerBase {
         this.dragStart = null;
         this.dragging = false;
 
-        this.active = false;
-        this.activator = () => { if (!this.active) this.active = true; };
-
         // Creates transformation matrix with INITIAL_SECONDS_PER_WINDOW requirement.
         this.stftHandler.waitUntilReady()
             .then(() => {
@@ -590,23 +587,27 @@ class Visualizer extends VisualizerBase {
     mouseScroll(event) {
         if (!this.active) return;
 
-        let factorPoint;
+        const timeZoom = event.ctrlKey || event.metaKey;
+        const freqZoom = event.shiftKey;
+
+        // Do nothing if the correct keys are not pressed
+        if (!timeZoom && !freqZoom) return;
+
+        // Do not scroll window.
+        event.preventDefault();
+
         const mousePosition = this.getMouseEventPosition(event);
         const fixedPoint = this.canvasToPoint(mousePosition);
-        const dir = this.createPoint(event.deltaX, event.deltaY);
 
-        if (dir.x !== 0) {
-            this.translation(this.createPoint(dir.x / 50.0, 0));
-        } else if (dir.y !== 0) {
-            const factor = (dir.y < 0) ? 1.04 : 0.96;
-
-            if (!event.shiftKey) {
-                factorPoint = this.createPoint(factor, 1);
-            } else {
-                factorPoint = this.createPoint(1, factor);
-            }
-
-            this.zoomOnPoint(factorPoint, fixedPoint);
+        if (timeZoom && freqZoom) {
+            const shift = event.wheelDelta / 1000.0;
+            this.translation(this.createPoint(shift, 0));
+        } else if (timeZoom) {
+            const factor = (event.deltaY < 0) ? 1.04 : 0.96;
+            this.zoomOnPoint(this.createPoint(factor, 1), fixedPoint);
+        } else {
+            const factor = (event.deltaX < 0) ? 1.04 : 0.96;
+            this.zoomOnPoint(this.createPoint(1, factor), fixedPoint);
         }
 
         this.toolBoxRef.current.moveSliderFromCanvas();
