@@ -1,6 +1,5 @@
 /**
-* @module visualizer
-* @see  visualizer
+* @module Visualizer
 */
 
 import React from 'react';
@@ -8,15 +7,15 @@ import VisualizerBase from '@selia/visualizer';
 import Artist from './Artist/artist';
 import STFTHandler from './STFTHandler/STFTHandler';
 import AudioFile from './Audio/audioFile';
-import audioPlayer from './Audio/reproductor';
+import AudioPlayer from './Audio/reproductor';
 import Tools from './Tools';
 
 /**
-* Short-Time Fourier Transform configurations
+* Short-time Fourier transform (STFT) configurations.
 * @property {Object} stft - Short-Time Fourier Transform window configurations.
 * @property {number} stft.window_size - Window length for stft computations.
 * @property {number} stft.hop_length - Length between two consecutive computation windows.
-* @property {string}  stft.window_type - Type of window used on tensor flow computations.
+* @property {string}  stft.window_type - Type of window used by tensor flow computations.
 * @property {number}  startTime - Initial time for stft computations.
 */
 const INIT_CONFIG = {
@@ -28,14 +27,22 @@ const INIT_CONFIG = {
     startTime: 0.0,
 };
 
-/** Seconds per canvas frame at initial state. */
+/** Seconds per canvas frame at initial state.
+* @private
+*/
 const INITIAL_SECONDS_PER_WINDOW = 10;
 
+const MAX_SECONDS_IN_CANVAS = 60;
+
+function zoomLimit(sampleRate) {
+    const limit = (MAX_SECONDS_IN_CANVAS * 48000) / sampleRate;
+    return limit;
+}
 /**
 * @property {Object} config - Visualization STFT and initial loading time configurations.
 * @property {Class} audioFile - Audio data reader class.
 * @property {Class} audioPlayer - Audio player class.
-* @property {Class} STFTRetriever - Class computing and delivering STFT values.
+* @property {Class} stftHandler - Class computing and delivering STFT values.
 * @property {Class} artist - Spectrogram sketching artist.
 * @property {number} audioLength - Audio file duration.
 * @property {Object} loaded - Data pictured. Used to avoid unnecesary work.
@@ -47,6 +54,7 @@ const INITIAL_SECONDS_PER_WINDOW = 10;
 * @property {SVGmatrix} SVGtransformationMatrix - Translating or scaling image
 * matrix transformation.
 * @property {boolean} zoomSwitchPosition - True when zooming Tool is activated.
+* @property {number} zoomLimit - Limit given to zoom acording to audio file sample rate.
 * @property {boolean} dragging - True when dragging image.
 * @property {SVGpoint} dragStart - Initial dragging point.
 * @property {SVGmatrix} savedMatrix - SVGtransformationMatrix saved available for image restoration.
@@ -62,44 +70,49 @@ class Visualizer extends VisualizerBase {
     /**
     * Initialize Visualizer instance with required classes and once its posible, add
     * events to canvas required for motion.
+    * @private
     */
     init() {
         this.config = INIT_CONFIG;
+
         // Class dealing with raw audio file.
         this.audioFile = new AudioFile(this.itemInfo.url);
+
         // Audio Reproduction class
         this.audioPlayer = null;
+
         // Class computing the Discrete Fourior Transform of the WAV file
-        this.STFTRetriever = new STFTHandler(this.audioFile, INIT_CONFIG);
+        this.stftHandler = new STFTHandler(this.audioFile, INIT_CONFIG);
+
         // Class dealing with webGL and axis responsabilities.
-        this.artist = new Artist(this, this.STFTRetriever);
+        this.artist = new Artist(this, this.stftHandler);
+        this.SVGtransformationMatrix = this.svg.createSVGMatrix();
 
-        this.getEvents()
-            .then((events) => this.bindEvents(events))
-            .catch((error) => console.error(error));
-
-        // Auxiliar variables:
+        // Auxiliary variables:
         this.audioLength = null;
-        //
         this.loaded = { times: { start: 0, end: 0 }, frequencies: { start: 0, end: 0 } };
         this.forcingDraw = false;
         this.zoomSwitchPosition = false;
         this.dragStart = null;
         this.dragging = false;
 
+        this.active = false;
+        this.activator = () => { if (!this.active) this.active = true; };
 
         // Creates transformation matrix with INITIAL_SECONDS_PER_WINDOW requirement.
-        this.STFTRetriever.waitUntilReady()
+        this.stftHandler.waitUntilReady()
             .then(() => {
                 this.artist.maxFrequency = this.audioFile.mediaInfo.sampleRate / 2;
-                this.SVGtransformationMatrix = this.svg.createSVGMatrix()
+                this.SVGtransformationMatrix = this.SVGtransformationMatrix
                     .translate(1 / 2, 0)
                     .scaleNonUniform(
                         1 / INITIAL_SECONDS_PER_WINDOW,
                         2 / this.audioFile.mediaInfo.sampleRate,
                     );
                 this.savedMatrix = this.SVGtransformationMatrix;
-                this.upgradeAudioLength();
+                this.updateAudioLength();
+                this.toolBoxRef.current.addEventsToCanvas();
+                this.zoomLimit = zoomLimit(this.audioFile.mediaInfo.sampleRate);
                 this.startDrawing();
             });
     }
@@ -107,6 +120,7 @@ class Visualizer extends VisualizerBase {
     /**
     * Adjust size of canvas after toolsBox is render.
     * It adjust webGL viewport with new sizes too.
+    * @private
     */
     adjustSize() {
         VisualizerBase.prototype.adjustSize.call(this);
@@ -117,23 +131,24 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Used to set transformationMatrix as at begginings of the time.
+    * Used to reset transformationMatrix to default transformation.
     * @public
     */
     resetMatrix() {
+        this.activator();
         const conf = { stft: {}, startTime: 0 };
-        this.STFTRetriever.setConfig(conf);
+        this.stftHandler.setConfig(conf);
         this.SVGtransformationMatrix = this.savedMatrix;
     }
 
     /**
-    * Upgrades audio file duration time dependencies.
+    * Updates audio file duration time dependencies.
     * @private
     */
-    upgradeAudioLength() {
+    updateAudioLength() {
         const duration = this.audioFile.mediaInfo.durationTime;
         this.audioLength = duration.toString();
-        this.toolBoxRef.current.upgradeAudioLength(duration);
+        this.toolBoxRef.current.updateAudioLength(duration);
         this.artist.axisHandler.audioLength = this.audioLength;
     }
 
@@ -143,20 +158,22 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     setConfig(config) {
-        if (config.stft != undefined) {
+        if (config.stft !== undefined) {
             for (const conf in config.stft) {
-                this.config.stft.conf = config.stft.conf;
+                this.config.stft.conf = config.stft[conf];
             }
         }
-        if (config.startTime != undefined) {
+
+        if (config.startTime !== undefined) {
             this.config.startTime = config.startTime;
         }
 
-        this.STFTRetriever.config = this.config;
+        this.stftHandler.config = this.config;
     }
 
     /**
     * @return {Object} Returns an Object with central configuration.
+    * @private
     */
     getConfig() {
         return this.config;
@@ -164,40 +181,23 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Method used to set all mouse events required.
+    * @private
     */
     getEvents() {
-        let counts = 0;
-        return new Promise((resolve, reject) => {
-            const checkForAudioFileClass = () => {
-                if (this.audioFile === undefined) {
-                    if (counts === 1000) {
-                        reject('Undefined audioFile');
-                    } else {
-                        counts += 1;
-                        setTimeout(() => this.getEvents(), 10);
-                    }
-                } else {
-                    this.audioFile.waitUntilReady()
-                        .then(() => {
-                            this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
-                            this.mouseDown = this.mouseDown.bind(this);
-                            this.mouseUp = this.mouseUp.bind(this);
-                            this.onMouseMove = this.onMouseMove.bind(this);
-                            this.mouseScroll = this.mouseScroll.bind(this);
-                            this.doubleClick = this.doubleClick.bind(this);
-                            resolve({
-                                mousedown: this.mouseDown,
-                                mousemove: this.onMouseMove,
-                                mouseup: this.mouseUp,
-                                mousewheel: this.mouseScroll,
-                                wheel: this.mouseScroll,
-                                dblclick: this.doubleClick,
-                            });
-                        });
-                }
-            };
-            checkForAudioFileClass();
-        });
+        this.getMouseEventPosition = this.getMouseEventPosition.bind(this);
+        this.mouseDown = this.mouseDown.bind(this);
+        this.mouseUp = this.mouseUp.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.mouseScroll = this.mouseScroll.bind(this);
+        this.doubleClick = this.doubleClick.bind(this);
+        return {
+            mousedown: this.mouseDown,
+            mousemove: this.onMouseMove,
+            mouseup: this.mouseUp,
+            mousewheel: this.mouseScroll,
+            wheel: this.mouseScroll,
+            dblclick: this.doubleClick,
+        };
     }
 
     /**
@@ -207,55 +207,43 @@ class Visualizer extends VisualizerBase {
     * @public.
     */
     renderToolbar() {
-        const actionButtons = {
-            home: () => this.resetMatrix(),
-            revertAction: () => this.revertAction(),
-        };
-        const stftConfMethods = {
-            modifyWindowSize: (newSize) => this.modifyWindowSize(newSize),
-            modifyWindowFunction: (newType) => this.modifyWindowFunction(newType),
-            modifyHopLength: (newHopLength) => this.modifyHopLength(newHopLength),
-        }
-        const colorMethods = {
-            modifyColorMap: (newColor) => this.modifyColorMap(newColor),
-            modifyInfFilter: (newValue) => this.modifyInfFilter(newValue),
-            modifySupFilter: (newValue) => this.modifySupFilter(newValue),
-        };
-
-        const movementMethods = {
-            sliderCoords: (event) => this.audioLength * this.getMouseEventPosition(event).x,
-            moveToCenter: (time) => this.translatePointToCenter(this.createPoint(time, 0)),
-            zoomOnRectangle: (event) => this.zoomOnRectangle(event),
-        };
-        const toogleZoomButton = () => {
-            if (this.zoomSwitchPosition = false) {
-                this.zoomSwitchPosition = true;
-            }
-        }
         // Creates a React reference to apply some toolbox methods from visualizer class.
         this.toolBoxRef = React.createRef();
         this.toolBox = (
             <Tools
                 ref={this.toolBoxRef}
                 id="toolbox"
-                //-----------Data---------------------------
+                // -----------Data---------------------------
+                visualizerActivator={() => this.activator()}
+                isActive={() => this.active}
                 STFTconfig={this.config.stft}
                 canvas={this.canvas}
                 canvasTimes={() => this.timesInCanvas()}
-                //-----------Methods-------------------------
-                switchButton={() => this.zoomSwitchPosition =! this.zoomSwitchPosition}
-                actionButtons={actionButtons}
-                setSTFT={stftConfMethods}
-                setColorMap={colorMethods}
+                // -----------Methods-------------------------
+                switchButton={() => { this.zoomSwitchPosition = !this.zoomSwitchPosition; }}
+                home={() => this.resetMatrix()}
+                revertAction={() => this.revertAction()}
+                // ------------------STFT_configuration_methods-----------
+                modifyWindowFunction={(newType) => this.modifyWindowFunction(newType)}
+                modifyWindowSize={(newSize) => this.modifyWindowSize(newSize)}
+                modifyHopLength={(newLength) => this.modifyHopLength(newLength)}
+                // --------------Color methods-----------------
+                modifyColorMap={(value) => this.modifyColorMap(value)}
+                modifyInfFilter={(value) => this.modifyInfFilter(value)}
+                modifySupFilter={(value) => this.modifySupFilter(value)}
+                // ------------------Zoom_and_displacement_methods-------------
+                moveToCenter={(time) => this.centerTime(time)}
                 playAndPause={() => this.reproduceAndPause()}
-                movement={movementMethods}
-                sliderCoords={(event) => this.audioLength * this.getMouseEventPosition(event).x} />
+                getDenormalizedTime={(event) => this.audioLength * this.getMouseEventPosition(event).x}
+            />
         );
-        return this.toolBox
+
+        return this.toolBox;
     }
 
     /**
     * Call this function when all settings are ready to start drawing the spectrogram.
+    * @private
     */
     startDrawing() {
         this.draw();
@@ -266,7 +254,7 @@ class Visualizer extends VisualizerBase {
     * Method used to sketch spectrogram.
     * It uses loaded propery to call artist draw method just in case new data has to be
     * sketched.
-    * @public
+    * @private
     */
     draw() {
         const glArray = this.SVGmatrixToArray(this.SVGtransformationMatrix);
@@ -274,11 +262,12 @@ class Visualizer extends VisualizerBase {
         const rigthSuperiorCorner = this.canvasToPoint(this.createPoint(1, 1));
         const leftCheckTime = Math.max(leftInferiorCorner.x, 0);
         const rigthCheckTime = Math.min(rigthSuperiorCorner.x, this.audioLength);
+
         if (Math.abs(leftCheckTime - this.loaded.times.start) > 0.01
             || leftInferiorCorner.y !== this.loaded.frequencies.start
             || Math.abs(rigthCheckTime - this.loaded.times.end) > 0.01
             || rigthSuperiorCorner.y !== this.loaded.frequencies.end
-            || this.forcingDraw ) {
+            || this.forcingDraw) {
             this.loaded = this.artist.draw(
                 leftInferiorCorner.x,
                 rigthSuperiorCorner.x,
@@ -292,6 +281,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transforms a SVG matrix int Float32Array
+    * @private
     */
     SVGmatrixToArray() {
         const matrixArray = new Float32Array([
@@ -310,7 +300,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transforms points from canvas space coordinates into time-frequency coordinates
-    * @public
+    * @private
     */
     canvasToPoint(p) {
         return p.matrixTransform(this.SVGtransformationMatrix.inverse());
@@ -318,7 +308,7 @@ class Visualizer extends VisualizerBase {
 
     /**
     * Transform points in time-frequency coordinates into canvas space coordinates.
-    * @public
+    * @private
     */
     pointToCanvas(p) {
         return p.matrixTransform(this.SVGtransformationMatrix);
@@ -328,13 +318,13 @@ class Visualizer extends VisualizerBase {
     * Return nearest point with time and frequency values coordinates.
     * @param {point} p - Point in time and frequency coordinates.
     * @return  {point}
-    * @public
+    * @private
     */
     validatePoints(p) {
         const maxFrequency = this.stftHandler.maxFreq;
         const time = Math.max(Math.min(p.x, this.audioLength), 0);
         const frequency = Math.max(Math.min(p.y, maxFrequency), 0);
-        return this.createPoint(time,frequency);
+        return this.createPoint(time, frequency);
     }
 
     /**
@@ -352,7 +342,7 @@ class Visualizer extends VisualizerBase {
     /**
     * Multiplies SVGtransformationMatrix by scaling matrix.
     * @param {point} p - Indicates scaling factor for each direction.
-    * @private
+    * @public
     */
     scale(p) {
         const matrix = this.SVGtransformationMatrix.scaleNonUniform(p.x, p.y);
@@ -360,25 +350,33 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Used to make a zoom with a fixed Point.
+    * Used to make a time zoom or frequency zoom without moving the given point.
     * @param {point} factor - Indicates scaling factor for each direction.
     * @param {point} fixedPoint - Point to fix.
-    * @private
+    * @public
     */
     zoomOnPoint(factor, fixedPoint) {
         let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
+
         // Condition to avoid too much increase or decrease in time scale.
-        const condition1 = (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / 60)
-        || (factor.x > 1 && this.SVGtransformationMatrix.a > 10);
+        const condition1 = (
+            (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / MAX_SECONDS_IN_CANVAS)
+            || (factor.x > 1 && this.SVGtransformationMatrix.a > 10)
+        );
+
         // Condition to avoid too much increase or decrease in frequency space.
-        const condition2 = (factor.y < 1
-            && (this.SVGtransformationMatrix.d  < (3 / 2) / this.audioFile.mediaInfo.sampleRate)
-            || (factor.y>1
-            && this.SVGtransformationMatrix.d > 10 / this.audioFile.mediaInfo.sampleRate));
+        const condition2 = ((
+                factor.y < 1
+                && (this.SVGtransformationMatrix.d < (3 / 2) / this.audioFile.mediaInfo.sampleRate))
+            || (
+                factor.y > 1
+                && this.SVGtransformationMatrix.d > 10 / this.audioFile.mediaInfo.sampleRate)
+        );
 
         if (condition1) {
             factor.x = 1;
         }
+
         if (condition2) {
             factor.y = 1;
         }
@@ -391,19 +389,21 @@ class Visualizer extends VisualizerBase {
     /**
     * Multiplies SVGtransformationMatrix by translations matrix to move around the spectrogram.
     * @param {SVGpoint} p -  SVG point to create translation matrix.
-    * @private
+    * @public
     */
     translation(p) {
-        if (this.canvasToPoint(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate/2 && p.y < 0) {
-            p.y = 0;
+        const q = this.createPoint(p.x, p.y);
+
+        if (this.canvasToPoint(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate / 2 && p.y < 0) {
+            q.y = 0;
         } else if (this.canvasToPoint(this.createPoint(0, 0)).y <= 0 && p.y > 0) {
-            p.y = 0;
+            q.y = 0;
         } else if (this.pointToCanvas(this.createPoint(0, 0)).x >= 0.5 && p.x > 0) {
-            p.x = 0;
+            q.x = 0;
         } else if (this.pointToCanvas(this.createPoint(this.audioLength, 0)).x <= 0.5 && p.x < 0) {
-            p.x = 0;
+            q.x = 0;
         }
-        const matrix = this.SVGtransformationMatrix.translate(p.x, p.y);
+        const matrix = this.SVGtransformationMatrix.translate(q.x, q.y);
         this.SVGtransformationMatrix = matrix;
     }
 
@@ -415,13 +415,16 @@ class Visualizer extends VisualizerBase {
     */
     translatePointToLeft(p) {
         const leftPoint = this.canvasToPoint(this.createPoint(0, 0));
-        const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y-p.y);
+        const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y - p.y);
         this.translation(translationPoint);
-        // const timeSelector = document.getElementById('timeSelector');
-        // timeSelector.value = p.x;
     }
 
-     /**
+    centerTime(time) {
+        const point = this.createPoint(time, 0);
+        this.translatePointToCenter(point);
+    }
+
+    /**
     * Translates spectrogram horizontally so the selected point reaches the center of
     * canvas.
     * @param {point} p - SVG point moving to the center.
@@ -433,63 +436,100 @@ class Visualizer extends VisualizerBase {
         this.translation(translationPoint);
     }
 
-
+    /**
+    * Get canvas coordinates of event point.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     getMouseEventPosition(event) {
         const canvasContainer = this.canvas.parentNode;
         let x = event.offsetX || (event.pageX - canvasContainer.offsetLeft);
         let y = event.offsetY || (event.pageY - canvasContainer.offsetTop);
-        x = x / this.canvas.width;
-        y = (-1 * y) / this.canvas.height + 1;
-        const point = this.createPoint(x, y);
-        return point;
+
+        x /= this.canvas.width;
+        y = -y / this.canvas.height + 1;
+
+        return this.createPoint(x, y);
     }
 
+    /**
+    * Method triggered with mouse click. Translate matrix following cursor movements.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     mouseDown(event) {
+        if (!this.active) return;
+
         const last = this.getMouseEventPosition(event);
         this.dragStart = this.canvasToPoint(last);
         this.dragging = true;
     }
 
+    /**
+    * Method to use when mouse is moving. Used to drag image or create zoom area.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     onMouseMove(event) {
+        if (!this.active) return;
+
         if (this.dragging) {
             if (this.zoomSwitchPosition === false) {
                 const last = this.getMouseEventPosition(event);
-                var pt = this.canvasToPoint(last);
+                const pt = this.canvasToPoint(last);
                 pt.x -= this.dragStart.x;
                 pt.y -= this.dragStart.y;
                 this.translation(pt);
                 this.dragStart = this.canvasToPoint(last);
             } else {
-                this.forcingDraw=true;
+                this.forcingDraw = true;
                 const last = this.pointToCanvas(this.dragStart);
                 const actualPoint = this.getMouseEventPosition(event);
                 const rect = this.computeRectanglePixelsValues(last, actualPoint);
-                this.artist.drawZoomRectangle(rect.x, rect.y, rect.baseLength, rect.heightLength);
+                this.artist.drawZoomRectangle(
+                    rect.x,
+                    rect.y,
+                    rect.baseLength,
+                    rect.heightLength,
+                );
             }
-        } else {
-            // Nothing to be done here.
         }
-        this.moveSliderDiv();
+
+        this.toolBoxRef.current.moveSliderFromCanvas();
         this.fillInfoWindow(event);
     }
 
+    /**
+    * Turn false dragging and zooming auxiliar variables.
+    * @private
+    */
     mouseUp(event) {
-        if (this.dragging === true) {
-            this.dragging = false;
+        if (!this.active) return;
+
+        if (this.zoomSwitchPosition === true) {
+            const firstPoint = this.pointToCanvas(this.dragStart);
+            const secondPoint = this.getMouseEventPosition(event);
+            this.zoomOnRectangle(firstPoint, secondPoint);
         }
         this.zoomSwitchPosition = false;
+        this.dragging = false;
     }
 
-    zoomOnRectangle(event) {
+    /**
+    * Zooms on rectangle bounded by two points.
+    * @param {point} firstPoint - Rectangle first corner.
+    * @param {point} secondPoint - Rectangle corner opposite to first corner.
+    * @public
+    */
+    zoomOnRectangle(firstPoint, secondPoint) {
         this.secondaryTransformation = this.SVGtransformationMatrix;
-        const firstPoint = this.pointToCanvas(this.dragStart);
-        const secondPoint = this.getMouseEventPosition(event)
+
         const canvasMeasures = this.computeCanvasMeasures();
         const rectangle = this.computeRectangleTimeFreqValues(firstPoint, secondPoint);
 
         const factorPoint = this.createPoint(
             canvasMeasures.canvasTime / rectangle.timeLength,
-            canvasMeasures.canvasFrequency / rectangle.frequencyLength
+            canvasMeasures.canvasFrequency / rectangle.frequencyLength,
         );
 
         this.scale(factorPoint);
@@ -498,10 +538,12 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * @param {point} firstPoint - first Point of the rectangleZoomTool
-    * @param {point} secondPoint - second point of the rectangleZoomTool
     * This method computes the left superior corner, the width, and the height of the rectangle
-    * selected to zoom it.
+    * in pixels.
+    * @param {point} firstPoint - Point inside canvas.
+    * @param {point} secondPoint - Point inside canvas.
+    * @return {Rectangle}
+    * @private
     */
     computeRectanglePixelsValues(firstPoint, secondPoint) {
         const rigthXcoordinate = Math.max(firstPoint.x, secondPoint.x) * this.canvas.width;
@@ -516,10 +558,10 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
+    * This method computes the times and frequencies corresponding to a given rectangle in canvas.
     * @param {point} firstPoint - first Point of the rectangleZoomTool
     * @param {point} secondPoint - second point of the rectangleZoomTool
-    * This method computes the times and frequencies corresponding to a canvas rectangle, values
-    * used to fit the rectangle on the whole canvas.
+    * @private
     */
     computeRectangleTimeFreqValues(firstPoint, secondPoint) {
         const initialPoint = this.canvasToPoint(firstPoint);
@@ -530,51 +572,73 @@ class Visualizer extends VisualizerBase {
         const bottomFrequency = Math.min(initialPoint.y, finalPoint.y);
         const timeRangeLength = rigthTime - leftTime;
         const frequencyRangeLength = topFrequency - bottomFrequency;
+
         return {
-            x: leftTime, y: bottomFrequency, timeLength: timeRangeLength, frequencyLength: frequencyRangeLength,
+            x: leftTime,
+            y: bottomFrequency,
+            timeLength: timeRangeLength,
+            frequencyLength: frequencyRangeLength,
         };
     }
 
-
+    /**
+    * Method used for mouse scrolling. Used to zoom on time scales or frequency
+    * when Shiftkey is pressed.
+    * @param {Event} event - HTML event.
+    * @private
+    */
     mouseScroll(event) {
+        if (!this.active) return;
+
         let factorPoint;
         const mousePosition = this.getMouseEventPosition(event);
         const fixedPoint = this.canvasToPoint(mousePosition);
         const dir = this.createPoint(event.deltaX, event.deltaY);
+
         if (dir.x !== 0) {
             this.translation(this.createPoint(dir.x / 50.0, 0));
         } else if (dir.y !== 0) {
             const factor = (dir.y < 0) ? 1.04 : 0.96;
+
             if (!event.shiftKey) {
                 factorPoint = this.createPoint(factor, 1);
-                // this.zoomOnPoint(factorPoint,fixedPoint)
             } else {
                 factorPoint = this.createPoint(1, factor);
-
             }
+
             this.zoomOnPoint(factorPoint, fixedPoint);
         }
-        this.moveSliderDiv();
-    }
 
-
-    doubleClick(event) {
-        const point = this.canvasToPoint(this.getMouseEventPosition(event));
-        if (this.isPlaying) {
-            this.reproduceAndPause();
-            this.translatePointToCenter(point);
-            this.moveSliderDiv();
-            this.reproduceAndPause();
-            return
-        }
-        this.translatePointToCenter(point);
-        this.moveSliderDiv();
-    }
-
-    moveSliderDiv() {
         this.toolBoxRef.current.moveSliderFromCanvas();
     }
 
+    /**
+    * Double click event method. Moves clicked point to center of canvas.
+    * @param {Event} event - HTML event.
+    * @private
+    */
+    doubleClick(event) {
+        if (!this.active) return;
+
+        const point = this.canvasToPoint(this.getMouseEventPosition(event));
+
+        if (this.isPlaying) {
+            this.reproduceAndPause();
+            this.translatePointToCenter(point);
+            this.toolBoxRef.current.moveSliderFromCanvas();
+            this.reproduceAndPause();
+            return;
+        }
+
+        this.translatePointToCenter(point);
+        this.toolBoxRef.current.moveSliderFromCanvas();
+    }
+
+    /**
+    * Get times matching left border, center and rigth border columns in canvas.
+    * @return {Object}
+    * @private
+    */
     timesInCanvas() {
         return {
             leftTime: this.leftBorderTime(),
@@ -583,20 +647,41 @@ class Visualizer extends VisualizerBase {
         };
     }
 
+    /**
+    * Get time in rigth border of canvas.
+    * @return {number}
+    * @private
+    */
     rigthBorderTime() {
         return Math.min(this.canvasToPoint(this.createPoint(1, 0)).x,
             this.audioFile.mediaInfo.durationTime);
     }
 
+    /**
+    * Get time in left border of canvas.
+    * @return {number}
+    * @private
+    */
     leftBorderTime() {
         return Math.max(0, this.canvasToPoint(this.createPoint(0, 0)).x);
     }
 
+
+    /**
+    * Get time in center of canvas.
+    * @return {number}
+    * @private
+    */
     centralTime() {
         return this.canvasToPoint(this.createPoint(1 / 2, 0)).x;
     }
 
 
+    /**
+    * Set time and frequency values for mouse position to fill information window.
+    * @param {event} event - HTML event
+    * @private
+    */
     fillInfoWindow(event) {
         const value = this.canvasToPoint(this.getMouseEventPosition(event));
         const time = `Tiempo: ${value.x.toFixed(2)} segundos.`;
@@ -604,15 +689,22 @@ class Visualizer extends VisualizerBase {
         this.toolBoxRef.current.setCursorInfo(time, frequency);
     }
 
+    /**
+    * Set SVGMatrix as secondaryTransformation to return to last zooming tool transformation.
+    * @public
+    */
     revertAction() {
+        this.activator();
         if (this.secondaryTransformation != null) {
             this.SVGtransformationMatrix = this.secondaryTransformation;
         }
     }
 
     /**
+    * Set window_function configuration and redraw.
     * @param {newWindowFunction} string- Name of the function type used to create the
     * window blocks
+    * @public
     */
     modifyWindowFunction(newWindowFunction) {
         const conf = {
@@ -622,14 +714,16 @@ class Visualizer extends VisualizerBase {
             startTime: this.leftBorderTime(),
         };
         this.config.stft.window_function = newWindowFunction;
-        this.STFTRetriever.setConfig(conf);
-        this.forcingDraw=true;
+        this.stftHandler.setConfig(conf);
+        this.forcingDraw = true;
         this.artist.reset();
     }
 
     /**
+    * Set window_size configuration and redraw.
     * @param {number} newWindowSize -Block size used in each discrete fourier transformation
     * in the stftHandler
+    * @public
     */
     modifyWindowSize(newWindowSize) {
         const realValue = Math.max(newWindowSize, this.config.stft.hop_length);
@@ -640,14 +734,16 @@ class Visualizer extends VisualizerBase {
             startTime: this.leftBorderTime(),
         };
         this.config.stft.window_size = realValue;
-        this.STFTRetriever.setConfig(conf);
-        this.forcingDraw=true;
+        this.stftHandler.setConfig(conf);
+        this.forcingDraw = true;
         this.artist.reset();
     }
 
     /**
+    * Set hop_length configuration and redraw.
     * @param {number} newWindowHop - The discrete fourier transformation gap between each
     * block on data used on coefficents computations.
+    * @public
     */
     modifyHopLength(newWindowHop) {
         const realValue = Math.min(newWindowHop, this.config.stft.window_size);
@@ -658,43 +754,54 @@ class Visualizer extends VisualizerBase {
             startTime: this.leftBorderTime(),
         };
         this.config.stft.hop_length = realValue;
-        this.STFTRetriever.setConfig(conf);
-        this.forcingDraw=true;
+        this.stftHandler.setConfig(conf);
+        this.forcingDraw = true;
         this.artist.reset();
     }
 
     /**
-    * @param {number} newColor - number to pick a line in the image loaded to select
+    * Set color map.
+    * @param {number} newColor - Number to pick a line in the image loaded to select
     * different color maps.
+    * @public
     */
     modifyColorMap(newColor) {
         this.artist.setColor(newColor);
-        this.forcingDraw=true;
-    }
-
-    // Modifies min lim of the color map.
-    modifyInfFilter(newValue) {
-        this.artist.setColorMapInfFilter(newValue);
-        this.forcingDraw=true;
-    }
-
-    // Modifies max lim of the color map.
-    modifySupFilter(newValue) {
-        this.artist.setColorMapSupFilter(newValue);
-        this.forcingDraw=true;
+        this.forcingDraw = true;
     }
 
     /**
-    * {number} time - Time where reproduction should start
+    * Set color map inferior filter.
+    * @param {number} newValue - Number between 0 and 1 for new inferior filter.
+    * @public
+    */
+    modifyInfFilter(newValue) {
+        this.artist.setColorMapInfFilter(newValue);
+        this.forcingDraw = true;
+    }
+
+    /**
+    Set color map superior filter.
+    * @param {number} newValue - Number between 0 and 1 for new superior filter.
+    * @public
+    */
+    modifySupFilter(newValue) {
+        this.artist.setColorMapSupFilter(newValue);
+        this.forcingDraw = true;
+    }
+
+    /**
     * This method handles the play/pause button.
-    * If play is pressed in pause mode it starts reproducing where it left before, if its pressed while
-    * reproducing then in pause reproduction and if its pressed without being reproducing or paused, then
-    * it starts reproduction in time value.
+    * Initial reproduction time is time in center of canvas.
+    * @public
     */
     reproduceAndPause() {
-        if(this.audioPlayer === null) {
-            this.audioPlayer = new audioPlayer(this.audioFile);
+        this.activator();
+
+        if (this.audioPlayer === null) {
+            this.audioPlayer = new AudioPlayer(this.audioFile);
         }
+
         const time = this.centralTime();
         if (!this.isPlaying) {
             this.isPlaying = true;
@@ -710,16 +817,18 @@ class Visualizer extends VisualizerBase {
 
     /**
     * The time is driven to the center of canvas and keeps advancing forward.
+    * @private
     */
     animatedMotion(time) {
         const newTime = time + this.audioPlayer.getTime() - this.initialAnimationTime;
         this.translatePointToCenter(this.createPoint(newTime, 0));
         this.timeoutId = setTimeout(() => this.animatedMotion(time), 10);
-        this.moveSliderDiv();
+        this.toolBoxRef.current.moveSliderFromCanvas();
     }
 
     /**
     * clears the setTimeout ID of the reproduction.
+    * @private
     */
     stopReproduction() {
         this.isPaused = false;

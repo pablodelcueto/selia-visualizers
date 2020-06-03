@@ -462,6 +462,7 @@ class STFTHandler {
     * information in case shift is completly starting over.
     */
     shiftSTFTBufferBackwards(startColumn, endColumn) {
+        console.log('shifting???')
         this.shifting = 'backwards';
 
         // Calculate number of columns to shift
@@ -481,7 +482,7 @@ class STFTHandler {
         if ((endColumn - this.computed.first > MAX_NORMAL_SHIFT_SEPARATION)
             || (cutPoint <= this.computed.first)) {
             this.STFTBuffer.fill(0);
-
+            console.log('jump');
             // Set values for new computations.
             this.startColumn += columnShift;
             this.endColumn += columnShift;
@@ -532,6 +533,7 @@ class STFTHandler {
     * information in case shift is completly starting over.
     */
     shiftSTFTBufferForwards(endColumn, startColumn) {
+        console.log('shifting')
         this.shifting = 'forwards';
 
         // Calculate the column shift

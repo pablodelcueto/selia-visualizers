@@ -5,6 +5,7 @@
     ],
     "opts": {
       "template": "node_modules/better-docs",
+<<<<<<< HEAD
       "verbose": true
     },
     "templates": {
@@ -15,4 +16,8 @@
         "hideGenerator": true,
       }
    }
+=======
+      "recurse": true
+    }
+>>>>>>> 1d3da3e8c4b1050ba56c1e9b7a784ac924bff7a9
 }

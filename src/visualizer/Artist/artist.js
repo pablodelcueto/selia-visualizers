@@ -84,7 +84,8 @@ class Artist {
             left: 0,
         };
 
-        const cssText = Object.entries(style).map((entry) => `${entry[0]} : ${entry[1]}`).join('; ');
+        const cssText = Object.entries(style).map((entry) =>
+         `${entry[0]} : ${entry[1]}`).join('; ');
         this.canvas.setAttribute(
             'style',
             `${originalStyle.cssText} ${cssText}`,

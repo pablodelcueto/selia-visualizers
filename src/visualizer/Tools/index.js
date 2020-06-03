@@ -78,7 +78,7 @@ class Toolbox extends React.Component {
     /**
     * Creates a toolBox.
     * @constructor
-    * @property {module:Tools/index.state} state - React component state.
+    * @property {module:Tools/index.ToolboxState} state - React component state.
     * @public
     */
     constructor(props) {
@@ -105,20 +105,14 @@ class Toolbox extends React.Component {
         };
     }
 
-    componentDidMount() {
-        this.addEventsToCanvas();
-    }
-
     /**
      * Unset drag and zoom on mouse up.
      * @private
      */
-    onMouseUp(event) {
-        this.setState((prevState) => {
-            if (prevState.zoomActive) {
-                this.props.movement.zoomOnRectangle(event);
-            }
+    onMouseUp() {
+        if (!this.props.isActive()) return;
 
+        this.setState((prevState) => {
             return {
                 zoomActive: false,
                 dragging: false,
@@ -158,15 +152,9 @@ class Toolbox extends React.Component {
     * @private
     */
     addEventsToCanvas() {
-        this.onMouseUp = this.onMouseUp.bind(this);
-
-        this.props.canvas.addEventListener('mouseup', (event) => {
-            this.onMouseUp(event);
-        });
-
-        this.props.canvas.addEventListener('mousemove', (event) => {
-            this.draggingOutDiv(event);
-        });
+        const { canvas } = this.props;
+        canvas.addEventListener('mouseup', () => this.onMouseUp());
+        canvas.addEventListener('mousemove', (event) => this.draggingOutDiv(event));
     }
 
     /**
@@ -178,7 +166,7 @@ class Toolbox extends React.Component {
     handleWindowSizeChange(windowSize) {
         this.setState((prevState) => {
             const realValue = Math.max(windowSize, prevState.stftConf.hop_length);
-            this.props.setSTFT.modifyWindowSize(realValue);
+            this.props.modifyWindowSize(realValue);
             return {
                 stftConf: {
                     ...prevState.stftConf,
@@ -196,7 +184,7 @@ class Toolbox extends React.Component {
     */
     handleWindowFunctionChange(type) {
         this.setState((prevState) => {
-            this.props.setSTFT.modifyWindowFunction(type);
+            this.props.modifyWindowFunction(type);
             return {
                 stftConf: {
                     ...prevState.stftConf,
@@ -215,7 +203,7 @@ class Toolbox extends React.Component {
     handleWindowHopChange(newHopLength) {
         this.setState((prevState) => {
             const realValue = Math.min(prevState.stftConf.window_size, newHopLength);
-            this.props.setSTFT.modifyHopLength(realValue);
+            this.props.modifyHopLength(realValue);
             return {
                 stftConf: {
                     ...prevState.stftConf,
@@ -231,7 +219,7 @@ class Toolbox extends React.Component {
     * @public
     */
     handleColorMapChange(color) {
-        this.props.setColorMap.modifyColorMap(parseFloat(color));
+        this.props.modifyColorMap(parseFloat(color));
     }
 
     /**
@@ -245,11 +233,11 @@ class Toolbox extends React.Component {
             const [newInf, newSup] = value;
 
             if (newInf !== prevState.colorConf.lim_inf) {
-                this.props.setColorMap.modifyInfFilter(newInf);
+                this.props.modifyInfFilter(newInf);
             }
 
             if (newSup !== prevState.colorConf.lim_sup) {
-                this.props.setColorMap.modifySupFilter(newSup);
+                this.props.modifySupFilter(newSup);
             }
 
             return {
@@ -268,7 +256,7 @@ class Toolbox extends React.Component {
     * @private
     */
     handleTranslation(newTime) {
-        this.props.movement.moveToCenter(newTime);
+        this.props.moveToCenter(newTime);
     }
 
     /**
@@ -284,6 +272,7 @@ class Toolbox extends React.Component {
     * @private
     */
     showHideInfoWindow() {
+        this.props.visualizerActivator();
         const infoWindow = document.getElementById('infoWindow');
         if (infoWindow.style.display === 'none') {
             document.getElementById('infoWindow').style.display = 'block';
@@ -294,7 +283,7 @@ class Toolbox extends React.Component {
         this.setState((prevState) => ({ infoWindowActive: !prevState.infoWindowActive }));
     }
 
-    upgradeAudioLength(duration) {
+    updateAudioLength(duration) {
         this.setState((prevState) => ({
             timeSettings: {
                 ...prevState.timeSettings,
@@ -310,9 +299,11 @@ class Toolbox extends React.Component {
     * @private
     */
     clickingDiv(event) {
+        if (!this.props.isActive()) return;
+
         const times = this.props.canvasTimes();
-        const centralTime = this.props.movement.sliderCoords(event);
-        this.props.movement.moveToCenter(centralTime);
+        const centralTime = this.props.getDenormalizedTime(event);
+        this.props.moveToCenter(centralTime);
         const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
         const timeLength = rigthTime - leftTime;
         this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
@@ -320,10 +311,12 @@ class Toolbox extends React.Component {
     }
 
     dragDivSlider(event) {
+        if (!this.props.isActive()) return;
+
         const times = this.props.canvasTimes();
         if (this.state.dragging) {
-            const centralTime = this.props.movement.sliderCoords(event);
-            this.props.movement.moveToCenter(centralTime);
+            const centralTime = this.props.getDenormalizedTime(event);
+            this.props.moveToCenter(centralTime);
             const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
             const timeLength = rigthTime - leftTime;
             this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
@@ -383,12 +376,17 @@ class Toolbox extends React.Component {
             <div
                 style={canvasDivStyle}
                 onMouseMove={(event) => this.dragDivSlider(event)}
-                onMouseUp={() => this.setState({ dragging: false })}
+                onMouseUp={() => this.onDragUp()}
                 onMouseDown={(event) => this.clickingDiv(event)}
             >
                 { this.buildSliderDiv() }
             </div>
         );
+    }
+
+    onDragUp() {
+        if (!this.props.isActive()) return;
+        this.setState({ dragging: false });
     }
 
     buildInfoWindow() {
@@ -412,7 +410,7 @@ class Toolbox extends React.Component {
             <button
                 type="submit"
                 className={buttonClass}
-                onClick={() => this.props.actionButtons.revertAction()}
+                onClick={() => this.props.revertAction()}
             >
                 <i className="fas fa-undo" />
             </button>
@@ -424,18 +422,39 @@ class Toolbox extends React.Component {
             <button
                 type="submit"
                 className={buttonClass}
-                onClick={() => this.props.actionButtons.home()}
+                onClick={() => this.props.home()}
             >
                 <i className="fas fa-home" />
             </button>
         );
     }
 
+    handleMoveButtonClick() {
+        this.props.visualizerActivator();
+        this.setState({ zoomActive: false });
+    }
+
     handleZoomButtonClick() {
+        this.props.visualizerActivator();
         this.setState((prevState) => {
             this.props.switchButton();
             return { zoomActive: !prevState.zoomActive };
         });
+    }
+
+    buildMoveButton() {
+        const active = this.props.isActive();
+        const className = active && !this.state.zoomActive ? activeButtonClass : buttonClass;
+
+        return (
+            <button
+                type="submit"
+                className={className}
+                onClick={() => this.handleMoveButtonClick()}
+            >
+                <i className="fas fa-arrows-alt" />
+            </button>
+        );
     }
 
     buildZoomToolButton() {
@@ -474,7 +493,7 @@ class Toolbox extends React.Component {
                 </div>
                 <select
                     value={this.state.stftConf.window_function}
-                    onChange={(event) => this.props.setSTFT.modifyWindowFunction(event.target.value)}
+                    onChange={(event) => this.props.modifyWindowFunction(event.target.value)}
                     className="custom-select"
                     id="windowTypeSelect"
                 >
@@ -609,6 +628,9 @@ class Toolbox extends React.Component {
 
                 <div className="row d-flex justify-content-start">
                     <div>
+                        {this.buildMoveButton()}
+                    </div>
+                    <div>
                         {this.buildZoomToolButton()}
                     </div>
                     <div>
@@ -659,44 +681,53 @@ Toolbox.propTypes = {
     */
     canvas: PropTypes.object.isRequired,
     /**
-    * Computes canvas borders times.
+    * Computes canvas left and rigth border times.
     */
     canvasTimes: PropTypes.func.isRequired,
     /**
-    *Modifies state in zoomSwitchButton
+    *Modifies value in zoomSwitchButton state.
     */
     switchButton: PropTypes.func.isRequired,
     /**
-    * Methods to return to past images.
+    * Reverts last zoom tool transformation.
     */
-    actionButtons: PropTypes.shape({
-        revertAction: PropTypes.func,
-        home: PropTypes.func,
-    }),
+    revertAction: PropTypes.func.isRequired,
     /**
-    * Methods to modify stft computations settings.
+    * Set transformation as initialized.
     */
-    setSTFT: PropTypes.shape({
-        modifyWindowFunction: PropTypes.func.isRequired,
-        modifyHopLength: PropTypes.func.isRequired,
-        modifyWindowSize: PropTypes.func.isRequired,
-
-    }),
+    home: PropTypes.func.isRequired,
     /**
-    * Methods to modify colorMap settings.
+    * Modifies window type.
     */
-    setColorMap: PropTypes.shape({
-        modifyColorMap: PropTypes.func.isRequired,
-        modifyInfFilter: PropTypes.func.isRequired,
-        modifySupFilter: PropTypes.func.isRequired,
-    }),
+    modifyWindowFunction: PropTypes.func.isRequired,
     /**
-    * Methods required to move sliderDiv.
+    * Modifies hop length.
     */
-    movement: PropTypes.shape({
-        moveToCenter: PropTypes.func.isRequired,
-        sliderCoords: PropTypes.func.isRequired,
-    }),
+    modifyHopLength: PropTypes.func.isRequired,
+    /**
+    *Modifies window size.
+    */
+    modifyWindowSize: PropTypes.func.isRequired,
+    /**
+    * Set color map.
+    */
+    modifyColorMap: PropTypes.func.isRequired,
+    /**
+    * Set inferior filter value.
+    */
+    modifyInfFilter: PropTypes.func.isRequired,
+    /**
+    * Set superior filter value.
+    */
+    modifySupFilter: PropTypes.func.isRequired,
+    /**
+    * Moves clicked point to center of canvas.
+    */
+    moveToCenter: PropTypes.func.isRequired,
+    /**
+    * Get audio time in proportion to point position in relation with canvas width.
+    */
+    getDenormalizedTime: PropTypes.func.isRequired,
     /**
     * Method to play audio.
     */
