@@ -212,7 +212,7 @@ class Artist {
         };
         this.ctx.strokeRect(this.rect.x, this.rect.y, this.rect.baseLength, this.rect.heightLength);
     }
-
+visualizervisualizer
     /**
      * Used to deactivate the varible in axisHandler isZooming, required to avoid
      * clearing while drawing zooming rectangle.

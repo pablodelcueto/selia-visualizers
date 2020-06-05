@@ -127,6 +127,10 @@ class Visualizer extends VisualizerBase {
         }
     }
 
+    activator() {
+        this.activator = true;
+    }
+
     /**
     * Used to reset transformationMatrix to default transformation.
     * @public
@@ -255,8 +259,8 @@ class Visualizer extends VisualizerBase {
     */
     draw() {
         const glArray = this.SVGmatrixToArray(this.transformationMatrix);
-        const leftInferiorCorner = this.canvasToPoint(this.createPoint(0, 0));
-        const rightSuperiorCorner = this.canvasToPoint(this.createPoint(1, 1));
+        const leftInferiorCorner = this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0));
+        const rightSuperiorCorner = this.canvasToPointForNormalizedCanvas(this.createPoint(1, 1));
         const leftCheckTime = Math.max(leftInferiorCorner.x, 0);
         const rightCheckTime = Math.min(rightSuperiorCorner.x, this.audioLength);
 
@@ -295,11 +299,29 @@ class Visualizer extends VisualizerBase {
         return matrixArray;
     }
 
+    canvasToPoint(p) {
+        const normalCanvasPoint = this.createPoint(
+            p.x / this.canvas.width,
+            p.y / this.canvas.height,
+        );
+        const point = this.canvasToPointForNormalizedCanvas(normalCanvasPoint);
+        return point;
+    }
+
+    pointToCanvas(p) {
+        const normalCanvasPoint = this.pointToNormalizedCanvas(p);
+        const realPoint = this.createPoint(
+            normalCanvasPoint.x * this.canvas.width,
+            normalCanvasPoint.x * this.canvas.height,
+        );
+        return realPoint;
+    }
+
     /**
     * Transforms points from canvas space coordinates into time-frequency coordinates
     * @private
     */
-    canvasToPoint(p) {
+    canvasToPointForNormalizedCanvas(p) {
         return p.matrixTransform(this.transformationMatrix.inverse());
     }
 
@@ -307,7 +329,7 @@ class Visualizer extends VisualizerBase {
     * Transform points in time-frequency coordinates into canvas space coordinates.
     * @private
     */
-    pointToCanvas(p) {
+    pointToNormalizedCanvas(p) {
         return p.matrixTransform(this.transformationMatrix);
     }
 
@@ -329,10 +351,10 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     computeCanvasMeasures() {
-        const time = this.canvasToPoint(this.createPoint(1, 0)).x
-                                        - this.canvasToPoint(this.createPoint(0, 0)).x;
-        const frec = this.canvasToPoint(this.createPoint(0, 1)).y
-                                        - this.canvasToPoint(this.createPoint(0, 0)).y;
+        const time = this.canvasToPointForNormalizedCanvas(this.createPoint(1, 0)).x
+                                        - this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0)).x;
+        const frec = this.canvasToPointForNormalizedCanvas(this.createPoint(0, 1)).y
+                                        - this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0)).y;
         return { canvasTime: time, canvasFrequency: frec };
     }
 
@@ -391,13 +413,13 @@ class Visualizer extends VisualizerBase {
     translation(p) {
         const q = this.createPoint(p.x, p.y);
 
-        if (this.canvasToPoint(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate / 2 && p.y < 0) {
+        if (this.canvasToPointForNormalizedCanvas(this.createPoint(0, 1)).y >= this.audioFile.mediaInfo.sampleRate / 2 && p.y < 0) {
             q.y = 0;
-        } else if (this.canvasToPoint(this.createPoint(0, 0)).y <= 0 && p.y > 0) {
+        } else if (this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0)).y <= 0 && p.y > 0) {
             q.y = 0;
-        } else if (this.pointToCanvas(this.createPoint(0, 0)).x >= 0.5 && p.x > 0) {
+        } else if (this.pointToNormalizedCanvas(this.createPoint(0, 0)).x >= 0.5 && p.x > 0) {
             q.x = 0;
-        } else if (this.pointToCanvas(this.createPoint(this.audioLength, 0)).x <= 0.5 && p.x < 0) {
+        } else if (this.pointToNormalizedCanvas(this.createPoint(this.audioLength, 0)).x <= 0.5 && p.x < 0) {
             q.x = 0;
         }
         const matrix = this.transformationMatrix.translate(q.x, q.y);
@@ -411,7 +433,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     translatePointToLeft(p) {
-        const leftPoint = this.canvasToPoint(this.createPoint(0, 0));
+        const leftPoint = this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0));
         const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y - p.y);
         this.translation(translationPoint);
     }
@@ -428,7 +450,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     translatePointToCenter(p) {
-        const centerPoint = this.canvasToPoint(this.createPoint(1 / 2, 0));
+        const centerPoint = this.canvasToPointForNormalizedCanvas(this.createPoint(1 / 2, 0));
         const translationPoint = this.createPoint(centerPoint.x - p.x, 0);
         this.translation(translationPoint);
     }
@@ -458,7 +480,7 @@ class Visualizer extends VisualizerBase {
         if (!this.active) return;
 
         const last = this.getMouseEventPosition(event);
-        this.dragStart = this.canvasToPoint(last);
+        this.dragStart = this.canvasToPointForNormalizedCanvas(last);
         this.dragging = true;
     }
 
@@ -473,14 +495,14 @@ class Visualizer extends VisualizerBase {
         if (this.dragging) {
             if (this.zoomSwitchPosition === false) {
                 const last = this.getMouseEventPosition(event);
-                const pt = this.canvasToPoint(last);
+                const pt = this.canvasToPointForNormalizedCanvas(last);
                 pt.x -= this.dragStart.x;
                 pt.y -= this.dragStart.y;
                 this.translation(pt);
-                this.dragStart = this.canvasToPoint(last);
+                this.dragStart = this.canvasToPointForNormalizedCanvas(last);
             } else {
                 this.forcingDraw = true;
-                const last = this.pointToCanvas(this.dragStart);
+                const last = this.pointToNormalizedCanvas(this.dragStart);
                 const actualPoint = this.getMouseEventPosition(event);
                 const rect = this.computeRectanglePixelsValues(last, actualPoint);
                 this.artist.drawZoomRectangle(
@@ -504,7 +526,7 @@ class Visualizer extends VisualizerBase {
         if (!this.active) return;
 
         if (this.zoomSwitchPosition === true) {
-            const firstPoint = this.pointToCanvas(this.dragStart);
+            const firstPoint = this.pointToNormalizedCanvas(this.dragStart);
             const secondPoint = this.getMouseEventPosition(event);
             this.zoomOnRectangle(firstPoint, secondPoint);
         }
@@ -561,8 +583,8 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     computeRectangleTimeFreqValues(firstPoint, secondPoint) {
-        const initialPoint = this.canvasToPoint(firstPoint);
-        const finalPoint = this.canvasToPoint(secondPoint);
+        const initialPoint = this.canvasToPointForNormalizedCanvas(firstPoint);
+        const finalPoint = this.canvasToPointForNormalizedCanvas(secondPoint);
         const rightTime = Math.max(initialPoint.x, finalPoint.x);
         const leftTime = Math.min(initialPoint.x, finalPoint.x);
         const topFrequency = Math.max(initialPoint.y, finalPoint.y);
@@ -597,7 +619,7 @@ class Visualizer extends VisualizerBase {
         event.preventDefault();
 
         const mousePosition = this.getMouseEventPosition(event);
-        const fixedPoint = this.canvasToPoint(mousePosition);
+        const fixedPoint = this.canvasToPointForNormalizedCanvas(mousePosition);
         const factorY = (event.deltaY < 0) ? 1.04 : 0.96;
         const factorX = (event.deltaX < 0) ? 1.04 : 0.96;
         const factor = Math.max(factorX, factorY);
@@ -624,7 +646,7 @@ class Visualizer extends VisualizerBase {
     doubleClick(event) {
         if (!this.active) return;
 
-        const point = this.canvasToPoint(this.getMouseEventPosition(event));
+        const point = this.canvasToPointForNormalizedCanvas(this.getMouseEventPosition(event));
 
         if (this.isPlaying) {
             this.reproduceAndPause();
@@ -657,7 +679,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     rightBorderTime() {
-        return Math.min(this.canvasToPoint(this.createPoint(1, 0)).x,
+        return Math.min(this.canvasToPointForNormalizedCanvas(this.createPoint(1, 0)).x,
             this.audioFile.mediaInfo.durationTime);
     }
 
@@ -667,7 +689,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     leftBorderTime() {
-        return Math.max(0, this.canvasToPoint(this.createPoint(0, 0)).x);
+        return Math.max(0, this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0)).x);
     }
 
 
@@ -677,7 +699,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     centralTime() {
-        return this.canvasToPoint(this.createPoint(1 / 2, 0)).x;
+        return this.canvasToPointForNormalizedCanvas(this.createPoint(1 / 2, 0)).x;
     }
 
 
@@ -687,7 +709,8 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     fillInfoWindow(event) {
-        const value = this.canvasToPoint(this.getMouseEventPosition(event));
+
+        const value = this.canvasToPointForNormalizedCanvas(this.getMouseEventPosition(event));
         const time = `Tiempo: ${value.x.toFixed(2)} segundos.`;
         const frequency = `Frecuencia: ${value.y.toFixed(0)} Hz.`;
         this.toolBoxRef.current.setCursorInfo(time, frequency);

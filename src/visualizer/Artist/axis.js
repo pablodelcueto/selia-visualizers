@@ -274,7 +274,7 @@ class Axis {
     */
     leftTimeAndPositionWithPrecision(time) {
         const leftPreciseTime = Math.floor(time * (10 ** this.precision)) / (10 ** this.precision);
-        const timePosition = this.visualizer.pointToCanvas(
+        const timePosition = this.visualizer.pointToNormalizedCanvas(
             this.visualizer.createPoint(leftPreciseTime, 0),
         );
         const relativeLeftValues = {
