@@ -304,8 +304,8 @@ class Toolbox extends React.Component {
         const times = this.props.canvasTimes();
         const centralTime = this.props.getDenormalizedTime(event);
         this.props.moveToCenter(centralTime);
-        const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
-        const timeLength = rigthTime - leftTime;
+        const [leftTime, rightTime] = [times.leftTime, times.rightTime];
+        const timeLength = rightTime - leftTime;
         this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
         this.setState({ dragging: true });
     }
@@ -317,8 +317,8 @@ class Toolbox extends React.Component {
         if (this.state.dragging) {
             const centralTime = this.props.getDenormalizedTime(event);
             this.props.moveToCenter(centralTime);
-            const [leftTime, rigthTime] = [times.leftTime, times.rigthTime];
-            const timeLength = rigthTime - leftTime;
+            const [leftTime, rightTime] = [times.leftTime, times.rightTime];
+            const timeLength = rightTime - leftTime;
             this.setSliderTimes(centralTime - timeLength / 2, centralTime + timeLength / 2);
         }
     }
@@ -329,7 +329,7 @@ class Toolbox extends React.Component {
             timeSettings: {
                 ...prevState.timeSettings,
                 initialTime: times.leftTime,
-                finalTime: times.rigthTime,
+                finalTime: times.rightTime,
             },
         }));
     }
@@ -686,7 +686,7 @@ Toolbox.propTypes = {
     */
     canvas: PropTypes.object.isRequired,
     /**
-    * Computes canvas left and rigth border times.
+    * Computes canvas left and right border times.
     */
     canvasTimes: PropTypes.func.isRequired,
     /**

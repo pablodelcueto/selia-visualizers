@@ -15,7 +15,6 @@ module.exports = {
     "plugins": [
         "react"
     ],
-
     "overrides": [
     {
       "files": ["*.js"],
@@ -26,7 +25,6 @@ module.exports = {
       }
     }
     ],
-
     "rules": {
         "no-plusplus":"off",
         "max-classes-per-file": ["error", 10000],

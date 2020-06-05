@@ -31,13 +31,19 @@ const CHECK_HEADER_DELAY = 5;
 /** Maximun number of tries at file reading. */
 const MAX_TRIES_AUDIO_READ = 10000;
 
+/** Time between done checks. */
+const CHECK_DONE_DELAY = 100;
+
+/** Maximun number of tries while waiting for audio load to be done. */
+const MAX_TRIES_AUDIO_DONE = 10000;
+
 
 /**
 * @class
 * Class that loads and serves audio data from url.
 *
 * This class waits until WAV header has been read to start serving audio data.
-* @property {module:Audio/audioFile.mediaInfo} mediaInfo - WAV configurations.
+* @property {module:Audio/audioFile.mediaInfo} mediaInfo - WAV media info.
 * @property {Uint8Array} rawDataArray - Array with WAV data.
 * @property {number} loadingProgress - File percentage loaded in rawDataArray.
 */
@@ -58,7 +64,7 @@ class AudioFile {
         // WAV file info.
         this.mediaInfo = null;
 
-        // turns true when loadingProgress = 100%;
+        // is true when all WAV data has been loaded.
         this.done = false;
 
         this.startLoading(url);
@@ -67,6 +73,7 @@ class AudioFile {
     /**
     * Starts reading data from url.
     * @param {string} url - WAV file url.
+    * @private
     * @async
     */
     startLoading(url) {
@@ -84,6 +91,7 @@ class AudioFile {
     * the url or when the audiobuffer is full.
     *
     * @return {boolean} True in case it has finished.
+    * @public
     */
     isDone() {
         return this.isDone;
@@ -105,6 +113,7 @@ class AudioFile {
     /**
     * Extract file header information.
     * @return {module:Audio/audioFile.mediaInfo}
+    * @private
     */
     readHeader() {
         const header = headerReader(this.rawDataArray);
@@ -124,6 +133,32 @@ class AudioFile {
     }
 
     /**
+     * Get audio duration.
+     * @return {float} Duration of audio in seconds.
+     * @public
+     */
+    getDuration() {
+        if (this.mediaInfo === null) {
+            throw Error('Audio header has not been loaded');
+        }
+
+        return this.mediaInfo.durationTime;
+    }
+
+    /**
+     * Get audio samplerate.
+     * @return {int} Samplerate of audio in Hertz.
+     * @public
+     */
+    getSamplerate() {
+        if (this.mediaInfo === null) {
+            throw Error('Audio header has not been loaded');
+        }
+
+        return this.mediaInfo.sampleRate;
+    }
+
+    /**
     * Get the buffer index corresponding to the given time and channel.
     *
     * The buffer index holds raw binary data. The returned index refers to the byte
@@ -132,6 +167,7 @@ class AudioFile {
     * @param {number} time - Time.
     * @param {int} channel - Audio channel.
     * @return {int} WAV index.
+    * @private
     */
     getIndex(time, channel) {
         if (!(channel)) channel = 0;
@@ -149,6 +185,7 @@ class AudioFile {
     *
     * @param {number} time - Time.
     * @return {int} WAV index.
+    * @private
     */
     getWavIndexFromTime(time) {
         return Math.floor(time * this.mediaInfo.sampleRate);
@@ -159,6 +196,7 @@ class AudioFile {
     *
     * @param {int} index - WAV index.
     * @return {number} Audio time.
+    * @private
     */
     getTime(index) {
         return index / this.mediaInfo.sampleRate;
@@ -173,6 +211,7 @@ class AudioFile {
     *
     * @param {int} bufferIndex - Buffer index value.
     * @return {int} WAV index matching bufferIndex value.
+    * @private
     */
     bufferIndexToWavIndex(bufferIndex) {
         return Math.floor(
@@ -184,6 +223,7 @@ class AudioFile {
     /**
     * Get last WAV index loaded in buffer.
     * @return {int} WAV index.
+    * @private
     */
     getLastWavIndex() {
         return this.bufferIndexToWavIndex(this.lastIndex);
@@ -193,6 +233,7 @@ class AudioFile {
     * Check if requested wav index has been loaded into the audio array.
     * @param {int} index - WAV index.
     * @return {boolean} True in case WAV index value has already been loaded to buffer.
+    * @public
     */
     canRead(index) {
         return index <= this.getLastWavIndex();
@@ -202,6 +243,7 @@ class AudioFile {
     * Checks if index exists in file.
     * @param {int} index - index number.
     * @return {boolean} True in case index is less that WAV file length.
+    * @private
     */
     isIndexInFile(index) {
         return index < this.mediaInfo.totalSize;
@@ -211,7 +253,7 @@ class AudioFile {
     * Extracts audio data from buffer.
     *
     * Main method for data extraction. Data can be requested in several ways:
-    * 1. If no argument is given, the all currently loaded data will be returned.
+    * 1. If no argument is given all currently loaded data will be returned.
     * 2. If startIndex or startTime are provided, the returned data will only contain audio
     * samples later than startTime or the time corresponding to startIndex, see
     * {@link module:Audio/audioFile~AudioFile#getWavIndexFromTime|getWavIndexFromTime}.
@@ -301,23 +343,24 @@ class AudioFile {
     * @param {int} start - buffer index to start slicing buffer.
     * @param {int} end - buffer index to end slicing buffer.
     * @return {Object} - subBuffer of buffer from start to end.
+    * @private
     */
     getSlice(start, end) {
         const [dataStart] = [this.mediaInfo.dataStart];
         const [sampleSize] = [this.mediaInfo.sampleSize];
         const [channels] = [this.mediaInfo.channels];
 
-        start = dataStart + channels * start * (sampleSize / 8);
-        end = dataStart + channels * end * (sampleSize / 8);
+        const startIndex = dataStart + channels * start * (sampleSize / 8);
+        const endIndex = dataStart + channels * end * (sampleSize / 8);
 
         if (sampleSize === 8) {
-            return new Int8Array(this.rawDataArray.slice(start, end).buffer);
+            return new Int8Array(this.rawDataArray.slice(startIndex, endIndex).buffer);
         } if (sampleSize === 16) {
-            return new Int16Array(this.rawDataArray.slice(start, end).buffer);
+            return new Int16Array(this.rawDataArray.slice(startIndex, endIndex).buffer);
         } if (sampleSize === 32) {
-            return new Int32Array(this.rawDataArray.slice(start, end).buffer);
+            return new Int32Array(this.rawDataArray.slice(startIndex, endIndex).buffer);
         } if (sampleSize === 64) {
-            return new BigInt64Array(this.rawDataArray.slice(start, end).buffer);
+            return new BigInt64Array(this.rawDataArray.slice(startIndex, endIndex).buffer);
         }
 
         throw new Error('Incompatible sample size');
@@ -340,8 +383,9 @@ class AudioFile {
 
     /**
     * Fills mediaInfo data and streams data from server into rawDataArray.
-    * @param{Object} stream - Flow of data from url.
+    * @param {Object} stream - Flow of data from url.
     * @async
+    * @private
     */
     async readStream(stream) {
         const { done, value } = await stream.read();
@@ -367,7 +411,18 @@ class AudioFile {
     }
 
     /**
+     * Get copy of full WAV data buffer (including header).
+     * @return {ArrayBuffer}
+     * @public
+     */
+    getRawData() {
+        return this.rawDataArray.buffer.slice(0);
+    }
+
+    /**
     * Waits until buffer can serve data.
+    * @return {Promise} Resolves when WAV header and data is available for read.
+    * @public
     */
     waitUntilReady() {
         let tries = 0;
@@ -389,6 +444,34 @@ class AudioFile {
             };
 
             checkIfReady();
+        });
+    }
+
+    /**
+    * Waits until WAV data has fully loaded.
+    * @return {Promise} Resolves when WAV data is fully loaded.
+    * @public
+    */
+    waitUntilDone() {
+        let tries = 0;
+
+        return new Promise((resolve, reject) => {
+            const checkIfDone = () => {
+                // Will reject the promise after many tries.
+                if (tries > MAX_TRIES_AUDIO_DONE) {
+                    reject(new Error('Audio has taken too long to load.'));
+                }
+
+                if (this.done) {
+                    resolve();
+                } else {
+                    tries += 1;
+                    // Will wait for a set time and check again if audio reader is done
+                    setTimeout(checkIfDone, CHECK_DONE_DELAY);
+                }
+            };
+
+            checkIfDone();
         });
     }
 }

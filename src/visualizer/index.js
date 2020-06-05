@@ -51,13 +51,13 @@ function zoomLimit(sampleRate) {
 * @property {number} loaded.frequencies.start - Start frequency spectrogram values pictured.
 * @property {number} loaded.frequencies.end - Final frequency spectrogram pictured.
 * @property {boolean} forcingDraw - Used when configuration changes are done.
-* @property {SVGmatrix} SVGtransformationMatrix - Translating or scaling image
+* @property {SVGmatrix} transformationMatrix - Translating or scaling image
 * matrix transformation.
 * @property {boolean} zoomSwitchPosition - True when zooming Tool is activated.
 * @property {number} zoomLimit - Limit given to zoom acording to audio file sample rate.
 * @property {boolean} dragging - True when dragging image.
 * @property {SVGpoint} dragStart - Initial dragging point.
-* @property {SVGmatrix} savedMatrix - SVGtransformationMatrix saved available for image restoration.
+* @property {SVGmatrix} savedMatrix - transformationMatrix saved available for image restoration.
 * @class
 */
 
@@ -86,7 +86,7 @@ class Visualizer extends VisualizerBase {
 
         // Class dealing with webGL and axis responsabilities.
         this.artist = new Artist(this, this.stftHandler);
-        this.SVGtransformationMatrix = this.svg.createSVGMatrix();
+        this.transformationMatrix = this.svg.createSVGMatrix();
 
         // Auxiliary variables:
         this.audioLength = null;
@@ -100,13 +100,13 @@ class Visualizer extends VisualizerBase {
         this.stftHandler.waitUntilReady()
             .then(() => {
                 this.artist.maxFrequency = this.audioFile.mediaInfo.sampleRate / 2;
-                this.SVGtransformationMatrix = this.SVGtransformationMatrix
+                this.transformationMatrix = this.transformationMatrix
                     .translate(1 / 2, 0)
                     .scaleNonUniform(
                         1 / INITIAL_SECONDS_PER_WINDOW,
                         2 / this.audioFile.mediaInfo.sampleRate,
                     );
-                this.savedMatrix = this.SVGtransformationMatrix;
+                this.savedMatrix = this.transformationMatrix;
                 this.updateAudioLength();
                 this.toolBoxRef.current.addEventsToCanvas();
                 this.zoomLimit = zoomLimit(this.audioFile.mediaInfo.sampleRate);
@@ -135,7 +135,7 @@ class Visualizer extends VisualizerBase {
         this.activator();
         const conf = { stft: {}, startTime: 0 };
         this.stftHandler.setConfig(conf);
-        this.SVGtransformationMatrix = this.savedMatrix;
+        this.transformationMatrix = this.savedMatrix;
     }
 
     /**
@@ -254,22 +254,22 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     draw() {
-        const glArray = this.SVGmatrixToArray(this.SVGtransformationMatrix);
+        const glArray = this.SVGmatrixToArray(this.transformationMatrix);
         const leftInferiorCorner = this.canvasToPoint(this.createPoint(0, 0));
-        const rigthSuperiorCorner = this.canvasToPoint(this.createPoint(1, 1));
+        const rightSuperiorCorner = this.canvasToPoint(this.createPoint(1, 1));
         const leftCheckTime = Math.max(leftInferiorCorner.x, 0);
-        const rigthCheckTime = Math.min(rigthSuperiorCorner.x, this.audioLength);
+        const rightCheckTime = Math.min(rightSuperiorCorner.x, this.audioLength);
 
         if (Math.abs(leftCheckTime - this.loaded.times.start) > 0.01
             || leftInferiorCorner.y !== this.loaded.frequencies.start
-            || Math.abs(rigthCheckTime - this.loaded.times.end) > 0.01
-            || rigthSuperiorCorner.y !== this.loaded.frequencies.end
+            || Math.abs(rightCheckTime - this.loaded.times.end) > 0.01
+            || rightSuperiorCorner.y !== this.loaded.frequencies.end
             || this.forcingDraw) {
             this.loaded = this.artist.draw(
                 leftInferiorCorner.x,
-                rigthSuperiorCorner.x,
+                rightSuperiorCorner.x,
                 leftInferiorCorner.y,
-                rigthSuperiorCorner.y,
+                rightSuperiorCorner.y,
                 glArray,
             );
             this.forcingDraw = false;
@@ -282,14 +282,14 @@ class Visualizer extends VisualizerBase {
     */
     SVGmatrixToArray() {
         const matrixArray = new Float32Array([
-            this.SVGtransformationMatrix.a,
-            this.SVGtransformationMatrix.b,
+            this.transformationMatrix.a,
+            this.transformationMatrix.b,
             0,
-            this.SVGtransformationMatrix.c,
-            this.SVGtransformationMatrix.d,
+            this.transformationMatrix.c,
+            this.transformationMatrix.d,
             0,
-            this.SVGtransformationMatrix.e,
-            this.SVGtransformationMatrix.f,
+            this.transformationMatrix.e,
+            this.transformationMatrix.f,
             1,
         ]);
         return matrixArray;
@@ -300,7 +300,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     canvasToPoint(p) {
-        return p.matrixTransform(this.SVGtransformationMatrix.inverse());
+        return p.matrixTransform(this.transformationMatrix.inverse());
     }
 
     /**
@@ -308,13 +308,13 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     pointToCanvas(p) {
-        return p.matrixTransform(this.SVGtransformationMatrix);
+        return p.matrixTransform(this.transformationMatrix);
     }
 
     /**
     * Return nearest point with time and frequency values coordinates.
     * @param {point} p - Point in time and frequency coordinates.
-    * @return  {point}
+    * @return {point}
     * @private
     */
     validatePoints(p) {
@@ -337,13 +337,13 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Multiplies SVGtransformationMatrix by scaling matrix.
+    * Multiplies transformationMatrix by scaling matrix.
     * @param {point} p - Indicates scaling factor for each direction.
     * @public
     */
     scale(p) {
-        const matrix = this.SVGtransformationMatrix.scaleNonUniform(p.x, p.y);
-        this.SVGtransformationMatrix = matrix;
+        const matrix = this.transformationMatrix.scaleNonUniform(p.x, p.y);
+        this.transformationMatrix = matrix;
     }
 
     /**
@@ -353,21 +353,21 @@ class Visualizer extends VisualizerBase {
     * @public
     */
     zoomOnPoint(factor, fixedPoint) {
-        let matrix = this.SVGtransformationMatrix.translate(fixedPoint.x, fixedPoint.y);
+        let matrix = this.transformationMatrix.translate(fixedPoint.x, fixedPoint.y);
 
         // Condition to avoid too much increase or decrease in time scale.
         const condition1 = (
-            (factor.x < 1 && this.SVGtransformationMatrix.a < 1 / MAX_SECONDS_IN_CANVAS)
-            || (factor.x > 1 && this.SVGtransformationMatrix.a > 10)
+            (factor.x < 1 && this.transformationMatrix.a < 1 / MAX_SECONDS_IN_CANVAS)
+            || (factor.x > 1 && this.transformationMatrix.a > 10)
         );
 
         // Condition to avoid too much increase or decrease in frequency space.
         const condition2 = ((
                 factor.y < 1
-                && (this.SVGtransformationMatrix.d < (3 / 2) / this.audioFile.mediaInfo.sampleRate))
+                && (this.transformationMatrix.d < (3 / 2) / this.audioFile.mediaInfo.sampleRate))
             || (
                 factor.y > 1
-                && this.SVGtransformationMatrix.d > 10 / this.audioFile.mediaInfo.sampleRate)
+                && this.transformationMatrix.d > 10 / this.audioFile.mediaInfo.sampleRate)
         );
 
         if (condition1) {
@@ -380,11 +380,11 @@ class Visualizer extends VisualizerBase {
 
         matrix = matrix.scaleNonUniform(factor.x, factor.y);
         matrix = matrix.translate(-fixedPoint.x, -fixedPoint.y);
-        this.SVGtransformationMatrix = matrix;
+        this.transformationMatrix = matrix;
     }
 
     /**
-    * Multiplies SVGtransformationMatrix by translations matrix to move around the spectrogram.
+    * Multiplies transformationMatrix by translations matrix to move around the spectrogram.
     * @param {SVGpoint} p -  SVG point to create translation matrix.
     * @public
     */
@@ -400,8 +400,8 @@ class Visualizer extends VisualizerBase {
         } else if (this.pointToCanvas(this.createPoint(this.audioLength, 0)).x <= 0.5 && p.x < 0) {
             q.x = 0;
         }
-        const matrix = this.SVGtransformationMatrix.translate(q.x, q.y);
-        this.SVGtransformationMatrix = matrix;
+        const matrix = this.transformationMatrix.translate(q.x, q.y);
+        this.transformationMatrix = matrix;
     }
 
     /**
@@ -519,7 +519,7 @@ class Visualizer extends VisualizerBase {
     * @public
     */
     zoomOnRectangle(firstPoint, secondPoint) {
-        this.secondaryTransformation = this.SVGtransformationMatrix;
+        this.secondaryTransformation = this.transformationMatrix;
 
         const canvasMeasures = this.computeCanvasMeasures();
         const rectangle = this.computeRectangleTimeFreqValues(firstPoint, secondPoint);
@@ -543,11 +543,11 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     computeRectanglePixelsValues(firstPoint, secondPoint) {
-        const rigthXcoordinate = Math.max(firstPoint.x, secondPoint.x) * this.canvas.width;
+        const rightXcoordinate = Math.max(firstPoint.x, secondPoint.x) * this.canvas.width;
         const leftXcoordinate = Math.min(firstPoint.x, secondPoint.x) * this.canvas.width;
         const bottomYcoordinate = (1 - Math.max(firstPoint.y, secondPoint.y)) * this.canvas.height;
         const topYcoordinate = (1 - Math.min(firstPoint.y, secondPoint.y)) * this.canvas.height;
-        const width = rigthXcoordinate - leftXcoordinate;
+        const width = rightXcoordinate - leftXcoordinate;
         const height = topYcoordinate - bottomYcoordinate;
         return {
             x: leftXcoordinate, y: bottomYcoordinate, baseLength: width, heightLength: height,
@@ -563,11 +563,11 @@ class Visualizer extends VisualizerBase {
     computeRectangleTimeFreqValues(firstPoint, secondPoint) {
         const initialPoint = this.canvasToPoint(firstPoint);
         const finalPoint = this.canvasToPoint(secondPoint);
-        const rigthTime = Math.max(initialPoint.x, finalPoint.x);
+        const rightTime = Math.max(initialPoint.x, finalPoint.x);
         const leftTime = Math.min(initialPoint.x, finalPoint.x);
         const topFrequency = Math.max(initialPoint.y, finalPoint.y);
         const bottomFrequency = Math.min(initialPoint.y, finalPoint.y);
-        const timeRangeLength = rigthTime - leftTime;
+        const timeRangeLength = rightTime - leftTime;
         const frequencyRangeLength = topFrequency - bottomFrequency;
 
         return {
@@ -598,15 +598,18 @@ class Visualizer extends VisualizerBase {
 
         const mousePosition = this.getMouseEventPosition(event);
         const fixedPoint = this.canvasToPoint(mousePosition);
+        const factorY = (event.deltaY < 0) ? 1.04 : 0.96;
+        const factorX = (event.deltaX < 0) ? 1.04 : 0.96;
+        const factor = Math.max(factorX, factorY);
 
         if (timeZoom && freqZoom) {
             const shift = event.wheelDelta / 1000.0;
             this.translation(this.createPoint(shift, 0));
         } else if (timeZoom) {
-            const factor = (event.deltaY < 0) ? 1.04 : 0.96;
+            // const factor = (event.deltaY < 0) ? 1.04 : 0.96;
             this.zoomOnPoint(this.createPoint(factor, 1), fixedPoint);
         } else {
-            const factor = (event.deltaX < 0) ? 1.04 : 0.96;
+            // const factor = (event.deltaX < 0) ? 1.04 : 0.96;
             this.zoomOnPoint(this.createPoint(1, factor), fixedPoint);
         }
 
@@ -636,7 +639,7 @@ class Visualizer extends VisualizerBase {
     }
 
     /**
-    * Get times matching left border, center and rigth border columns in canvas.
+    * Get times matching left border, center and right border columns in canvas.
     * @return {Object}
     * @private
     */
@@ -644,16 +647,16 @@ class Visualizer extends VisualizerBase {
         return {
             leftTime: this.leftBorderTime(),
             centralTime: this.centralTime(),
-            rigthTime: this.rigthBorderTime(),
+            rightTime: this.rightBorderTime(),
         };
     }
 
     /**
-    * Get time in rigth border of canvas.
+    * Get time in right border of canvas.
     * @return {number}
     * @private
     */
-    rigthBorderTime() {
+    rightBorderTime() {
         return Math.min(this.canvasToPoint(this.createPoint(1, 0)).x,
             this.audioFile.mediaInfo.durationTime);
     }
@@ -697,7 +700,7 @@ class Visualizer extends VisualizerBase {
     revertAction() {
         this.activator();
         if (this.secondaryTransformation != null) {
-            this.SVGtransformationMatrix = this.secondaryTransformation;
+            this.transformationMatrix = this.secondaryTransformation;
         }
     }
 
@@ -807,7 +810,6 @@ class Visualizer extends VisualizerBase {
         if (!this.isPlaying) {
             this.isPlaying = true;
             this.audioPlayer.reproduce(time, () => {
-                this.initialAnimationTime = this.audioPlayer.getTime();
                 this.animatedMotion(time);
             });
         } else if (this.isPlaying) {
@@ -821,7 +823,7 @@ class Visualizer extends VisualizerBase {
     * @private
     */
     animatedMotion(time) {
-        const newTime = time + this.audioPlayer.getTime() - this.initialAnimationTime;
+        const newTime = this.audioPlayer.getTime();
         this.translatePointToCenter(this.createPoint(newTime, 0));
         this.timeoutId = setTimeout(() => this.animatedMotion(time), 10);
         this.toolBoxRef.current.moveSliderFromCanvas();
