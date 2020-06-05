@@ -312,7 +312,7 @@ class Visualizer extends VisualizerBase {
         const normalCanvasPoint = this.pointToNormalizedCanvas(p);
         const realPoint = this.createPoint(
             normalCanvasPoint.x * this.canvas.width,
-            normalCanvasPoint.x * this.canvas.height,
+            normalCanvasPoint.y * this.canvas.height,
         );
         return realPoint;
     }
@@ -478,8 +478,10 @@ class Visualizer extends VisualizerBase {
     */
     mouseDown(event) {
         if (!this.active) return;
-
         const last = this.getMouseEventPosition(event);
+        console.log(last);
+        const normalized = this.canvasToPointForNormalizedCanvas(last);
+        console.log(this.pointToCanvas(normalized));
         this.dragStart = this.canvasToPointForNormalizedCanvas(last);
         this.dragging = true;
     }
