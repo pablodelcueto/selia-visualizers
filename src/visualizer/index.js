@@ -27,6 +27,9 @@ const INIT_CONFIG = {
     startTime: 0.0,
 };
 
+const MAX_TRIES_READY = 10000;
+const CHECK_READY_DELAY = 100;
+
 /** Seconds per canvas frame at initial state.
 * @private
 */
@@ -96,6 +99,8 @@ class Visualizer extends VisualizerBase {
         this.dragStart = null;
         this.dragging = false;
 
+        this.done = false;
+
         // Creates transformation matrix with INITIAL_SECONDS_PER_WINDOW requirement.
         this.stftHandler.waitUntilReady()
             .then(() => {
@@ -111,6 +116,8 @@ class Visualizer extends VisualizerBase {
                 this.toolBoxRef.current.addEventsToCanvas();
                 this.zoomLimit = zoomLimit(this.audioFile.mediaInfo.sampleRate);
                 this.startDrawing();
+
+                this.done = true;
             });
     }
 
@@ -140,6 +147,7 @@ class Visualizer extends VisualizerBase {
         const conf = { stft: {}, startTime: 0 };
         this.stftHandler.setConfig(conf);
         this.transformationMatrix = this.savedMatrix;
+        this.emitUpdateEvent();
     }
 
     /**
@@ -170,6 +178,8 @@ class Visualizer extends VisualizerBase {
         }
 
         this.stftHandler.config = this.config;
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -264,9 +274,9 @@ class Visualizer extends VisualizerBase {
         const leftCheckTime = Math.max(leftInferiorCorner.x, 0);
         const rightCheckTime = Math.min(rightSuperiorCorner.x, this.audioLength);
 
-        if (Math.abs(leftCheckTime - this.loaded.times.start) > 0.01
+        if (Math.abs(leftCheckTime - this.loaded.times.start) > 0
             || leftInferiorCorner.y !== this.loaded.frequencies.start
-            || Math.abs(rightCheckTime - this.loaded.times.end) > 0.01
+            || Math.abs(rightCheckTime - this.loaded.times.end) > 0
             || rightSuperiorCorner.y !== this.loaded.frequencies.end
             || this.forcingDraw) {
             this.loaded = this.artist.draw(
@@ -302,19 +312,14 @@ class Visualizer extends VisualizerBase {
     canvasToPoint(p) {
         const normalCanvasPoint = this.createPoint(
             p.x / this.canvas.width,
-            p.y / this.canvas.height,
+            1 - (p.y / this.canvas.height),
         );
         const point = this.canvasToPointForNormalizedCanvas(normalCanvasPoint);
         return point;
     }
 
     pointToCanvas(p) {
-        const normalCanvasPoint = this.pointToNormalizedCanvas(p);
-        const realPoint = this.createPoint(
-            normalCanvasPoint.x * this.canvas.width,
-            normalCanvasPoint.y * this.canvas.height,
-        );
-        return realPoint;
+        return this.pointToNormalizedCanvas(p);
     }
 
     /**
@@ -436,6 +441,7 @@ class Visualizer extends VisualizerBase {
         const leftPoint = this.canvasToPointForNormalizedCanvas(this.createPoint(0, 0));
         const translationPoint = this.createPoint(leftPoint.x - p.x, leftPoint.y - p.y);
         this.translation(translationPoint);
+        this.emitUpdateEvent();
     }
 
     centerTime(time) {
@@ -453,6 +459,7 @@ class Visualizer extends VisualizerBase {
         const centerPoint = this.canvasToPointForNormalizedCanvas(this.createPoint(1 / 2, 0));
         const translationPoint = this.createPoint(centerPoint.x - p.x, 0);
         this.translation(translationPoint);
+        this.emitUpdateEvent();
     }
 
     /**
@@ -484,6 +491,8 @@ class Visualizer extends VisualizerBase {
         console.log(this.pointToCanvas(normalized));
         this.dragStart = this.canvasToPointForNormalizedCanvas(last);
         this.dragging = true;
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -518,6 +527,8 @@ class Visualizer extends VisualizerBase {
 
         this.toolBoxRef.current.moveSliderFromCanvas();
         this.fillInfoWindow(event);
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -531,6 +542,8 @@ class Visualizer extends VisualizerBase {
             const firstPoint = this.pointToNormalizedCanvas(this.dragStart);
             const secondPoint = this.getMouseEventPosition(event);
             this.zoomOnRectangle(firstPoint, secondPoint);
+
+            this.emitUpdateEvent();
         }
         this.zoomSwitchPosition = false;
         this.dragging = false;
@@ -638,6 +651,8 @@ class Visualizer extends VisualizerBase {
         }
 
         this.toolBoxRef.current.moveSliderFromCanvas();
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -660,6 +675,8 @@ class Visualizer extends VisualizerBase {
 
         this.translatePointToCenter(point);
         this.toolBoxRef.current.moveSliderFromCanvas();
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -727,6 +744,8 @@ class Visualizer extends VisualizerBase {
         if (this.secondaryTransformation != null) {
             this.transformationMatrix = this.secondaryTransformation;
         }
+
+        this.emitUpdateEvent();
     }
 
     /**
@@ -863,6 +882,28 @@ class Visualizer extends VisualizerBase {
         this.isPlaying = false;
         this.audioPlayer.stop();
         clearTimeout(this.timeoutId);
+    }
+
+    waitUntilReady() {
+      let tries = 0;
+
+      return new Promise((resolve, reject) => {
+        const checkIfReady = () => {
+          // Will reject the promise after many tries.
+          if (tries > MAX_TRIES_READY) {
+            reject(new Error('Visualizer has taken to long to be ready'));
+          }
+
+          if (this.ready) {
+            resolve();
+          } else {
+            tries += 1;
+            setTimeout(checkIfReady, CHECK_READY_DELAY);
+          }
+        };
+
+        checkIfReady();
+      });
     }
 }
 
