@@ -3,7 +3,7 @@
 */
 
 import React from 'react';
-import VisualizerBase from '@selia/visualizer';
+import VisualizerBase from '../VisualizerBase';
 import Artist from './Artist/artist';
 import STFTHandler from './STFTHandler/STFTHandler';
 import AudioFile from './Audio/audioFile';
@@ -135,7 +135,7 @@ class Visualizer extends VisualizerBase {
     }
 
     activator() {
-        this.activator = true;
+        this.activate = true;
     }
 
     /**
@@ -485,10 +485,9 @@ class Visualizer extends VisualizerBase {
     */
     mouseDown(event) {
         if (!this.active) return;
+
         const last = this.getMouseEventPosition(event);
-        console.log(last);
         const normalized = this.canvasToPointForNormalizedCanvas(last);
-        console.log(this.pointToCanvas(normalized));
         this.dragStart = this.canvasToPointForNormalizedCanvas(last);
         this.dragging = true;
 

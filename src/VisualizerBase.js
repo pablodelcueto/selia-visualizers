@@ -5,13 +5,13 @@ class VisualizerBase {
     this.active = config.active || true;
     this.activator = config.activator || (() => null);
 
-    // this.events = this.getEvents();
+    this.events = this.getEvents();
     this.svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
 
     this.adjustSize();
     this.init();
 
-    // this.bindEvents();
+    this.bindEvents(this.events);
   }
 
   getEvents() {
@@ -101,7 +101,7 @@ class VisualizerBase {
       }
 
       listeners.forEach((listener) => {
-        this.canvas.addEventListener(eventType, listener, {passive:false});
+        this.canvas.addEventListener(eventType, listener, {passive: false});
       });
     }
   }
